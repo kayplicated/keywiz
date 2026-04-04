@@ -70,8 +70,10 @@ fn render_key(f: &mut Frame, x: u16, y: u16, area: Rect, key: &Key, is_highlight
 fn render_standard(f: &mut Frame, area: Rect, layout: &Layout, highlight: Option<char>) {
     let highlight_lower = highlight.map(|c| c.to_ascii_lowercase());
 
-    let max_keys = layout.rows.iter().map(|r| r.keys.len()).max().unwrap_or(13);
-    let kb_width = (max_keys as u16) * KEY_W + ROW_OFFSETS[3] + 2;
+    let kb_width = layout.rows.iter().enumerate()
+        .map(|(i, r)| ROW_OFFSETS[i] + (r.keys.len() as u16) * KEY_W)
+        .max()
+        .unwrap_or(65);
     let kb_height = 4 * KEY_H;
 
     let x_offset = area.x + area.width.saturating_sub(kb_width) / 2;

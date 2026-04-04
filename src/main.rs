@@ -123,6 +123,9 @@ fn run_loop(
                     KeyCode::Tab => {
                         app.show_keyboard = !app.show_keyboard;
                     }
+                    KeyCode::BackTab => {
+                        app.split = !app.split;
+                    }
                     KeyCode::Char(ch) => {
                         if let Some(d) = drill.as_mut() {
                             d.handle_input(ch, &app.layout);
@@ -137,6 +140,9 @@ fn run_loop(
                     }
                     KeyCode::Tab => {
                         app.show_keyboard = !app.show_keyboard;
+                    }
+                    KeyCode::BackTab => {
+                        app.split = !app.split;
                     }
                     KeyCode::Char(ch) => {
                         if let Some(t) = typing_test.as_mut() {
