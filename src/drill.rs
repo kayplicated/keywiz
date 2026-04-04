@@ -83,7 +83,13 @@ impl Drill {
     }
 
     pub fn next_char(&mut self) {
-        self.current = *self.chars.choose(&mut rand::rng()).unwrap_or(&'a');
+        let prev = self.current;
+        loop {
+            self.current = *self.chars.choose(&mut rand::rng()).unwrap_or(&'a');
+            if self.current != prev || self.chars.len() <= 1 {
+                break;
+            }
+        }
     }
 
     fn window_accuracy(&self) -> f64 {
