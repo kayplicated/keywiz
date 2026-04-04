@@ -2,14 +2,15 @@
 
 A terminal typing tutor with a visual keyboard — built for custom layouts that no other tool supports.
 
-![keywiz drill mode](https://github.com/user-attachments/assets/placeholder)
-
 ## Features
 
 - **Visual keyboard** with color-coded finger zones
-- **Key drills** with adaptive difficulty (home row -> top row -> all rows, scales up/down based on accuracy)
-- **Typing practice** with scrolling word display and live WPM/accuracy tracking
-- **Reads kanata configs** directly — no need to maintain a separate layout file
+- **Key drills** with adaptive difficulty — starts on home row, levels up/down based on rolling accuracy
+- **Typing practice** with scrolling word display and live WPM/accuracy
+- **Endless mode** — continuous practice without a word limit
+- **Split keyboard view** for columnar split boards (Elora, Corne, Sweep, etc.)
+- **Toggle keyboard** with Tab — fly blind when you're ready
+- **Reads kanata configs** directly — no separate layout file needed
 - Runs in the terminal, no GUI dependencies
 
 ## Install
@@ -26,14 +27,21 @@ keywiz
 
 # Specify a config and layer
 keywiz /path/to/kanata.kbd my_layer
+
+# Split keyboard mode
+keywiz --split
 ```
 
 ### Modes
 
-- **[1] Key Drills** — random keys, starts with home row. Levels up automatically when you hit >90% accuracy, levels back down if you drop below 70%.
-- **[2] Typing Practice** — type 20 words with a scrolling display and keyboard guide. Shows WPM and accuracy.
+- **[1] Key Drills** — random keys, starts with home row. Levels up at >90% accuracy, back down below 70%.
+- **[2] Typing Practice** — type 20 words with a scrolling display and keyboard guide.
+- **[3] Endless Mode** — like typing practice, but it never ends. ESC to stop.
 
-Press **ESC** to go back or quit.
+### Controls
+
+- **Tab** — toggle keyboard visibility
+- **ESC** — go back / quit
 
 ## Layout Support
 
