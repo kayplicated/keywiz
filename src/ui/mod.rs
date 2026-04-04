@@ -105,7 +105,7 @@ pub fn render_drill(f: &mut Frame, drill: &Drill, app: &App) {
     f.render_widget(prompt, prompt_area);
 
     // Keyboard
-    keyboard::render_keyboard(f, kb_area, &app.layout, Some(drill.current));
+    keyboard::render_keyboard(f, kb_area, &app.layout, Some(drill.current), app.split);
 
     // Stats
     let stats = Paragraph::new(Line::from(vec![
@@ -237,7 +237,7 @@ pub fn render_typing(f: &mut Frame, test: &TypingTest, app: &App) {
         f.render_widget(words_display, words_area);
 
         // Keyboard — highlight expected char
-        keyboard::render_keyboard(f, kb_area, &app.layout, test.expected_char());
+        keyboard::render_keyboard(f, kb_area, &app.layout, test.expected_char(), app.split);
     }
 
     // Stats

@@ -4,21 +4,71 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-use crate::layout::Layout;
+use crate::layout::{Key, Layout};
 
 /// Key cell width in characters (including borders).
 const KEY_W: u16 = 5;
 /// Key cell height in lines.
 const KEY_H: u16 = 3;
 
-/// Row offsets (in half-key units) to simulate stagger.
-/// Number row: 0, Top: 1, Home: 2, Bottom: 3
+/// Row offsets (in half-key units) to simulate stagger on standard keyboards.
 const ROW_OFFSETS: [u16; 4] = [0, 1, 3, 5];
 
-pub fn render_keyboard(f: &mut Frame, area: Rect, layout: &Layout, highlight: Option<char>) {
+/// Column stagger offsets for split columnar keyboards (in lines, applied vertically).
+/// Pinky: +1, Ring: 0, Middle: -1, Index: 0, Inner index: +1
+/// Applied per-column: [0, 1, 2, 3, 4, 5] on each half
+const COL_STAGGER: [i16; 6] = [1, 0, -1, 0, 1, 1];
+
+/// Split gap width in characters.
+const SPLIT_GAP: u16 = 4;
+
+pub fn render_keyboard(
+    f: &mut Frame,
+    area: Rect,
+    layout: &Layout,
+    highlight: Option<char>,
+    split: bool,
+) {
+    if split {
+        render_split(f, area, layout, highlight);
+    } else {
+        render_standard(f, area, layout, highlight);
+    }
+}
+
+fn render_key(f: &mut Frame, x: u16, y: u16, area: Rect, key: &Key, is_highlighted: bool) {
+    if x + KEY_W > area.x + area.width || y + KEY_H > area.y + area.height {
+        return;
+    }
+    let key_area = Rect::new(x, y, KEY_W, KEY_H);
+
+    let lines = if is_highlighted {
+        let border = Style::default().fg(Color::Gray);
+        let letter = Style::default().fg(Color::White).bold();
+        vec![
+            Line::from(Span::styled("┌───┐", border)),
+            Line::from(vec![
+                Span::styled("│ ", border),
+                Span::styled(format!("{}", key.lower), letter),
+                Span::styled(" │", border),
+            ]),
+            Line::from(Span::styled("└───┘", border)),
+        ]
+    } else {
+        let style = Style::default().fg(key.finger.color());
+        vec![
+            Line::from(Span::styled("┌───┐", style)),
+            Line::from(Span::styled(format!("│ {} │", key.lower), style)),
+            Line::from(Span::styled("└───┘", style)),
+        ]
+    };
+
+    f.render_widget(Paragraph::new(lines), key_area);
+}
+
+fn render_standard(f: &mut Frame, area: Rect, layout: &Layout, highlight: Option<char>) {
     let highlight_lower = highlight.map(|c| c.to_ascii_lowercase());
 
-    // Center the keyboard in the area
     let max_keys = layout.rows.iter().map(|r| r.keys.len()).max().unwrap_or(13);
     let kb_width = (max_keys as u16) * KEY_W + ROW_OFFSETS[3] + 2;
     let kb_height = 4 * KEY_H;
@@ -32,35 +82,60 @@ pub fn render_keyboard(f: &mut Frame, area: Rect, layout: &Layout, highlight: Op
 
         for (col_idx, key) in row.keys.iter().enumerate() {
             let key_x = x_offset + stagger + (col_idx as u16) * KEY_W;
-
             let is_highlighted = highlight_lower == Some(key.lower);
+            render_key(f, key_x, row_y, area, key, is_highlighted);
+        }
+    }
+}
 
-            if key_x + KEY_W <= area.x + area.width && row_y + KEY_H <= area.y + area.height {
-                let key_area = Rect::new(key_x, row_y, KEY_W, KEY_H);
+fn render_split(f: &mut Frame, area: Rect, layout: &Layout, highlight: Option<char>) {
+    let highlight_lower = highlight.map(|c| c.to_ascii_lowercase());
 
-                let lines = if is_highlighted {
-                    let border = Style::default().fg(Color::Gray);
-                    let letter = Style::default().fg(Color::White).bold();
-                    vec![
-                        Line::from(Span::styled("┌───┐", border)),
-                        Line::from(vec![
-                            Span::styled("│ ", border),
-                            Span::styled(format!("{}", key.lower), letter),
-                            Span::styled(" │", border),
-                        ]),
-                        Line::from(Span::styled("└───┘", border)),
-                    ]
-                } else {
-                    let style = Style::default().fg(key.finger.color());
-                    vec![
-                        Line::from(Span::styled("┌───┐", style)),
-                        Line::from(Span::styled(format!("│ {} │", key.lower), style)),
-                        Line::from(Span::styled("└───┘", style)),
-                    ]
-                };
+    // Split: number row at 6 (` 1 2 3 4 5 | 6 7 8 9 0 - =), alpha rows at 5
+    let split_at = |row_idx: usize, len: usize| -> usize {
+        if row_idx == 0 { 6.min(len) } else { 5.min(len) }
+    };
 
-                f.render_widget(Paragraph::new(lines), key_area);
-            }
+    let max_left: u16 = 6;
+    let max_right: u16 = 8; // top alpha can have 8 on right (j f o u , [ ] \)
+    let kb_width = max_left * KEY_W + SPLIT_GAP + max_right * KEY_W;
+    let kb_height = 4 * KEY_H;
+
+    let x_offset = area.x + area.width.saturating_sub(kb_width) / 2;
+    let y_offset = area.y + area.height.saturating_sub(kb_height) / 2;
+
+    // The split edge is at x_offset + max_left * KEY_W
+    let split_edge = x_offset + max_left * KEY_W;
+
+    // Keys to exclude in split mode (brackets, backslash, grave, dash, equals)
+    let exclude = ['`', '-', '=', '[', ']', '\\'];
+
+    for (row_idx, row) in layout.rows.iter().enumerate() {
+        let keys = &row.keys;
+        let sp = split_at(row_idx, keys.len());
+        let row_y = y_offset + (row_idx as u16) * KEY_H;
+
+        // Left half — filter, then right-align to split edge
+        let left_keys: Vec<&Key> = keys[..sp].iter()
+            .filter(|k| !exclude.contains(&k.lower))
+            .collect();
+        let left_width = (left_keys.len() as u16) * KEY_W;
+        let left_start = split_edge - left_width;
+        for (col_idx, key) in left_keys.iter().enumerate() {
+            let key_x = left_start + (col_idx as u16) * KEY_W;
+            let is_highlighted = highlight_lower == Some(key.lower);
+            render_key(f, key_x, row_y, area, key, is_highlighted);
+        }
+
+        // Right half — filter, then left-align from split edge + gap
+        let right_keys: Vec<&Key> = keys[sp..].iter()
+            .filter(|k| !exclude.contains(&k.lower))
+            .collect();
+        let right_start = split_edge + SPLIT_GAP;
+        for (col_idx, key) in right_keys.iter().enumerate() {
+            let key_x = right_start + (col_idx as u16) * KEY_W;
+            let is_highlighted = highlight_lower == Some(key.lower);
+            render_key(f, key_x, row_y, area, key, is_highlighted);
         }
     }
 }

@@ -17,21 +17,28 @@ use ratatui::Terminal;
 use typing::TypingTest;
 
 fn main() -> io::Result<()> {
-    // Parse layout
-    let config_path = std::env::args()
-        .nth(1)
+    // Parse args
+    let args: Vec<String> = std::env::args().collect();
+    let split = args.iter().any(|a| a == "--split");
+    let positional: Vec<&String> = args[1..].iter().filter(|a| !a.starts_with("--")).collect();
+
+    let config_path = positional
+        .first()
+        .map(|s| s.to_string())
         .unwrap_or_else(|| {
-            // Default: look for kanata config
             let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
             format!("{home}/.config/kanata/kanata.kbd")
         });
 
-    let layer_name = std::env::args().nth(2).unwrap_or_else(|| "gallium_v2".into());
+    let layer_name = positional
+        .get(1)
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "gallium_v2".into());
 
     let source = std::fs::read_to_string(&config_path)
         .unwrap_or_else(|e| {
             eprintln!("Could not read {config_path}: {e}");
-            eprintln!("Usage: keywiz [kanata-config-path] [layer-name]");
+            eprintln!("Usage: keywiz [--split] [kanata-config-path] [layer-name]");
             std::process::exit(1);
         });
 
@@ -46,7 +53,7 @@ fn main() -> io::Result<()> {
     io::stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
-    let mut app = App::new(layout);
+    let mut app = App::new(layout, split);
     let mut drill: Option<Drill> = None;
     let mut typing_test: Option<TypingTest> = None;
 

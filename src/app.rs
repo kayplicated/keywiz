@@ -11,14 +11,16 @@ pub struct App {
     pub layout: Layout,
     pub mode: Mode,
     pub should_quit: bool,
+    pub split: bool,
 }
 
 impl App {
-    pub fn new(layout: Layout) -> Self {
+    pub fn new(layout: Layout, split: bool) -> Self {
         Self {
             layout,
             mode: Mode::ModeSelect,
             should_quit: false,
+            split,
         }
     }
 }
