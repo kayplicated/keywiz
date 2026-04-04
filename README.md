@@ -41,6 +41,7 @@ keywiz --split
 ### Controls
 
 - **Tab** — toggle keyboard visibility
+- **Shift+Tab** — toggle split / standard keyboard
 - **ESC** — go back / quit
 
 ## Layout Support
