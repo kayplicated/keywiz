@@ -109,9 +109,12 @@ pub fn render_drill(f: &mut Frame, drill: &Drill, app: &App) {
     f.render_widget(prompt, prompt_area);
 
     // Keyboard
-    keyboard::render_keyboard(f, kb_area, &app.layout, Some(drill.current), app.split);
+    if app.show_keyboard {
+        keyboard::render_keyboard(f, kb_area, &app.layout, Some(drill.current), app.split);
+    }
 
     // Stats
+    let kb_hint = if app.show_keyboard { "TAB hide keyboard" } else { "TAB show keyboard" };
     let stats = Paragraph::new(Line::from(vec![
         Span::styled(format!("Correct: {}", drill.correct), Style::default().fg(Color::Green)),
         Span::raw("  "),
@@ -120,6 +123,8 @@ pub fn render_drill(f: &mut Frame, drill: &Drill, app: &App) {
         Span::styled(format!("Accuracy: {:.0}%", drill.accuracy()), Style::default().fg(Color::Yellow)),
         Span::raw("  "),
         Span::styled(format!("Streak: {}", drill.streak), Style::default().fg(Color::Cyan)),
+        Span::raw("  "),
+        Span::styled(kb_hint, Style::default().fg(Color::DarkGray)),
         Span::raw("  "),
         Span::styled("ESC to go back", Style::default().fg(Color::DarkGray)),
     ]))
@@ -244,14 +249,19 @@ pub fn render_typing(f: &mut Frame, test: &TypingTest, app: &App) {
         f.render_widget(words_display, words_area);
 
         // Keyboard — highlight expected char
-        keyboard::render_keyboard(f, kb_area, &app.layout, test.expected_char(), app.split);
+        if app.show_keyboard {
+            keyboard::render_keyboard(f, kb_area, &app.layout, test.expected_char(), app.split);
+        }
     }
 
     // Stats
+    let kb_hint = if app.show_keyboard { "TAB hide keyboard" } else { "TAB show keyboard" };
     let stats = Paragraph::new(Line::from(vec![
         Span::styled(format!("WPM: {:.0}", test.wpm()), Style::default().fg(Color::Cyan)),
         Span::raw("  "),
         Span::styled(format!("Accuracy: {:.0}%", test.accuracy()), Style::default().fg(Color::Yellow)),
+        Span::raw("  "),
+        Span::styled(kb_hint, Style::default().fg(Color::DarkGray)),
         Span::raw("  "),
         Span::styled("ESC to go back", Style::default().fg(Color::DarkGray)),
     ]))

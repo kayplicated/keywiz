@@ -120,6 +120,9 @@ fn run_loop(
                         app.mode = Mode::ModeSelect;
                         *drill = None;
                     }
+                    KeyCode::Tab => {
+                        app.show_keyboard = !app.show_keyboard;
+                    }
                     KeyCode::Char(ch) => {
                         if let Some(d) = drill.as_mut() {
                             d.handle_input(ch, &app.layout);
@@ -131,6 +134,9 @@ fn run_loop(
                     KeyCode::Esc => {
                         app.mode = Mode::ModeSelect;
                         *typing_test = None;
+                    }
+                    KeyCode::Tab => {
+                        app.show_keyboard = !app.show_keyboard;
                     }
                     KeyCode::Char(ch) => {
                         if let Some(t) = typing_test.as_mut() {

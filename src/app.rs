@@ -12,6 +12,7 @@ pub struct App {
     pub mode: Mode,
     pub should_quit: bool,
     pub split: bool,
+    pub show_keyboard: bool,
 }
 
 impl App {
@@ -21,6 +22,7 @@ impl App {
             mode: Mode::ModeSelect,
             should_quit: false,
             split,
+            show_keyboard: true,
         }
     }
 }
