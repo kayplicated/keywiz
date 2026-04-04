@@ -1,0 +1,69 @@
+;; Kanata configuration for Gallium v2 layout
+;; Created for Kay's Attack Shark keyboard (85 keys, white with purple keycaps)
+;;
+;; Layers:
+;;   - gallium_v2: Default typing layer (Gallium v2 layout optimized for prose)
+;;   - qwerty: Gaming layer (standard QWERTY for GW2/PoE)
+;;
+;; Toggle between layers: CapsLock (or configure your preferred key below)
+
+(defcfg
+  linux-dev-names-include (
+    "SONIX X85"
+  )
+  linux-dev-names-exclude (
+    "HUGE PLUS"
+    "Wacom Intuos PT S Pen"
+    "Wacom Intuos PT S Finger"
+    "Wacom Intuos PT S Pad"
+  )
+)
+
+(defsrc
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet lalt           spc            ralt rctl
+)
+
+(deflayer gallium_v2
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   @gal f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  b    l    d    c    v    j    f    o    u    ,    [    ]    \
+  caps n    r    @hqw s    g    y    h    a    e    i    '    ret
+  lsft x    q    m    w    z    k    p    '    ;    .    rsft
+  lctl lmet lalt           spc            ralt rctl
+)
+
+(deflayer qwerty
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   @qwe f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    @hwn g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet lalt           spc            ralt rctl
+)
+
+;; Aliases for F9 layer switching
+;; @gal = switch TO qwerty (from gallium)
+;; @qwe = switch TO gallium (from qwerty)
+;; @hqw = tap T, hold for QWERTY layer (for niri navigation in Gallium)
+;; @hwn = tap F, hold for Win key (for niri navigation in QWERTY)
+;; tap-hold: first number = tap timeout, second = hold timeout (in ms)
+(defalias
+  gal (layer-switch qwerty)
+  qwe (layer-switch gallium_v2)
+  hqw (tap-hold 200 200 t (layer-while-held qwerty))
+  hwn (tap-hold 200 200 f lmet)
+)
+
+;; Notes:
+;; - CapsLock (@tog) switches between Gallium v2 and QWERTY
+;; - To use actual CapsLock, you'll need to remap it to another key combo
+;;   (e.g., Shift+Shift or a different key)
+;; - Gallium v2 optimizations:
+;;   * OF = I+U on QWERTY positions (smooth home row roll!)
+;;   * Y on home row (better for "you", "your", "my", "by")
+;;   * F on home row (avoids the awkward I+M stretch from QWERTY)

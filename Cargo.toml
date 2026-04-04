@@ -2,5 +2,11 @@
 name = "keywiz"
 version = "0.1.0"
 edition = "2024"
+description = "Terminal typing tutor with visual keyboard for custom layouts"
+license = "AGPL-3.0"
+repository = "https://github.com/kayplicated/keywiz"
 
 [dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+rand = "0.9"
