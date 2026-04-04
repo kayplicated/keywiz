@@ -96,8 +96,8 @@ fn render_split(f: &mut Frame, area: Rect, layout: &Layout, highlight: Option<ch
         if row_idx == 0 { 6.min(len) } else { 5.min(len) }
     };
 
-    let max_left: u16 = 6;
-    let max_right: u16 = 8; // top alpha can have 8 on right (j f o u , [ ] \)
+    let max_left: u16 = 5;  // alpha rows have 5 on left
+    let max_right: u16 = 5; // alpha rows have ~5 on right after filtering
     let kb_width = max_left * KEY_W + SPLIT_GAP + max_right * KEY_W;
     let kb_height = 4 * KEY_H;
 
