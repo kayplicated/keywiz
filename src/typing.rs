@@ -13,7 +13,8 @@ fn random_word() -> String {
 
 pub struct TypingTest {
     pub words: Vec<String>,
-    pub target_count: usize,
+    /// None = endless mode
+    pub target_count: Option<usize>,
     pub input: String,
     pub word_index: usize,
     pub char_index: usize,
@@ -26,9 +27,9 @@ pub struct TypingTest {
 }
 
 impl TypingTest {
-    pub fn new(target_count: usize) -> Self {
-        // Start with a small buffer of words
-        let words: Vec<String> = (0..10.min(target_count))
+    pub fn new(target_count: Option<usize>) -> Self {
+        let initial = target_count.map(|t| 10.min(t)).unwrap_or(10);
+        let words: Vec<String> = (0..initial)
             .map(|_| random_word())
             .collect();
         TypingTest {
@@ -47,8 +48,9 @@ impl TypingTest {
 
     /// Ensure we always have a few words buffered ahead of the current position.
     fn ensure_buffer(&mut self) {
+        let max = self.target_count.unwrap_or(usize::MAX);
         while self.words.len() < self.word_index + 8
-            && self.words.len() < self.target_count
+            && self.words.len() < max
         {
             self.words.push(random_word());
         }
@@ -68,7 +70,10 @@ impl TypingTest {
     }
 
     pub fn is_finished(&self) -> bool {
-        self.word_index >= self.target_count
+        match self.target_count {
+            Some(target) => self.word_index >= target,
+            None => false, // endless mode never finishes
+        }
     }
 
     pub fn handle_input(&mut self, ch: char) {
@@ -106,13 +111,15 @@ impl TypingTest {
                 // Check if word is complete
                 if let Some(word) = self.current_word() {
                     if self.char_index >= word.len() {
-                        // Last word doesn't need a space
-                        if self.word_index + 1 >= self.target_count {
-                            self.word_index += 1;
-                            self.end_time = Some(Instant::now());
-                        } else {
-                            self.needs_space = true;
+                        // Last word doesn't need a space (only in non-endless mode)
+                        if let Some(target) = self.target_count {
+                            if self.word_index + 1 >= target {
+                                self.word_index += 1;
+                                self.end_time = Some(Instant::now());
+                                return;
+                            }
                         }
+                        self.needs_space = true;
                     }
                 }
             } else {

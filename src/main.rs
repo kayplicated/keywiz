@@ -106,7 +106,11 @@ fn run_loop(
                         app.mode = Mode::Drill;
                     }
                     KeyCode::Char('2') => {
-                        *typing_test = Some(TypingTest::new(20));
+                        *typing_test = Some(TypingTest::new(Some(20)));
+                        app.mode = Mode::Typing;
+                    }
+                    KeyCode::Char('3') => {
+                        *typing_test = Some(TypingTest::new(None));
                         app.mode = Mode::Typing;
                     }
                     _ => {}

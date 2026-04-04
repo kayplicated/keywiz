@@ -17,7 +17,7 @@ pub fn render_mode_select(f: &mut Frame, app: &App) {
     // Center content vertically: 8 lines of menu content
     let [_, center, _] = Layout::vertical([
         Constraint::Fill(1),
-        Constraint::Length(10),
+        Constraint::Length(12),
         Constraint::Fill(1),
     ]).areas(area);
 
@@ -37,9 +37,13 @@ pub fn render_mode_select(f: &mut Frame, app: &App) {
         Line::from(""),
         Line::from(vec![
             Span::styled("[2]", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" Typing Practice — type words"),
+            Span::raw(" Typing Practice — 20 words"),
         ]),
         Line::from(""),
+        Line::from(vec![
+            Span::styled("[3]", Style::default().fg(Color::Cyan).bold()),
+            Span::raw(" Endless Mode — keep going"),
+        ]),
         Line::from(""),
         Line::from(
             Span::styled("ESC to quit", Style::default().fg(Color::DarkGray)),
@@ -152,7 +156,10 @@ pub fn render_typing(f: &mut Frame, test: &TypingTest, app: &App) {
     // Header
     let header = Paragraph::new(Line::from(vec![
         Span::styled("Typing Practice", Style::default().fg(Color::Cyan).bold()),
-        Span::raw(format!(" — {}/{}", test.word_index, test.words.len())),
+        Span::raw(match test.target_count {
+            Some(target) => format!(" — {}/{}", test.word_index, target),
+            None => format!(" — {} words", test.word_index),
+        }),
     ]))
     .alignment(Alignment::Center);
     f.render_widget(header, header_area);
