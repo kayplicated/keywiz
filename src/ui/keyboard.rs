@@ -43,16 +43,17 @@ fn render_key(f: &mut Frame, x: u16, y: u16, area: Rect, key: &Key, is_highlight
     let key_area = Rect::new(x, y, KEY_W, KEY_H);
 
     let lines = if is_highlighted {
-        let border = Style::default().fg(Color::Gray);
+        let color = key.finger.color();
+        let border = Style::default().fg(color).bold();
         let letter = Style::default().fg(Color::White).bold();
         vec![
-            Line::from(Span::styled("┌───┐", border)),
+            Line::from(Span::styled("╔═══╗", border)),
             Line::from(vec![
-                Span::styled("│ ", border),
+                Span::styled("║ ", border),
                 Span::styled(format!("{}", key.lower), letter),
-                Span::styled(" │", border),
+                Span::styled(" ║", border),
             ]),
-            Line::from(Span::styled("└───┘", border)),
+            Line::from(Span::styled("╚═══╝", border)),
         ]
     } else {
         let style = Style::default().fg(key.finger.color());
