@@ -1,5 +1,15 @@
 pub mod kanata;
 
+/// Standard US QWERTY layout.
+pub fn qwerty() -> Layout {
+    Layout::from_rows("qwerty", [
+        vec![('`','~'),('1','!'),('2','@'),('3','#'),('4','$'),('5','%'),('6','^'),('7','&'),('8','*'),('9','('),('0',')'),('-','_'),('=','+')],
+        vec![('q','Q'),('w','W'),('e','E'),('r','R'),('t','T'),('y','Y'),('u','U'),('i','I'),('o','O'),('p','P'),('[','{'),('\\','|'),(']','}')],
+        vec![('a','A'),('s','S'),('d','D'),('f','F'),('g','G'),('h','H'),('j','J'),('k','K'),('l','L'),(';',':'),('\'','"')],
+        vec![('z','Z'),('x','X'),('c','C'),('v','V'),('b','B'),('n','N'),('m','M'),(',','<'),('.','>'),('/','?')],
+    ])
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Finger {
     LPinky,
@@ -106,6 +116,7 @@ impl Layout {
     }
 
     /// Find which key produces this character and return its finger.
+    #[allow(dead_code)]
     pub fn finger_for_char(&self, ch: char) -> Option<Finger> {
         let lower = ch.to_ascii_lowercase();
         for row in &self.rows {
@@ -116,5 +127,23 @@ impl Layout {
             }
         }
         None
+    }
+
+    /// Build a translation map from another layout to this one by physical position.
+    /// e.g. if `from` is QWERTY and `self` is Gallium, then pressing QWERTY 'j'
+    /// maps to whatever Gallium has at that position ('h').
+    pub fn translation_from(&self, from: &Layout) -> std::collections::HashMap<char, char> {
+        let mut map = std::collections::HashMap::new();
+        for (row_idx, from_row) in from.rows.iter().enumerate() {
+            if let Some(to_row) = self.rows.get(row_idx) {
+                for (col_idx, from_key) in from_row.keys.iter().enumerate() {
+                    if let Some(to_key) = to_row.keys.get(col_idx) {
+                        map.insert(from_key.lower, to_key.lower);
+                        map.insert(from_key.upper, to_key.upper);
+                    }
+                }
+            }
+        }
+        map
     }
 }

@@ -17,6 +17,7 @@ const ROW_OFFSETS: [u16; 4] = [0, 1, 3, 5];
 /// Column stagger offsets for split columnar keyboards (in lines, applied vertically).
 /// Pinky: +1, Ring: 0, Middle: -1, Index: 0, Inner index: +1
 /// Applied per-column: [0, 1, 2, 3, 4, 5] on each half
+#[allow(dead_code)]
 const COL_STAGGER: [i16; 6] = [1, 0, -1, 0, 1, 1];
 
 /// Split gap width in characters.

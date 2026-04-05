@@ -20,7 +20,25 @@ fn main() -> io::Result<()> {
     // Parse args
     let args: Vec<String> = std::env::args().collect();
     let split = args.iter().any(|a| a == "--split");
-    let positional: Vec<&String> = args[1..].iter().filter(|a| !a.starts_with("--")).collect();
+    let from_layout = args.iter()
+        .position(|a| a == "--from")
+        .and_then(|i| args.get(i + 1))
+        .map(|s| s.as_str());
+    // Collect indices of args consumed by flags
+    let mut skip_indices = std::collections::HashSet::new();
+    for (i, a) in args.iter().enumerate() {
+        if a == "--split" {
+            skip_indices.insert(i);
+        } else if a == "--from" {
+            skip_indices.insert(i);
+            skip_indices.insert(i + 1);
+        }
+    }
+    let positional: Vec<&String> = args.iter()
+        .enumerate()
+        .filter(|(i, _)| *i > 0 && !skip_indices.contains(i))
+        .map(|(_, a)| a)
+        .collect();
 
     let config_path = positional
         .first()
@@ -38,7 +56,7 @@ fn main() -> io::Result<()> {
     let source = std::fs::read_to_string(&config_path)
         .unwrap_or_else(|e| {
             eprintln!("Could not read {config_path}: {e}");
-            eprintln!("Usage: keywiz [--split] [kanata-config-path] [layer-name]");
+            eprintln!("Usage: keywiz [--split] [--from qwerty] [kanata-config-path] [layer-name]");
             std::process::exit(1);
         });
 
@@ -48,20 +66,35 @@ fn main() -> io::Result<()> {
             std::process::exit(1);
         });
 
+    // Build translation map if --from is specified
+    let translate = from_layout.map(|from_name| {
+        let from = if from_name == "qwerty" {
+            layout::qwerty()
+        } else {
+            // Try to parse it as a layer from the same kanata config
+            kanata::parse_kanata(&source, from_name)
+                .unwrap_or_else(|| {
+                    eprintln!("Could not find layout '{from_name}' (try 'qwerty' or a kanata layer name)");
+                    std::process::exit(1);
+                })
+        };
+        layout.translation_from(&from)
+    });
+
     // Setup terminal
     terminal::enable_raw_mode()?;
     io::stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
-    let mut app = App::new(layout, split);
+    let mut app = App::new(layout, split, translate);
     let mut drill: Option<Drill> = None;
     let mut typing_test: Option<TypingTest> = None;
 
     let result = run_loop(&mut terminal, &mut app, &mut drill, &mut typing_test);
 
-    // Restore terminal
-    terminal::disable_raw_mode()?;
-    io::stdout().execute(LeaveAlternateScreen)?;
+    // Restore terminal — ignore errors (can fail over SSH)
+    let _ = terminal::disable_raw_mode();
+    let _ = io::stdout().execute(LeaveAlternateScreen);
 
     result
 }
@@ -127,6 +160,7 @@ fn run_loop(
                         app.split = !app.split;
                     }
                     KeyCode::Char(ch) => {
+                        let ch = app.translate_input(ch);
                         if let Some(d) = drill.as_mut() {
                             d.handle_input(ch, &app.layout);
                         }
@@ -145,6 +179,7 @@ fn run_loop(
                         app.split = !app.split;
                     }
                     KeyCode::Char(ch) => {
+                        let ch = app.translate_input(ch);
                         if let Some(t) = typing_test.as_mut() {
                             t.handle_input(ch);
                         }

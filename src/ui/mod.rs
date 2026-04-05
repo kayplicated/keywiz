@@ -28,7 +28,11 @@ pub fn render_mode_select(f: &mut Frame, app: &App) {
             Span::styled("wiz", Style::default().fg(Color::Yellow).bold()),
         ]),
         Line::from(""),
-        Line::from(format!("Layout: {layout_name}")).style(Style::default().fg(Color::DarkGray)),
+        Line::from(if app.translate.is_some() {
+            format!("Layout: {layout_name} (translating from QWERTY)")
+        } else {
+            format!("Layout: {layout_name}")
+        }).style(Style::default().fg(Color::DarkGray)),
         Line::from(""),
         Line::from(vec![
             Span::styled("[1]", Style::default().fg(Color::Cyan).bold()),
