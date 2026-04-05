@@ -10,6 +10,7 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 - **Endless mode** — continuous practice without a word limit
 - **Split keyboard view** for columnar split boards (Elora, Corne, Sweep, etc.)
 - **Toggle keyboard** with Tab — fly blind when you're ready
+- **Input translation** — practice any layout on any keyboard (e.g. train Gallium v2 on a QWERTY tablet over SSH)
 - **Reads kanata configs** directly — no separate layout file needed
 - Runs in the terminal, no GUI dependencies
 
@@ -30,7 +31,22 @@ keywiz /path/to/kanata.kbd my_layer
 
 # Split keyboard mode
 keywiz --split
+
+# Practice on a QWERTY keyboard (translates input to your target layout)
+keywiz --from qwerty
 ```
+
+### Training on a different keyboard
+
+If your physical keyboard doesn't run your target layout (e.g. SSHing from a tablet), use `--from` to tell keywiz what layout your keyboard actually sends. Keywiz translates each keypress by physical position — pressing QWERTY `j` registers as whatever your target layout has in that position (e.g. `h` on Gallium v2).
+
+```sh
+# SSH into your desktop from an Android tablet with a QWERTY keyboard
+ssh desktop
+keywiz --from qwerty
+```
+
+This way you can practice anywhere without needing kanata, custom Android IMEs, or any special setup on the device you're typing on.
 
 ### Modes
 
