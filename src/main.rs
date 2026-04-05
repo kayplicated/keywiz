@@ -48,16 +48,21 @@ fn main() -> io::Result<()> {
             format!("{home}/.config/kanata/kanata.kbd")
         });
 
-    let layer_name = positional
-        .get(1)
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| "gallium_v2".into());
-
     let source = std::fs::read_to_string(&config_path)
         .unwrap_or_else(|e| {
             eprintln!("Could not read {config_path}: {e}");
-            eprintln!("Usage: keywiz [--split] [--from qwerty] [kanata-config-path] [layer-name]");
+            eprintln!("Usage: keywiz [--split] [--from <layout>] [kanata-config-path] [layer-name]");
             std::process::exit(1);
+        });
+
+    let layer_name = positional
+        .get(1)
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| {
+            kanata::first_layer_name(&source).unwrap_or_else(|| {
+                eprintln!("No deflayer found in {config_path}");
+                std::process::exit(1);
+            })
         });
 
     let layout = kanata::parse_kanata(&source, &layer_name)

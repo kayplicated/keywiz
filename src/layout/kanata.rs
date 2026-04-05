@@ -51,6 +51,15 @@ pub fn parse_kanata(source: &str, layer_name: &str) -> Option<Layout> {
 }
 
 /// Extract the content of a `(deflayer name ...)` block.
+/// Find the name of the first `deflayer` in a kanata config.
+pub fn first_layer_name(source: &str) -> Option<String> {
+    let pattern = "(deflayer ";
+    let start = source.find(pattern)?;
+    let after = &source[start + pattern.len()..];
+    let name_end = after.find(|c: char| c.is_whitespace() || c == ')')?;
+    Some(after[..name_end].to_string())
+}
+
 fn extract_deflayer(source: &str, name: &str) -> Option<String> {
     let pattern = format!("(deflayer {}", name);
     let start = source.find(&pattern)?;

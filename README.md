@@ -23,10 +23,10 @@ cargo install --path .
 ## Usage
 
 ```sh
-# Uses ~/.config/kanata/kanata.kbd with layer "gallium_v2" by default
+# Uses ~/.config/kanata/kanata.kbd, auto-detects the first layer
 keywiz
 
-# Specify a config and layer
+# Specify a config and layer to train
 keywiz /path/to/kanata.kbd my_layer
 
 # Split keyboard mode
@@ -34,6 +34,9 @@ keywiz --split
 
 # Practice on a QWERTY keyboard (translates input to your target layout)
 keywiz --from qwerty
+
+# Translate from any layout defined in your kanata config
+keywiz --from qwerty my_custom_layer
 ```
 
 ### Training on a different keyboard
@@ -45,6 +48,8 @@ If your physical keyboard doesn't run your target layout (e.g. SSHing from a tab
 ssh desktop
 keywiz --from qwerty
 ```
+
+The `--from` value can be `qwerty` (built-in) or any layer name defined in your kanata config. This means if you have two custom layouts in the same config file, you can practice one while typing on the other.
 
 This way you can practice anywhere without needing kanata, custom Android IMEs, or any special setup on the device you're typing on.
 
