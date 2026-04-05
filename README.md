@@ -22,21 +22,25 @@ cargo install --path .
 
 ## Usage
 
+```
+keywiz [options] [kanata-config] [layer-to-train]
+```
+
 ```sh
-# Uses ~/.config/kanata/kanata.kbd, auto-detects the first layer
+# Auto-detects config (~/.config/kanata/kanata.kbd) and first layer
 keywiz
 
-# Specify a config and layer to train
-keywiz /path/to/kanata.kbd my_layer
+# Train a specific layer
+keywiz /path/to/kanata.kbd gallium_v2
 
 # Split keyboard mode
 keywiz --split
 
-# Practice on a QWERTY keyboard (translates input to your target layout)
+# Your keyboard sends QWERTY, but you want to train Gallium v2
 keywiz --from qwerty
 
-# Translate from any layout defined in your kanata config
-keywiz --from qwerty my_custom_layer
+# Your keyboard sends Colemak (defined in your kanata config), train Gallium v2
+keywiz --from colemak gallium_v2
 ```
 
 ### Training on a different keyboard
