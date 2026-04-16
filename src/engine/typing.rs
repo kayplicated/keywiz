@@ -1,37 +1,30 @@
-use rand::prelude::IndexedRandom;
+//! Typing engine: char-by-char matching with WPM and accuracy tracking.
+//!
+//! Manages a word buffer, tracks cursor position, and calculates stats.
+//! Used by word and text modes — knows nothing about rendering or input events.
+
+use crate::words::random_word;
 use std::time::Instant;
 
-const WORDS: &str = include_str!("words.txt");
-
-fn random_word() -> String {
-    let all_words: Vec<&str> = WORDS.lines().filter(|l| !l.is_empty()).collect();
-    all_words
-        .choose(&mut rand::rng())
-        .unwrap_or(&"the")
-        .to_string()
-}
-
 pub struct TypingTest {
-    pub words: Vec<String>,
+    pub(crate) words: Vec<String>,
     /// None = endless mode
-    pub target_count: Option<usize>,
-    pub input: String,
-    pub word_index: usize,
-    pub char_index: usize,
+    pub(crate) target_count: Option<usize>,
+    input: String,
+    pub(crate) word_index: usize,
+    pub(crate) char_index: usize,
     /// Are we waiting for a space between words?
-    pub needs_space: bool,
-    pub correct: usize,
-    pub wrong: usize,
-    pub start_time: Option<Instant>,
-    pub end_time: Option<Instant>,
+    pub(crate) needs_space: bool,
+    pub(crate) correct: usize,
+    pub(crate) wrong: usize,
+    start_time: Option<Instant>,
+    end_time: Option<Instant>,
 }
 
 impl TypingTest {
     pub fn new(target_count: Option<usize>) -> Self {
         let initial = target_count.map(|t| 10.min(t)).unwrap_or(10);
-        let words: Vec<String> = (0..initial)
-            .map(|_| random_word())
-            .collect();
+        let words: Vec<String> = (0..initial).map(|_| random_word()).collect();
         TypingTest {
             words,
             target_count,
@@ -49,9 +42,7 @@ impl TypingTest {
     /// Ensure we always have a few words buffered ahead of the current position.
     fn ensure_buffer(&mut self) {
         let max = self.target_count.unwrap_or(usize::MAX);
-        while self.words.len() < self.word_index + 8
-            && self.words.len() < max
-        {
+        while self.words.len() < self.word_index + 8 && self.words.len() < max {
             self.words.push(random_word());
         }
     }
@@ -72,10 +63,11 @@ impl TypingTest {
     pub fn is_finished(&self) -> bool {
         match self.target_count {
             Some(target) => self.word_index >= target,
-            None => false, // endless mode never finishes
+            None => false,
         }
     }
 
+    /// Process a typed character.
     pub fn handle_input(&mut self, ch: char) {
         if self.is_finished() {
             return;
@@ -109,18 +101,18 @@ impl TypingTest {
                 self.char_index += 1;
 
                 // Check if word is complete
-                if let Some(word) = self.current_word() {
-                    if self.char_index >= word.len() {
-                        // Last word doesn't need a space (only in non-endless mode)
-                        if let Some(target) = self.target_count {
-                            if self.word_index + 1 >= target {
-                                self.word_index += 1;
-                                self.end_time = Some(Instant::now());
-                                return;
-                            }
-                        }
-                        self.needs_space = true;
+                if let Some(word) = self.current_word()
+                    && self.char_index >= word.len()
+                {
+                    // Last word doesn't need a space (only in non-endless mode)
+                    if let Some(target) = self.target_count
+                        && self.word_index + 1 >= target
+                    {
+                        self.word_index += 1;
+                        self.end_time = Some(Instant::now());
+                        return;
                     }
+                    self.needs_space = true;
                 }
             } else {
                 self.wrong += 1;

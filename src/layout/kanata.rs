@@ -106,8 +106,8 @@ fn resolve_key_with_aliases(
     token: &str,
     aliases: &std::collections::HashMap<String, char>,
 ) -> Option<char> {
-    if token.starts_with('@') {
-        aliases.get(&token[1..]).copied()
+    if let Some(alias) = token.strip_prefix('@') {
+        aliases.get(alias).copied()
     } else if token.len() == 1 {
         Some(token.chars().next().unwrap())
     } else {
@@ -200,25 +200,7 @@ fn parse_tap_hold_alias(line: &str) -> Option<(String, char)> {
 
 /// Simple key resolution without alias lookup (used during alias parsing).
 fn resolve_key_simple(token: &str) -> Option<char> {
-    if token.len() == 1 {
-        Some(token.chars().next().unwrap())
-    } else {
-        match token {
-            "grv" => Some('`'),
-            "min" | "-" => Some('-'),
-            "eql" | "=" => Some('='),
-            "lbrc" | "[" => Some('['),
-            "rbrc" | "]" => Some(']'),
-            "bsls" | "\\" => Some('\\'),
-            "scln" | ";" => Some(';'),
-            "quot" | "'" => Some('\''),
-            "comm" | "," => Some(','),
-            "dot" | "." => Some('.'),
-            "slsh" | "/" => Some('/'),
-            "spc" => Some(' '),
-            _ => None,
-        }
-    }
+    resolve_key_with_aliases(token, &std::collections::HashMap::new())
 }
 
 fn parse_number_row(
@@ -277,8 +259,8 @@ mod tests {
 
         assert_eq!(layout.name, "gallium_v2");
 
-        // Home row should be: n r t s g y h a e i
+        // Home row should be: n r t s g p h a e i
         let home: Vec<char> = layout.rows[2].keys.iter().map(|k| k.lower).collect();
-        assert_eq!(home, vec!['n', 'r', 't', 's', 'g', 'y', 'h', 'a', 'e', 'i', '\'']);
+        assert_eq!(home, vec!['n', 'r', 't', 's', 'g', 'p', 'h', 'a', 'e', 'i', '\'']);
     }
 }

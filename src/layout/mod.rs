@@ -53,6 +53,22 @@ fn finger_for_col(col: usize) -> Finger {
     }
 }
 
+/// Finger assignment for columnar stagger keyboards.
+/// Each finger gets one column except index fingers which get two.
+/// Left: pinky=0, ring=1, middle=2, index=3-4 | Right: index=5-6, middle=7, ring=8, pinky=9+
+fn finger_for_col_colstag(col: usize) -> Finger {
+    match col {
+        0 => Finger::LPinky,
+        1 => Finger::LRing,
+        2 => Finger::LMiddle,
+        3 | 4 => Finger::LIndex,
+        5 | 6 => Finger::RIndex,
+        7 => Finger::RMiddle,
+        8 => Finger::RRing,
+        _ => Finger::RPinky,
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Key {
     pub lower: char,
@@ -93,6 +109,17 @@ impl Layout {
                 make_row(rows[2].clone()),
                 make_row(rows[3].clone()),
             ],
+        }
+    }
+
+    /// Reassign finger mappings for colstag or rowstag layout.
+    /// Only reassigns alpha rows (top, home, bottom) — number row keeps standard mapping.
+    pub fn set_colstag(&mut self, colstag: bool) {
+        let finger_fn = if colstag { finger_for_col_colstag } else { finger_for_col };
+        for row in &mut self.rows[1..] {
+            for (col, key) in row.keys.iter_mut().enumerate() {
+                key.finger = finger_fn(col);
+            }
         }
     }
 

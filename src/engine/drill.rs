@@ -1,11 +1,14 @@
+//! Drill engine: single-character presentation with adaptive level progression.
+//!
+//! Tracks accuracy over a rolling window and automatically adjusts difficulty.
+//! Used by the drill mode — knows nothing about rendering or input events.
+
+use crate::config::{
+    LEVEL_DOWN_THRESHOLD, LEVEL_UP_THRESHOLD, MIN_KEYS_BEFORE_LEVEL_CHANGE, WINDOW_SIZE,
+};
 use crate::layout::Layout;
 use rand::prelude::IndexedRandom;
 use std::collections::VecDeque;
-
-const WINDOW_SIZE: usize = 20;
-const LEVEL_UP_THRESHOLD: f64 = 90.0;
-const LEVEL_DOWN_THRESHOLD: f64 = 70.0;
-const MIN_KEYS_BEFORE_LEVEL_CHANGE: usize = 30;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DrillLevel {
@@ -41,20 +44,20 @@ impl DrillLevel {
 }
 
 pub struct Drill {
-    pub level: DrillLevel,
-    pub chars: Vec<char>,
-    pub current: char,
-    pub total: usize,
-    pub correct: usize,
-    pub wrong: usize,
-    pub streak: usize,
-    pub best_streak: usize,
+    pub(crate) level: DrillLevel,
+    chars: Vec<char>,
+    pub(crate) current: char,
+    total: usize,
+    pub(crate) correct: usize,
+    pub(crate) wrong: usize,
+    pub(crate) streak: usize,
+    pub(crate) best_streak: usize,
     /// Rolling window of recent results (true = correct, false = wrong)
     window: VecDeque<bool>,
     /// Keys typed at the current level (resets on level change)
     keys_at_level: usize,
     /// Set briefly when level changes, for UI feedback
-    pub level_changed: Option<LevelChange>,
+    pub(crate) level_changed: Option<LevelChange>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -100,7 +103,8 @@ impl Drill {
         (correct as f64 / self.window.len() as f64) * 100.0
     }
 
-    pub fn handle_input(&mut self, ch: char, layout: &Layout) {
+    /// Process a typed character. Returns true if the character was correct.
+    pub fn handle_input(&mut self, ch: char, layout: &Layout) -> bool {
         self.total += 1;
         self.keys_at_level += 1;
         self.level_changed = None;
@@ -130,26 +134,28 @@ impl Drill {
             && self.window.len() >= WINDOW_SIZE
         {
             let acc = self.window_accuracy();
-            if acc >= LEVEL_UP_THRESHOLD {
-                if let Some(next) = self.level.next() {
-                    self.level = next;
-                    self.chars = chars_for_level(layout, self.level);
-                    self.keys_at_level = 0;
-                    self.window.clear();
-                    self.level_changed = Some(LevelChange::Up);
-                    self.next_char();
-                }
-            } else if acc < LEVEL_DOWN_THRESHOLD {
-                if let Some(prev) = self.level.prev() {
-                    self.level = prev;
-                    self.chars = chars_for_level(layout, self.level);
-                    self.keys_at_level = 0;
-                    self.window.clear();
-                    self.level_changed = Some(LevelChange::Down);
-                    self.next_char();
-                }
+            if acc >= LEVEL_UP_THRESHOLD
+                && let Some(next) = self.level.next()
+            {
+                self.level = next;
+                self.chars = chars_for_level(layout, self.level);
+                self.keys_at_level = 0;
+                self.window.clear();
+                self.level_changed = Some(LevelChange::Up);
+                self.next_char();
+            } else if acc < LEVEL_DOWN_THRESHOLD
+                && let Some(prev) = self.level.prev()
+            {
+                self.level = prev;
+                self.chars = chars_for_level(layout, self.level);
+                self.keys_at_level = 0;
+                self.window.clear();
+                self.level_changed = Some(LevelChange::Down);
+                self.next_char();
             }
         }
+
+        is_correct
     }
 
     pub fn accuracy(&self) -> f64 {
