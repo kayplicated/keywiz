@@ -8,6 +8,7 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 - **Key drills** with adaptive difficulty — starts on home row, levels up/down based on rolling accuracy
 - **Typing practice** with scrolling word display and live WPM/accuracy
 - **Endless mode** — continuous practice without a word limit
+- **Text practice** — type through real passages, arrow keys to switch texts
 - **Split keyboard view** for columnar split boards (Elora, Corne, Sweep, etc.)
 - **Toggle keyboard** with Tab — fly blind when you're ready
 - **Input translation** — practice any layout on any keyboard (e.g. train Gallium v2 on a QWERTY tablet over SSH)
@@ -62,16 +63,28 @@ This way you can practice anywhere without needing kanata, custom Android IMEs, 
 - **[1] Key Drills** — random keys, starts with home row. Levels up at >90% accuracy, back down below 70%.
 - **[2] Typing Practice** — type 20 words with a scrolling display and keyboard guide.
 - **[3] Endless Mode** — like typing practice, but it never ends. ESC to stop.
+- **[4] Text Practice** — type through real passages from the `texts/` directory. Arrow left/right to switch between texts.
 
 ### Controls
 
 - **Tab** — toggle keyboard visibility
 - **Shift+Tab** — toggle split / standard keyboard
+- **◀ ▶** — switch passages (text practice mode)
 - **ESC** — go back / quit
 
 ## Layout Support
 
 Keywiz reads keyboard layouts from [kanata](https://github.com/jtroo/kanata) configuration files, including `tap-hold` aliases. The layout system is modular — adding parsers for other formats (QMK, KMonad, etc.) is straightforward.
+
+## Custom Texts
+
+Add `.txt` files to the `texts/` directory for text practice mode. Format:
+
+```
+Title Goes Here
+The rest of the file is the passage text that you'll type through.
+Multiple lines are fine — they get word-wrapped to fit the display.
+```
 
 ## License
 
