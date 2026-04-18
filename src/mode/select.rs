@@ -51,7 +51,7 @@ impl SelectMode {
         ])
         .areas(area);
 
-        let layout_name = &ctx.layout.name;
+        let layout_name = ctx.stats_key();
         let menu = Paragraph::new(vec![
             Line::from(vec![
                 Span::styled("key", Style::default().fg(Color::Cyan).bold()),

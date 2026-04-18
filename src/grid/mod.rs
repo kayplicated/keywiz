@@ -4,6 +4,19 @@
 //! stable evdev keycode, a home-row-centered screen position, and a finger
 //! assignment. Keyboards live as JSON files under `keyboards/`.
 //!
+//! # Coordinate convention
+//!
+//! Positions are in key-width units relative to home-row center. Rows sit
+//! one unit apart; columns one unit apart; column-stagger offsets use
+//! half-unit y values. By convention:
+//! - home row: `y = 0`
+//! - top row: `y = -1`
+//! - bottom row: `y = 1`
+//! - number row: `y = -2`
+//!
+//! Drill mode uses these y-values to derive character sets for each
+//! level, so custom keyboards should follow the convention.
+//!
 //! A **layout** maps keycodes to lowercase + shifted characters. Layouts
 //! live under `layouts/` as JSON. A generic layout (e.g. `qwerty.json`)
 //! works on any keyboard; a hardware-specific override can be shipped as
@@ -88,5 +101,43 @@ impl Grid {
                 .map(|m| m.lower == target)
                 .unwrap_or(false)
         })
+    }
+
+    /// All characters produced by buttons at `y` (approximately — within
+    /// half a row unit). Only alphabetic characters are returned, so drill
+    /// modes can target letters without worrying about punctuation rows.
+    pub fn alpha_chars_at_y(&self, y: f32) -> Vec<char> {
+        self.buttons
+            .iter()
+            .filter(|b| (b.y - y).abs() < 0.5)
+            .filter_map(|b| b.mapping.as_ref().map(|m| m.lower))
+            .filter(|c| c.is_alphabetic())
+            .collect()
+    }
+
+    /// Alphabetic characters on the home row.
+    ///
+    /// Assumes the keyboard convention that home row sits at `y = 0` —
+    /// every shipped keyboard follows this, and custom keyboards should
+    /// too so drill levels remain consistent.
+    pub fn home_row_chars(&self) -> Vec<char> {
+        self.alpha_chars_at_y(0.0)
+    }
+
+    /// Alphabetic characters from home row plus the row above it (top row).
+    /// Assumes home at `y = 0`, top row at `y = -1`.
+    pub fn home_and_top_chars(&self) -> Vec<char> {
+        let mut chars = self.alpha_chars_at_y(0.0);
+        chars.extend(self.alpha_chars_at_y(-1.0));
+        chars
+    }
+
+    /// All alphabetic characters produced by any button on the grid.
+    pub fn all_alpha_chars(&self) -> Vec<char> {
+        self.buttons
+            .iter()
+            .filter_map(|b| b.mapping.as_ref().map(|m| m.lower))
+            .filter(|c| c.is_alphabetic())
+            .collect()
     }
 }

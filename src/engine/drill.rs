@@ -6,7 +6,6 @@
 use crate::config::{
     LEVEL_DOWN_THRESHOLD, LEVEL_UP_THRESHOLD, MIN_KEYS_BEFORE_LEVEL_CHANGE, WINDOW_SIZE,
 };
-use crate::layout::Layout;
 use crate::stats::StatsTracker;
 use rand::prelude::IndexedRandom;
 use std::collections::VecDeque;
@@ -44,6 +43,46 @@ impl DrillLevel {
     }
 }
 
+/// Abstract char source: the caller provides per-level char sets so the
+/// engine stays layout-agnostic. Modes build this from [`AppContext`] so
+/// it works for both the legacy layout and the new grid paths.
+///
+/// `AppContext` implements this trait, but modes can't pass `&ctx` and
+/// `&mut ctx.stats` at the same time — use [`snapshot_sources`] to
+/// pre-compute per-level chars before calling [`Drill::handle_input`].
+pub trait CharSource {
+    fn chars_for(&self, level: DrillLevel) -> Vec<char>;
+}
+
+/// A concrete char source holding pre-computed chars for each level.
+/// Built once per tick so modes can hand the engine `&mut stats` without
+/// fighting the borrow checker.
+pub struct LevelChars {
+    pub home_row: Vec<char>,
+    pub home_and_top: Vec<char>,
+    pub all_rows: Vec<char>,
+}
+
+impl LevelChars {
+    pub fn from_source(source: &dyn CharSource) -> Self {
+        LevelChars {
+            home_row: source.chars_for(DrillLevel::HomeRow),
+            home_and_top: source.chars_for(DrillLevel::HomeAndTop),
+            all_rows: source.chars_for(DrillLevel::AllRows),
+        }
+    }
+}
+
+impl CharSource for LevelChars {
+    fn chars_for(&self, level: DrillLevel) -> Vec<char> {
+        match level {
+            DrillLevel::HomeRow => self.home_row.clone(),
+            DrillLevel::HomeAndTop => self.home_and_top.clone(),
+            DrillLevel::AllRows => self.all_rows.clone(),
+        }
+    }
+}
+
 pub struct Drill {
     pub(crate) level: DrillLevel,
     chars: Vec<char>,
@@ -65,8 +104,8 @@ pub enum LevelChange {
 }
 
 impl Drill {
-    pub fn new(layout: &Layout, level: DrillLevel) -> Self {
-        let chars = chars_for_level(layout, level);
+    pub fn new(source: &dyn CharSource, level: DrillLevel) -> Self {
+        let chars = source.chars_for(level);
         let current = *chars.choose(&mut rand::rng()).unwrap_or(&'a');
         Drill {
             level,
@@ -99,7 +138,12 @@ impl Drill {
     }
 
     /// Process a typed character. Returns true if the character was correct.
-    pub fn handle_input(&mut self, ch: char, layout: &Layout, stats: &mut StatsTracker) -> bool {
+    pub fn handle_input(
+        &mut self,
+        ch: char,
+        source: &dyn CharSource,
+        stats: &mut StatsTracker,
+    ) -> bool {
         self.keys_at_level += 1;
         self.level_changed = None;
 
@@ -131,7 +175,7 @@ impl Drill {
                 && let Some(next) = self.level.next()
             {
                 self.level = next;
-                self.chars = chars_for_level(layout, self.level);
+                self.chars = source.chars_for(self.level);
                 self.keys_at_level = 0;
                 self.window.clear();
                 self.level_changed = Some(LevelChange::Up);
@@ -140,7 +184,7 @@ impl Drill {
                 && let Some(prev) = self.level.prev()
             {
                 self.level = prev;
-                self.chars = chars_for_level(layout, self.level);
+                self.chars = source.chars_for(self.level);
                 self.keys_at_level = 0;
                 self.window.clear();
                 self.level_changed = Some(LevelChange::Down);
@@ -149,23 +193,5 @@ impl Drill {
         }
 
         is_correct
-    }
-}
-
-fn chars_for_level(layout: &Layout, level: DrillLevel) -> Vec<char> {
-    match level {
-        DrillLevel::HomeRow => layout.home_row_chars(),
-        DrillLevel::HomeAndTop => {
-            let mut c = layout.home_row_chars();
-            c.extend(
-                layout.rows[1]
-                    .keys
-                    .iter()
-                    .map(|k| k.lower)
-                    .filter(|c| c.is_alphabetic()),
-            );
-            c
-        }
-        DrillLevel::AllRows => layout.all_chars(),
     }
 }

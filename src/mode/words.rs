@@ -167,14 +167,24 @@ impl WordsMode {
         // Keyboard — highlight expected char
         if ctx.show_keyboard {
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            ui::keyboard::render_keyboard(
-                f,
-                areas.keyboard,
-                &ctx.layout,
-                self.test.expected_char(),
-                ctx.split,
-                heat,
-            );
+            if let Some(mgr) = &ctx.grid_manager {
+                ui::grid::render_grid(
+                    f,
+                    areas.keyboard,
+                    mgr.grid(),
+                    self.test.expected_char(),
+                    heat,
+                );
+            } else {
+                ui::keyboard::render_keyboard(
+                    f,
+                    areas.keyboard,
+                    &ctx.layout,
+                    self.test.expected_char(),
+                    ctx.split,
+                    heat,
+                );
+            }
         }
     }
 }

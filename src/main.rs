@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod engine;
 mod grid;
+mod keybinds;
 mod layout;
 mod mode;
 mod stats;
@@ -11,7 +12,8 @@ mod words;
 use std::io;
 
 use app::AppContext;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::event::{self, Event, KeyEventKind};
+use keybinds::KeybindResult;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
 use layout::kanata;
@@ -60,7 +62,8 @@ fn main() -> io::Result<()> {
     io::stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
-    ctx.stats.set_persistent(stats::persist::load(&ctx.layout.name));
+    ctx.stats
+        .set_persistent(stats::persist::load(ctx.stats_key()));
 
     let result = run_loop(&mut terminal, &mut ctx);
 
@@ -68,7 +71,7 @@ fn main() -> io::Result<()> {
     let _ = terminal::disable_raw_mode();
     let _ = io::stdout().execute(LeaveAlternateScreen);
 
-    stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
+    stats::persist::save(ctx.stats_key(), ctx.stats.persistent());
 
     result
 }
@@ -178,22 +181,9 @@ fn run_loop(
                 continue;
             }
 
-            // Shared key handling — done once, not per mode
-            match key.code {
-                KeyCode::Tab => {
-                    ctx.show_keyboard = !ctx.show_keyboard;
-                    continue;
-                }
-                KeyCode::BackTab => {
-                    ctx.split = !ctx.split;
-                    ctx.layout.set_colstag(ctx.split);
-                    continue;
-                }
-                KeyCode::F(2) => {
-                    ctx.show_heatmap = !ctx.show_heatmap;
-                    continue;
-                }
-                _ => {}
+            // Global keybinds — handled once, before per-mode dispatch.
+            if matches!(keybinds::handle_shared(key, ctx), KeybindResult::Handled) {
+                continue;
             }
 
             // Mode-specific handling
@@ -203,7 +193,7 @@ fn run_loop(
                 ModeResult::SwitchTo(new_mode) => {
                     // Save when returning to menu (session boundary).
                     if matches!(new_mode, ActiveMode::Select(_)) {
-                        stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
+                        stats::persist::save(ctx.stats_key(), ctx.stats.persistent());
                     }
                     mode = new_mode;
                 }

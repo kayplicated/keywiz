@@ -19,7 +19,7 @@ pub struct DrillMode {
 impl DrillMode {
     pub fn new(ctx: &AppContext, level: DrillLevel) -> Self {
         DrillMode {
-            drill: Drill::new(&ctx.layout, level),
+            drill: Drill::new(ctx, level),
         }
     }
 
@@ -28,7 +28,10 @@ impl DrillMode {
             KeyCode::Esc => ModeResult::SwitchTo(ActiveMode::Select(super::select::SelectMode)),
             KeyCode::Char(ch) => {
                 let ch = ctx.translate_input(ch);
-                self.drill.handle_input(ch, &ctx.layout, &mut ctx.stats);
+                // Snapshot level char sets so the engine can take &mut stats
+                // without co-borrowing the rest of ctx.
+                let source = crate::engine::drill::LevelChars::from_source(ctx);
+                self.drill.handle_input(ch, &source, &mut ctx.stats);
                 ModeResult::Stay
             }
             _ => ModeResult::Stay,
@@ -73,17 +76,27 @@ impl DrillMode {
         .alignment(Alignment::Center);
         f.render_widget(prompt, areas.body);
 
-        // Keyboard
+        // Keyboard — use grid widget when available, legacy otherwise.
         if ctx.show_keyboard {
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            ui::keyboard::render_keyboard(
-                f,
-                areas.keyboard,
-                &ctx.layout,
-                Some(self.drill.current),
-                ctx.split,
-                heat,
-            );
+            if let Some(mgr) = &ctx.grid_manager {
+                ui::grid::render_grid(
+                    f,
+                    areas.keyboard,
+                    mgr.grid(),
+                    Some(self.drill.current),
+                    heat,
+                );
+            } else {
+                ui::keyboard::render_keyboard(
+                    f,
+                    areas.keyboard,
+                    &ctx.layout,
+                    Some(self.drill.current),
+                    ctx.split,
+                    heat,
+                );
+            }
         }
 
         // Stats

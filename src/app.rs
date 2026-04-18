@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use crate::engine::drill::{CharSource, DrillLevel};
 use crate::grid::GridManager;
 use crate::layout::Layout;
 use crate::stats::StatsTracker;
@@ -48,6 +49,62 @@ impl AppContext {
         match &self.translate {
             Some(map) => map.get(&ch).copied().unwrap_or(ch),
             None => ch,
+        }
+    }
+
+    /// Alphabetic characters on the home row of the active source.
+    /// Prefers the grid manager when present, falling back to the legacy
+    /// [`Layout`].
+    pub fn home_row_chars(&self) -> Vec<char> {
+        match &self.grid_manager {
+            Some(m) => m.grid().home_row_chars(),
+            None => self.layout.home_row_chars(),
+        }
+    }
+
+    /// Home row plus the row above it.
+    pub fn home_and_top_chars(&self) -> Vec<char> {
+        match &self.grid_manager {
+            Some(m) => m.grid().home_and_top_chars(),
+            None => {
+                // Legacy: home + top row (row index 1 = top row).
+                let mut c = self.layout.home_row_chars();
+                c.extend(
+                    self.layout.rows[1]
+                        .keys
+                        .iter()
+                        .map(|k| k.lower)
+                        .filter(|c| c.is_alphabetic()),
+                );
+                c
+            }
+        }
+    }
+
+    /// All alphabetic characters produced by the active source.
+    pub fn all_chars(&self) -> Vec<char> {
+        match &self.grid_manager {
+            Some(m) => m.grid().all_alpha_chars(),
+            None => self.layout.all_chars(),
+        }
+    }
+
+    /// Name for stats persistence: grid layout name if present,
+    /// otherwise the legacy layout name.
+    pub fn stats_key(&self) -> &str {
+        match &self.grid_manager {
+            Some(m) => m.current_layout(),
+            None => &self.layout.name,
+        }
+    }
+}
+
+impl CharSource for AppContext {
+    fn chars_for(&self, level: DrillLevel) -> Vec<char> {
+        match level {
+            DrillLevel::HomeRow => self.home_row_chars(),
+            DrillLevel::HomeAndTop => self.home_and_top_chars(),
+            DrillLevel::AllRows => self.all_chars(),
         }
     }
 }

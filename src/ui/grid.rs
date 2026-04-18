@@ -104,10 +104,11 @@ fn render_button(
         return;
     };
 
+    // Heatmap mode: every key shows its heat color (gray when cold). This
+    // keeps the F2 toggle visually meaningful even with no accumulated
+    // data — pressing F2 should always *change* what you see.
     let color = match heat {
-        Some(stats) => {
-            heatmap::heat_color(stats, mapping.lower).unwrap_or_else(|| btn.finger.color())
-        }
+        Some(stats) => heatmap::heat_color(stats, mapping.lower).unwrap_or(Color::DarkGray),
         None => btn.finger.color(),
     };
 
