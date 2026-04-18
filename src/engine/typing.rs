@@ -3,6 +3,7 @@
 //! Manages a word buffer, tracks cursor position, and calculates stats.
 //! Used by word and text modes — knows nothing about rendering or input events.
 
+use crate::stats::Stats;
 use crate::words::random_word;
 use std::time::Instant;
 
@@ -68,7 +69,7 @@ impl TypingTest {
     }
 
     /// Process a typed character.
-    pub fn handle_input(&mut self, ch: char) {
+    pub fn handle_input(&mut self, ch: char, stats: &mut Stats) {
         if self.is_finished() {
             return;
         }
@@ -77,7 +78,9 @@ impl TypingTest {
         }
 
         if self.needs_space {
-            if ch == ' ' {
+            let correct = ch == ' ';
+            stats.record(' ', correct);
+            if correct {
                 self.correct += 1;
                 self.needs_space = false;
                 self.word_index += 1;
@@ -95,7 +98,9 @@ impl TypingTest {
         }
 
         if let Some(expected) = self.expected_char() {
-            if ch == expected {
+            let correct = ch == expected;
+            stats.record(expected, correct);
+            if correct {
                 self.correct += 1;
                 self.input.push(ch);
                 self.char_index += 1;

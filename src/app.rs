@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use crate::layout::Layout;
+use crate::stats::Stats;
 
 /// Shared state that crosses mode boundaries.
 pub struct AppContext {
@@ -12,6 +13,8 @@ pub struct AppContext {
     /// Input translation map: physical key -> target layout key.
     /// None means input is already in the target layout.
     pub(crate) translate: Option<HashMap<char, char>>,
+    /// Per-key typing statistics, scoped to the current layout.
+    pub(crate) stats: Stats,
 }
 
 impl AppContext {
@@ -21,6 +24,7 @@ impl AppContext {
             split,
             show_keyboard: true,
             translate,
+            stats: Stats::new(),
         }
     }
 

@@ -7,6 +7,7 @@ use crate::config::{
     LEVEL_DOWN_THRESHOLD, LEVEL_UP_THRESHOLD, MIN_KEYS_BEFORE_LEVEL_CHANGE, WINDOW_SIZE,
 };
 use crate::layout::Layout;
+use crate::stats::Stats;
 use rand::prelude::IndexedRandom;
 use std::collections::VecDeque;
 
@@ -104,12 +105,13 @@ impl Drill {
     }
 
     /// Process a typed character. Returns true if the character was correct.
-    pub fn handle_input(&mut self, ch: char, layout: &Layout) -> bool {
+    pub fn handle_input(&mut self, ch: char, layout: &Layout, stats: &mut Stats) -> bool {
         self.total += 1;
         self.keys_at_level += 1;
         self.level_changed = None;
 
         let is_correct = ch == self.current;
+        stats.record(self.current, is_correct);
 
         if is_correct {
             self.correct += 1;

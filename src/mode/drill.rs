@@ -28,7 +28,7 @@ impl DrillMode {
             KeyCode::Esc => ModeResult::SwitchTo(ActiveMode::Select(super::select::SelectMode)),
             KeyCode::Char(ch) => {
                 let ch = ctx.translate_input(ch);
-                self.drill.handle_input(ch, &ctx.layout);
+                self.drill.handle_input(ch, &ctx.layout, &mut ctx.stats);
                 ModeResult::Stay
             }
             _ => ModeResult::Stay,

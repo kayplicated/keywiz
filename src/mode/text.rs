@@ -159,7 +159,9 @@ impl TextMode {
                 }
                 let ch = ctx.translate_input(ch);
                 if let Some(expected) = self.expected_char() {
-                    if ch == expected {
+                    let correct = ch == expected;
+                    ctx.stats.record(expected, correct);
+                    if correct {
                         self.correct += 1;
                         self.cursor += 1;
                         if self.is_finished() {

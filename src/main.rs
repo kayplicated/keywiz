@@ -3,6 +3,7 @@ mod config;
 mod engine;
 mod layout;
 mod mode;
+mod stats;
 mod ui;
 mod words;
 

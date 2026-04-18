@@ -29,7 +29,7 @@ impl WordsMode {
             KeyCode::Esc => ModeResult::SwitchTo(ActiveMode::Select(super::select::SelectMode)),
             KeyCode::Char(ch) => {
                 let ch = ctx.translate_input(ch);
-                self.test.handle_input(ch);
+                self.test.handle_input(ch, &mut ctx.stats);
                 ModeResult::Stay
             }
             _ => ModeResult::Stay,
