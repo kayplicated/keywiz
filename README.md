@@ -4,19 +4,12 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 
 ## Screenshots
 
-![Mode selection menu](assets/menu.png)
-
-**Key Drills** — single-char drills with adaptive level progression:
-
-![Key drills](assets/drill.png)
-
-**Typing Practice** — scrolling word display with live WPM and accuracy:
-
-![Typing practice](assets/words.png)
-
-**Text Practice** — type through real passages, with split keyboard view:
-
-![Text practice](assets/text.png)
+| | |
+|---|---|
+| ![Mode selection menu](assets/menu.png) | ![Key drills](assets/drill.png) |
+| **Mode selection** | **Key Drills** — adaptive level progression |
+| ![Typing practice](assets/words.png) | ![Text practice](assets/text.png) |
+| **Typing Practice** — live WPM and accuracy | **Text Practice** — real passages, split view |
 
 ## Features
 
