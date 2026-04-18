@@ -1,0 +1,2 @@
+The Terminal
+She typed 'ls -la *.toml' and scanned the output. The config file was there: ~/.config/app/settings.toml. She opened it in her editor, found the block {debug = false, verbose = true}, and flipped the first value. The array [1, 2, 3] on line 47 needed one more entry. She saved with :wq, then ran ./build.sh --release and watched the compiler work through 247 files. No errors. She piped the binary through tar -czf dist.tar.gz and called it a night.

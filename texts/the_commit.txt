@@ -1,0 +1,2 @@
+The Commit
+He ran git status and saw 12 modified files. A quick git diff --stat showed the damage: 340 insertions, 88 deletions. He staged the important ones with git add -p, then typed git commit -m "fix: handle empty input in parser". The hash came back as a8f3c21. He pushed to origin/feature-branch and opened a PR titled "Parser edge cases". Two reviewers got tagged: @alice and @bob. Now he waited.

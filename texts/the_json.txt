@@ -1,0 +1,2 @@
+The JSON
+The API response landed in her terminal: {"status": "ok", "count": 42, "items": [{"id": 1, "name": "alpha"}, {"id": 2, "name": "beta"}]}. She piped it through jq to pretty-print the output. The nested braces made her eyes cross, but the structure was clean. She extracted the names with .items[].name and got back "alpha" and "beta" on two lines. One more curl, one more parse, and the sync job would be done for the day.

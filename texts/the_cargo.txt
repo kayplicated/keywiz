@@ -1,0 +1,2 @@
+The Cargo
+The Cargo.toml had grown messy. Under [dependencies] there were 14 crates, half of them outdated. She pinned serde to "1.0.210" and bumped tokio from "1.35" to "1.40". A cargo update rewrote the lockfile. Then cargo build --release churned for 93 seconds, spitting out warnings about unused imports. She ran cargo clippy --fix to clean them up, followed by cargo test. All 47 tests passed. Time to tag v0.3.0 and call it done.

@@ -1,0 +1,2 @@
+The Rust
+She opened main.rs and stared at the function signature: fn parse(input: &str) -> Result<Vec<Token>, ParseError>. The borrow checker had been yelling at her for an hour. She added a let mut tokens = Vec::new(); and tried again. This time it compiled. She pushed each token with tokens.push(t) inside the loop, then returned Ok(tokens) at the end. The ? operator handled the errors. Clean, fast, safe. Rust was finally starting to click.

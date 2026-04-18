@@ -1,0 +1,2 @@
+The Debug
+thread 'main' panicked at src/parser.rs:128:17: index out of bounds: the len is 4 but the index is 7. She stared at the error for a moment, then scrolled up the stack trace. The problem was obvious now: the loop condition used i <= len instead of i < len. She changed == to < and checked the assertion at line 92. assert_eq!(result, expected) now held. No panic, no unwinding, just a clean exit code of 0.
