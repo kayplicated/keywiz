@@ -68,7 +68,7 @@ impl GridManager {
     /// Like [`new`] but with explicit directories — used in tests.
     pub fn with_dirs(keyboards_dir: &Path, layouts_dir: &Path) -> Result<Self, GridError> {
         let keyboards = list_json_stems(keyboards_dir);
-        let layouts = generic_layout_names(layouts_dir);
+        let layouts = generic_layout_names(layouts_dir, &keyboards);
 
         let initial_keyboard = pick_default(&keyboards, "us_intl")
             .ok_or_else(|| GridError::Load(format!("no keyboards in {}", keyboards_dir.display())))?;
@@ -223,15 +223,26 @@ fn list_json_stems(dir: &Path) -> Vec<String> {
     out
 }
 
-/// List generic layout names — file stems that don't contain a `-` (which
-/// would make them hardware-specific variants like `gallium-elora`).
-fn generic_layout_names(dir: &Path) -> Vec<String> {
+/// List generic layout names. A file stem is a **variant** (and thus
+/// excluded from the generic catalog) only when it ends in `-<keyboard>`
+/// where `<keyboard>` is an installed keyboard name. This lets layout
+/// names freely contain hyphens (e.g. `colemak-dh`) without being
+/// mistaken for variants.
+fn generic_layout_names(dir: &Path, keyboards: &[String]) -> Vec<String> {
     let mut out: Vec<String> = list_json_stems(dir)
         .into_iter()
-        .filter(|name| !name.contains('-'))
+        .filter(|name| !is_variant(name, keyboards))
         .collect();
     out.sort();
     out
+}
+
+fn is_variant(name: &str, keyboards: &[String]) -> bool {
+    keyboards.iter().any(|kb| {
+        name.len() > kb.len() + 1
+            && name.ends_with(kb.as_str())
+            && name.as_bytes()[name.len() - kb.len() - 1] == b'-'
+    })
 }
 
 fn pick_default(list: &[String], preferred: &str) -> Option<String> {
@@ -290,20 +301,15 @@ mod tests {
     }
 
     #[test]
-    fn generic_layout_names_filters_variants() {
-        // Can't touch the real filesystem in a unit test — just exercise
-        // the filter logic directly.
-        let stems = vec![
-            "qwerty".to_string(),
-            "colemak".to_string(),
-            "gallium-elora".to_string(),
-            "gallium".to_string(),
-        ];
-        let mut generic: Vec<String> = stems
-            .into_iter()
-            .filter(|n| !n.contains('-'))
-            .collect();
-        generic.sort();
-        assert_eq!(generic, vec!["colemak", "gallium", "qwerty"]);
+    fn is_variant_requires_matching_keyboard_suffix() {
+        let kb = vec!["us_intl".to_string(), "elora".to_string()];
+        // Plain generic layouts.
+        assert!(!is_variant("qwerty", &kb));
+        assert!(!is_variant("colemak", &kb));
+        // Hyphen in the name but no keyboard match: not a variant.
+        assert!(!is_variant("colemak-dh", &kb));
+        // Variant: suffix matches an installed keyboard.
+        assert!(is_variant("gallium-elora", &kb));
+        assert!(is_variant("qwerty-us_intl", &kb));
     }
 }

@@ -30,8 +30,8 @@ pub enum ActiveMode {
 }
 
 impl ActiveMode {
-    /// Handle a key event. Shared keys (Tab, BackTab) are handled by the
-    /// event loop before this is called.
+    /// Handle a key event. Global keybinds (Tab, F2, Ctrl+arrows) are
+    /// handled before this is called; see [`crate::keybinds`].
     pub fn handle_input(&mut self, key: KeyEvent, ctx: &mut AppContext) -> ModeResult {
         match self {
             ActiveMode::Select(m) => m.handle_input(key, ctx),

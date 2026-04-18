@@ -243,6 +243,8 @@ impl TextMode {
         ]))
         .alignment(Alignment::Center);
         f.render_widget(stats, areas.stats);
+
+        ui::render_footer(f, areas.footer, ctx);
     }
 
     fn render_passage(&self, f: &mut Frame, areas: &ui::ContentAreas, ctx: &AppContext) {

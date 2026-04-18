@@ -28,11 +28,6 @@ pub fn handle_shared(key: KeyEvent, ctx: &mut AppContext) -> KeybindResult {
             ctx.show_keyboard = !ctx.show_keyboard;
             KeybindResult::Handled
         }
-        KeyCode::BackTab => {
-            ctx.split = !ctx.split;
-            ctx.layout.set_colstag(ctx.split);
-            KeybindResult::Handled
-        }
         KeyCode::F(2) => {
             ctx.show_heatmap = !ctx.show_heatmap;
             KeybindResult::Handled
