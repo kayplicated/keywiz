@@ -12,11 +12,12 @@ pub mod tracker;
 
 pub use tracker::StatsTracker;
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Per-key accuracy record.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct KeyRecord {
     pub attempts: u64,
     pub correct: u64,
@@ -37,7 +38,7 @@ impl KeyRecord {
 }
 
 /// Per-layout keystroke statistics.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Stats {
     keys: HashMap<char, KeyRecord>,
 }

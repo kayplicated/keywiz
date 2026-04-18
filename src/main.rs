@@ -95,11 +95,15 @@ fn main() -> io::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
     let mut ctx = AppContext::new(layout, split, translate);
+    ctx.stats.set_persistent(stats::persist::load(&ctx.layout.name));
+
     let result = run_loop(&mut terminal, &mut ctx);
 
     // Restore terminal — ignore errors (can fail over SSH)
     let _ = terminal::disable_raw_mode();
     let _ = io::stdout().execute(LeaveAlternateScreen);
+
+    stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
 
     result
 }
@@ -136,7 +140,13 @@ fn run_loop(
             match mode.handle_input(key, ctx) {
                 ModeResult::Stay => {}
                 ModeResult::Quit => return Ok(()),
-                ModeResult::SwitchTo(new_mode) => mode = new_mode,
+                ModeResult::SwitchTo(new_mode) => {
+                    // Save when returning to menu (session boundary).
+                    if matches!(new_mode, ActiveMode::Select(_)) {
+                        stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
+                    }
+                    mode = new_mode;
+                }
             }
         }
     }
