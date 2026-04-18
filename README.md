@@ -18,6 +18,8 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 - **Typing practice** with scrolling word display and live WPM/accuracy
 - **Endless mode** — continuous practice without a word limit
 - **Text practice** — type through real passages, arrow keys to switch texts
+- **Heatmap overlay** — F2 colors the keyboard by where you actually struggle, accumulated across sessions
+- **Smart word selection** — words you type quietly bias toward your weak keys, so practice targets itself
 - **Split keyboard view** for columnar split boards (Elora, Corne, Sweep, etc.)
 - **Toggle keyboard** with Tab — fly blind when you're ready
 - **Input translation** — practice any layout on any keyboard (e.g. train Gallium v2 on a QWERTY tablet over SSH)
@@ -78,8 +80,20 @@ This way you can practice anywhere without needing kanata, custom Android IMEs, 
 
 - **Tab** — toggle keyboard visibility
 - **Shift+Tab** — toggle split / standard keyboard
+- **F2** — toggle heatmap overlay on the keyboard
 - **◀ ▶** — switch passages (text practice mode)
 - **ESC** — go back / quit
+
+### Heatmap & smart practice
+
+Every keystroke feeds a per-key *heat* score: missing a key bumps its heat up by one step, two correct presses drop it back down. Heat accumulates across sessions (stored under your OS data directory, per layout) so a key that's been trouble for weeks stays visible.
+
+Two things read from it:
+
+- **The F2 heatmap overlay** colors the keyboard from cool violet → blue → yellow → orange → red. Green is deliberately absent — correctness should feel calm, not "good."
+- **Word selection in modes [2] and [3]** quietly weights toward words containing your hot keys. If `y` is giving you trouble you'll see more `yet`, `holiday`, `by`. With no heat, selection is uniform random.
+
+There's no "drill X" menu — practice targets itself as you type.
 
 ## Layout Support
 
