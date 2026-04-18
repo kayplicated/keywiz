@@ -24,12 +24,12 @@ impl SelectMode {
             }
             KeyCode::Char('2') => {
                 ctx.stats.new_session();
-                let mode = super::words::WordsMode::new(Some(20));
+                let mode = super::words::WordsMode::new(Some(20), ctx);
                 ModeResult::SwitchTo(ActiveMode::Words(mode))
             }
             KeyCode::Char('3') => {
                 ctx.stats.new_session();
-                let mode = super::words::WordsMode::new(None);
+                let mode = super::words::WordsMode::new(None, ctx);
                 ModeResult::SwitchTo(ActiveMode::Words(mode))
             }
             KeyCode::Char('4') => {

@@ -1,8 +1,9 @@
 //! Per-key typing statistics.
 //!
-//! Tracks attempts and correct counts for each character the user has typed.
-//! Used by engines to record keystrokes, and by UI components (heatmap) and
-//! auto-drill generation to query accuracy.
+//! Tracks attempts, correct count, and accumulated heat for each character
+//! the user has typed. Engines record keystrokes through this; the keyboard
+//! heatmap reads from it to color keys, and the word selector reads from it
+//! to bias practice toward struggling letters.
 //!
 //! This module owns the in-memory data model. Disk persistence lives in
 //! [`persist`].
@@ -20,10 +21,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// don't push it further — the key is already "fully hot."
 pub const MAX_HEAT: u32 = 20;
 
-/// Cost-per-step-down when a correct press cools a hot key. A key at
-/// heat step N costs `COOL_COST_FACTOR * N` correct presses to drop to
-/// step N-1. So deeply miswired keys take real effort to retrain.
-pub const COOL_COST_FACTOR: u32 = 5;
+/// Correct presses needed to drop one heat step. Flat across all steps:
+/// one miss = +1 step, two corrects = -1 step. Wrong presses don't wipe
+/// accumulated cooling progress, so practice stays productive even when
+/// you're still making mistakes.
+pub const COOL_COST: u32 = 2;
 
 /// Per-key record of accuracy and heat.
 ///
@@ -48,33 +50,22 @@ pub struct KeyRecord {
 }
 
 impl KeyRecord {
-    /// Accuracy as a fraction in `0.0..=1.0`. Returns `1.0` for keys with no
-    /// attempts so fresh keys don't show up as "worst" before being tried.
-    pub fn accuracy(&self) -> f64 {
-        if self.attempts == 0 {
-            1.0
-        } else {
-            self.correct as f64 / self.attempts as f64
-        }
-    }
-
     /// Apply the heat model for a single keystroke.
-    /// - wrong press: heat += 1 (capped at MAX_HEAT), cooling progress resets
-    /// - correct press on a hot key: add to cooling progress; when it reaches
-    ///   `COOL_COST_FACTOR * heat`, drop heat by 1 and reset progress
-    /// - correct press on a cold key (heat = 0): nothing changes
+    /// - wrong press: heat += 1 (capped at MAX_HEAT); cooling progress is
+    ///   preserved so practice stays productive through mistakes.
+    /// - correct press on a hot key: add to cooling progress; every
+    ///   `COOL_COST` correct presses drops heat by one step.
+    /// - correct press on a cold key (heat = 0): nothing changes.
     fn update_heat(&mut self, correct: bool) {
         if !correct {
             self.heat = (self.heat + 1).min(MAX_HEAT);
-            self.cooling_progress = 0;
             return;
         }
         if self.heat == 0 {
             return;
         }
         self.cooling_progress += 1;
-        let cost = COOL_COST_FACTOR * self.heat;
-        if self.cooling_progress >= cost {
+        if self.cooling_progress >= COOL_COST {
             self.heat -= 1;
             self.cooling_progress = 0;
         }
@@ -146,21 +137,6 @@ impl Stats {
         }
     }
 
-    /// Return the `n` keys with the lowest accuracy, lowest first.
-    /// Keys with zero attempts are excluded (no data to judge).
-    pub fn worst_keys(&self, n: usize) -> Vec<char> {
-        let mut with_data: Vec<(&char, &KeyRecord)> = self
-            .keys
-            .iter()
-            .filter(|(_, r)| r.attempts > 0)
-            .collect();
-        with_data.sort_by(|a, b| {
-            a.1.accuracy()
-                .partial_cmp(&b.1.accuracy())
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        with_data.into_iter().take(n).map(|(c, _)| *c).collect()
-    }
 }
 
 fn now_unix() -> u64 {
@@ -184,36 +160,12 @@ mod tests {
         let r = s.get('a').unwrap();
         assert_eq!(r.attempts, 3);
         assert_eq!(r.correct, 2);
-        assert!((r.accuracy() - 2.0 / 3.0).abs() < 1e-9);
     }
 
     #[test]
-    fn untouched_key_reports_perfect_accuracy() {
+    fn untouched_key_returns_none() {
         let s = Stats::new();
         assert!(s.get('z').is_none());
-    }
-
-    #[test]
-    fn worst_keys_returns_lowest_accuracy_first() {
-        let mut s = Stats::new();
-        // 'a': 100%
-        s.record('a', true);
-        s.record('a', true);
-        // 'b': 50%
-        s.record('b', true);
-        s.record('b', false);
-        // 'c': 0%
-        s.record('c', false);
-
-        let worst = s.worst_keys(2);
-        assert_eq!(worst, vec!['c', 'b']);
-    }
-
-    #[test]
-    fn worst_keys_ignores_untried_keys() {
-        let mut s = Stats::new();
-        s.record('a', true);
-        assert_eq!(s.worst_keys(5), vec!['a']);
     }
 
     #[test]
@@ -246,45 +198,40 @@ mod tests {
     }
 
     #[test]
-    fn correct_presses_cool_a_hot_key_with_rising_cost() {
+    fn correct_presses_cool_a_hot_key_at_flat_cost() {
         let mut s = Stats::new();
-        // Push heat to 2.
+        // Push heat to 3 — that's 3 steps to clear at 2 corrects each = 6.
         s.record('a', false);
         s.record('a', false);
-        assert_eq!(s.get('a').unwrap().heat, 2);
+        s.record('a', false);
+        assert_eq!(s.get('a').unwrap().heat, 3);
 
-        // Cooling from 2 → 1 costs 10 correct presses.
-        for _ in 0..9 {
+        for expected_remaining in (0..3).rev() {
             s.record('a', true);
-            assert_eq!(s.get('a').unwrap().heat, 2);
-        }
-        s.record('a', true);
-        assert_eq!(s.get('a').unwrap().heat, 1);
-
-        // Cooling from 1 → 0 costs 5 correct presses.
-        for _ in 0..4 {
+            assert_eq!(s.get('a').unwrap().heat, expected_remaining + 1);
             s.record('a', true);
-            assert_eq!(s.get('a').unwrap().heat, 1);
+            assert_eq!(s.get('a').unwrap().heat, expected_remaining);
         }
-        s.record('a', true);
-        assert_eq!(s.get('a').unwrap().heat, 0);
     }
 
     #[test]
-    fn wrong_press_resets_cooling_progress() {
+    fn wrong_press_does_not_wipe_cooling_progress() {
         let mut s = Stats::new();
         s.record('a', false);
         s.record('a', false);
-        // Cool a bit but not enough to drop a step.
-        for _ in 0..5 {
-            s.record('a', true);
-        }
+        // One correct press — not enough to cool yet.
+        s.record('a', true);
         assert_eq!(s.get('a').unwrap().heat, 2);
-        assert_eq!(s.get('a').unwrap().cooling_progress, 5);
+        assert_eq!(s.get('a').unwrap().cooling_progress, 1);
 
-        // Another wrong press should wipe the progress.
+        // Another wrong press bumps heat but keeps the cooling progress.
         s.record('a', false);
         assert_eq!(s.get('a').unwrap().heat, 3);
+        assert_eq!(s.get('a').unwrap().cooling_progress, 1);
+
+        // The next correct press finishes the cooling from that earlier +1.
+        s.record('a', true);
+        assert_eq!(s.get('a').unwrap().heat, 2);
         assert_eq!(s.get('a').unwrap().cooling_progress, 0);
     }
 

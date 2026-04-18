@@ -18,9 +18,9 @@ pub struct WordsMode {
 
 impl WordsMode {
     /// Create a new words mode. Pass `Some(n)` for a fixed word count, `None` for endless.
-    pub fn new(target_count: Option<usize>) -> Self {
+    pub fn new(target_count: Option<usize>, ctx: &AppContext) -> Self {
         WordsMode {
-            test: TypingTest::new(target_count),
+            test: TypingTest::new(target_count, ctx.stats.persistent()),
         }
     }
 

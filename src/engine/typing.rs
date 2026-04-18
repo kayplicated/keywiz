@@ -3,7 +3,7 @@
 //! Manages a word buffer, tracks cursor position, and calculates stats.
 //! Used by word and text modes — knows nothing about rendering or input events.
 
-use crate::stats::StatsTracker;
+use crate::stats::{Stats, StatsTracker};
 use crate::words::random_word;
 use std::time::Instant;
 
@@ -21,9 +21,9 @@ pub struct TypingTest {
 }
 
 impl TypingTest {
-    pub fn new(target_count: Option<usize>) -> Self {
+    pub fn new(target_count: Option<usize>, stats: &Stats) -> Self {
         let initial = target_count.map(|t| 10.min(t)).unwrap_or(10);
-        let words: Vec<String> = (0..initial).map(|_| random_word()).collect();
+        let words: Vec<String> = (0..initial).map(|_| random_word(stats)).collect();
         TypingTest {
             words,
             target_count,
@@ -37,10 +37,10 @@ impl TypingTest {
     }
 
     /// Ensure we always have a few words buffered ahead of the current position.
-    fn ensure_buffer(&mut self) {
+    fn ensure_buffer(&mut self, stats: &Stats) {
         let max = self.target_count.unwrap_or(usize::MAX);
         while self.words.len() < self.word_index + 8 && self.words.len() < max {
-            self.words.push(random_word());
+            self.words.push(random_word(stats));
         }
     }
 
@@ -81,7 +81,7 @@ impl TypingTest {
                 self.word_index += 1;
                 self.char_index = 0;
                 self.input.clear();
-                self.ensure_buffer();
+                self.ensure_buffer(stats.persistent());
 
                 if self.is_finished() {
                     self.end_time = Some(Instant::now());
