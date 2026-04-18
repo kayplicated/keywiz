@@ -20,10 +20,10 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 - **Text practice** — type through real passages, arrow keys to switch texts
 - **Heatmap overlay** — F2 colors the keyboard by where you actually struggle, accumulated across sessions
 - **Smart word selection** — words you type quietly bias toward your weak keys, so practice targets itself
-- **Split keyboard view** for columnar split boards (Elora, Corne, Sweep, etc.)
+- **Many layouts + keyboards** — QWERTY, Colemak, Colemak-DH, Dvorak, Canary, Hyperroll, Gallium across US, Kyria, and Elora hardware — cycle between them with Ctrl+arrows while the app is running
+- **Data-driven** — keyboards and layouts are JSON files; drop your own in `keyboards/` or `layouts/` and they show up in the cycle
 - **Toggle keyboard** with Tab — fly blind when you're ready
-- **Input translation** — practice any layout on any keyboard (e.g. train Gallium v2 on a QWERTY tablet over SSH)
-- **Reads kanata configs** directly — no separate layout file needed
+- **Kanata escape hatch** — point keywiz at a `.kbd` config for one-off layouts not in the shipped catalog
 - Runs in the terminal, no GUI dependencies
 
 ## Install
@@ -34,40 +34,32 @@ cargo install --path .
 
 ## Usage
 
-```
-keywiz [options] [kanata-config] [layer-to-train]
-```
-
 ```sh
-# Auto-detects config (~/.config/kanata/kanata.kbd) and first layer
+# Default: us_intl keyboard + qwerty layout
 keywiz
 
-# Train a specific layer
-keywiz /path/to/kanata.kbd gallium_v2
+# Pick keyboard and layout by name
+keywiz -k us_intl -l colemak
+keywiz -k elora -l gallium
+keywiz -k kyria -l canary
 
-# Split keyboard mode
-keywiz --split
+# Cycle at runtime without restarting
+#   Ctrl+↑ / Ctrl+↓  — previous / next keyboard
+#   Ctrl+← / Ctrl+→  — previous / next layout
 
-# Your keyboard sends QWERTY, but you want to train Gallium v2
-keywiz --from qwerty
-
-# Your keyboard sends Colemak (defined in your kanata config), train Gallium v2
-keywiz --from colemak gallium_v2
+# Load a kanata .kbd directly (escape hatch for custom layouts)
+keywiz --kanata /path/to/your.kbd
+keywiz --kanata /path/to/your.kbd gallium_v2   # specific layer
 ```
 
-### Training on a different keyboard
+Shipped keyboards (`keyboards/`): `us_intl`, `kyria`, `elora`, `halcyon_elora_v2`.
+Shipped layouts (`layouts/`): `qwerty`, `colemak`, `colemak-dh`, `dvorak`, `canary`, `hyperroll`, `gallium`.
 
-If your physical keyboard doesn't run your target layout (e.g. SSHing from a tablet), use `--from` to tell keywiz what layout your keyboard actually sends. Keywiz translates each keypress by physical position — pressing QWERTY `j` registers as whatever your target layout has in that position (e.g. `h` on Gallium v2).
+### Adding your own
 
-```sh
-# SSH into your desktop from an Android tablet with a QWERTY keyboard
-ssh desktop
-keywiz --from qwerty
-```
+Both are just JSON. Drop a new file in `keyboards/` or `layouts/` and it appears in the cycle on next launch. A **keyboard** declares physical buttons with home-row-centered coordinates (x grows right, y grows down, home row at `y=0`). A **layout** maps evdev keycodes (`KEY_A`, `KEY_SEMICOLON`, …) to `{ lower, upper }` characters. See the shipped files for templates.
 
-The `--from` value can be `qwerty` (built-in) or any layer name defined in your kanata config. This means if you have two custom layouts in the same config file, you can practice one while typing on the other.
-
-This way you can practice anywhere without needing kanata, custom Android IMEs, or any special setup on the device you're typing on.
+For hardware-specific overrides, name a layout file `{layout}-{keyboard}.json` (e.g. `gallium-elora.json`) — it wins over the generic when paired with that keyboard, and stays hidden from the layout list otherwise.
 
 ### Modes
 
@@ -79,8 +71,9 @@ This way you can practice anywhere without needing kanata, custom Android IMEs, 
 ### Controls
 
 - **Tab** — toggle keyboard visibility
-- **Shift+Tab** — toggle split / standard keyboard
 - **F2** — toggle heatmap overlay on the keyboard
+- **Ctrl + ↑ / ↓** — cycle keyboards
+- **Ctrl + ← / →** — cycle layouts
 - **◀ ▶** — switch passages (text practice mode)
 - **ESC** — go back / quit
 
@@ -94,10 +87,6 @@ Two things read from it:
 - **Word selection in modes [2] and [3]** quietly weights toward words containing your hot keys. If `y` is giving you trouble you'll see more `yet`, `holiday`, `by`. With no heat, selection is uniform random.
 
 There's no "drill X" menu — practice targets itself as you type.
-
-## Layout Support
-
-Keywiz reads keyboard layouts from [kanata](https://github.com/jtroo/kanata) configuration files, including `tap-hold` aliases. The layout system is modular — adding parsers for other formats (QMK, KMonad, etc.) is straightforward.
 
 ## Custom Texts
 
