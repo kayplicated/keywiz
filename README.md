@@ -2,6 +2,22 @@
 
 A terminal typing tutor with a visual keyboard — built for custom layouts that no other tool supports.
 
+## Screenshots
+
+![Mode selection menu](assets/menu.png)
+
+**Key Drills** — single-char drills with adaptive level progression:
+
+![Key drills](assets/drill.png)
+
+**Typing Practice** — scrolling word display with live WPM and accuracy:
+
+![Typing practice](assets/words.png)
+
+**Text Practice** — type through real passages, with split keyboard view:
+
+![Text practice](assets/text.png)
+
 ## Features
 
 - **Visual keyboard** with color-coded finger zones
