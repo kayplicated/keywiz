@@ -1,5 +1,6 @@
 //! Shared UI components and layout helpers.
 
+pub mod grid;
 pub mod heatmap;
 pub mod keyboard;
 

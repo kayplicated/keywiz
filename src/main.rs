@@ -1,6 +1,7 @@
 mod app;
 mod config;
 mod engine;
+mod grid;
 mod layout;
 mod mode;
 mod stats;
@@ -22,17 +23,17 @@ fn main() -> io::Result<()> {
     // Parse args
     let args: Vec<String> = std::env::args().collect();
     let split = args.iter().any(|a| a == "--split");
-    let from_layout = args
-        .iter()
-        .position(|a| a == "--from")
-        .and_then(|i| args.get(i + 1))
-        .map(|s| s.as_str());
+    let from_layout = flag_value(&args, "--from");
+    let keyboard_flag = flag_value(&args, "-k").or_else(|| flag_value(&args, "--keyboard"));
+    let layout_flag = flag_value(&args, "-l").or_else(|| flag_value(&args, "--layout"));
+
     // Collect indices of args consumed by flags
     let mut skip_indices = std::collections::HashSet::new();
     for (i, a) in args.iter().enumerate() {
+        let a = a.as_str();
         if a == "--split" {
             skip_indices.insert(i);
-        } else if a == "--from" {
+        } else if matches!(a, "--from" | "-k" | "--keyboard" | "-l" | "--layout") {
             skip_indices.insert(i);
             skip_indices.insert(i + 1);
         }
@@ -44,6 +45,77 @@ fn main() -> io::Result<()> {
         .map(|(_, a)| a)
         .collect();
 
+    // Branch: if -k/-l were passed, use the data-driven grid path.
+    // Otherwise use the legacy kanata path (unchanged behavior).
+    let use_grid_path = keyboard_flag.is_some() || layout_flag.is_some();
+
+    let mut ctx = if use_grid_path {
+        build_grid_context(keyboard_flag.as_deref(), layout_flag.as_deref())?
+    } else {
+        build_kanata_context(&positional, split, from_layout.as_deref())?
+    };
+
+    // Setup terminal
+    terminal::enable_raw_mode()?;
+    io::stdout().execute(EnterAlternateScreen)?;
+    let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+
+    ctx.stats.set_persistent(stats::persist::load(&ctx.layout.name));
+
+    let result = run_loop(&mut terminal, &mut ctx);
+
+    // Restore terminal — ignore errors (can fail over SSH)
+    let _ = terminal::disable_raw_mode();
+    let _ = io::stdout().execute(LeaveAlternateScreen);
+
+    stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
+
+    result
+}
+
+/// Parse `--flag <value>` style arguments. Returns the value if present.
+fn flag_value(args: &[String], name: &str) -> Option<String> {
+    args.iter()
+        .position(|a| a == name)
+        .and_then(|i| args.get(i + 1))
+        .map(|s| s.to_string())
+}
+
+/// Build an [`AppContext`] via the new data-driven grid path. The legacy
+/// `layout` field is still populated (for now, until modes migrate) using
+/// a stub built from the grid's keyboard name so stats file paths stay
+/// stable and existing code keeps compiling.
+fn build_grid_context(keyboard: Option<&str>, layout: Option<&str>) -> io::Result<AppContext> {
+    let mut manager = grid::GridManager::new().unwrap_or_else(|e| {
+        eprintln!("keywiz: could not load keyboards/layouts: {e}");
+        std::process::exit(1);
+    });
+    if let Some(name) = keyboard
+        && let Err(e) = manager.set_keyboard(name)
+    {
+        eprintln!("keywiz: {e}");
+        std::process::exit(1);
+    }
+    if let Some(name) = layout
+        && let Err(e) = manager.set_layout(name)
+    {
+        eprintln!("keywiz: {e}");
+        std::process::exit(1);
+    }
+
+    // Legacy `layout` field is unused on this path, but still required by
+    // AppContext::new and the modes until the next session consolidates.
+    let stub = layout::qwerty();
+    let ctx = AppContext::new(stub, false, None).with_grid_manager(manager);
+    Ok(ctx)
+}
+
+/// Build an [`AppContext`] via the original kanata config path.
+fn build_kanata_context(
+    positional: &[&String],
+    split: bool,
+    from_layout: Option<&str>,
+) -> io::Result<AppContext> {
     let config_path = positional
         .first()
         .map(|s| s.to_string())
@@ -55,6 +127,7 @@ fn main() -> io::Result<()> {
     let source = std::fs::read_to_string(&config_path).unwrap_or_else(|e| {
         eprintln!("Could not read {config_path}: {e}");
         eprintln!("Usage: keywiz [--split] [--from <layout>] [kanata-config-path] [layer-name]");
+        eprintln!("   or: keywiz -k <keyboard> -l <layout>");
         std::process::exit(1);
     });
 
@@ -74,7 +147,6 @@ fn main() -> io::Result<()> {
     });
     layout.set_colstag(split);
 
-    // Build translation map if --from is specified
     let translate = from_layout.map(|from_name| {
         let from = if from_name == "qwerty" {
             layout::qwerty()
@@ -89,23 +161,7 @@ fn main() -> io::Result<()> {
         layout.translation_from(&from)
     });
 
-    // Setup terminal
-    terminal::enable_raw_mode()?;
-    io::stdout().execute(EnterAlternateScreen)?;
-    let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
-
-    let mut ctx = AppContext::new(layout, split, translate);
-    ctx.stats.set_persistent(stats::persist::load(&ctx.layout.name));
-
-    let result = run_loop(&mut terminal, &mut ctx);
-
-    // Restore terminal — ignore errors (can fail over SSH)
-    let _ = terminal::disable_raw_mode();
-    let _ = io::stdout().execute(LeaveAlternateScreen);
-
-    stats::persist::save(&ctx.layout.name, ctx.stats.persistent());
-
-    result
+    Ok(AppContext::new(layout, split, translate))
 }
 
 fn run_loop(

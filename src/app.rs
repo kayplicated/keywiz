@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use crate::grid::GridManager;
 use crate::layout::Layout;
 use crate::stats::StatsTracker;
 
@@ -17,6 +18,10 @@ pub struct AppContext {
     pub(crate) translate: Option<HashMap<char, char>>,
     /// Session + persistent per-key stats for the current layout.
     pub(crate) stats: StatsTracker,
+    /// Optional data-driven grid manager. When present, modes and widgets
+    /// that know about it will prefer it over the legacy `layout` field.
+    /// Absent when keywiz was started via the kanata path.
+    pub(crate) grid_manager: Option<GridManager>,
 }
 
 impl AppContext {
@@ -28,7 +33,14 @@ impl AppContext {
             show_heatmap: false,
             translate,
             stats: StatsTracker::new(),
+            grid_manager: None,
         }
+    }
+
+    /// Replace the grid manager (used when booting via the data-driven path).
+    pub fn with_grid_manager(mut self, manager: GridManager) -> Self {
+        self.grid_manager = Some(manager);
+        self
     }
 
     /// Translate input character if translation is active.
