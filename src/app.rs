@@ -10,6 +10,8 @@ pub struct AppContext {
     pub(crate) layout: Layout,
     pub(crate) split: bool,
     pub(crate) show_keyboard: bool,
+    /// When true, the keyboard widget tints keys by accuracy instead of finger color.
+    pub(crate) show_heatmap: bool,
     /// Input translation map: physical key -> target layout key.
     /// None means input is already in the target layout.
     pub(crate) translate: Option<HashMap<char, char>>,
@@ -23,6 +25,7 @@ impl AppContext {
             layout,
             split,
             show_keyboard: true,
+            show_heatmap: false,
             translate,
             stats: StatsTracker::new(),
         }

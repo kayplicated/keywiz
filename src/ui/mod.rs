@@ -1,5 +1,6 @@
 //! Shared UI components and layout helpers.
 
+pub mod heatmap;
 pub mod keyboard;
 
 use ratatui::layout::{Constraint, Layout, Rect};

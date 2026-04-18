@@ -75,12 +75,14 @@ impl DrillMode {
 
         // Keyboard
         if ctx.show_keyboard {
+            let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
             ui::keyboard::render_keyboard(
                 f,
                 areas.keyboard,
                 &ctx.layout,
                 Some(self.drill.current),
                 ctx.split,
+                heat,
             );
         }
 

@@ -313,12 +313,14 @@ impl TextMode {
         // Keyboard
         if ctx.show_keyboard {
             let highlight = self.expected_char().filter(|c| *c != '\n');
+            let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
             ui::keyboard::render_keyboard(
                 f,
                 areas.keyboard,
                 &ctx.layout,
                 highlight,
                 ctx.split,
+                heat,
             );
         }
     }

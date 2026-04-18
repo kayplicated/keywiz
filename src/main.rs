@@ -133,6 +133,10 @@ fn run_loop(
                     ctx.layout.set_colstag(ctx.split);
                     continue;
                 }
+                KeyCode::F(2) => {
+                    ctx.show_heatmap = !ctx.show_heatmap;
+                    continue;
+                }
                 _ => {}
             }
 
