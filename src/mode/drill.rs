@@ -90,19 +90,20 @@ impl DrillMode {
         } else {
             "TAB show keyboard"
         };
+        let session = ctx.stats.session();
         let stats = Paragraph::new(Line::from(vec![
             Span::styled(
-                format!("Correct: {}", self.drill.correct),
+                format!("Correct: {}", session.total_correct()),
                 Style::default().fg(Color::Green),
             ),
             Span::raw("  "),
             Span::styled(
-                format!("Wrong: {}", self.drill.wrong),
+                format!("Wrong: {}", session.total_wrong()),
                 Style::default().fg(Color::Red),
             ),
             Span::raw("  "),
             Span::styled(
-                format!("Accuracy: {:.0}%", self.drill.accuracy()),
+                format!("Accuracy: {:.0}%", session.overall_accuracy()),
                 Style::default().fg(Color::Yellow),
             ),
             Span::raw("  "),

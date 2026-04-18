@@ -54,8 +54,6 @@ pub struct TextMode {
     chars: Vec<char>,
     /// Current cursor position in chars.
     cursor: usize,
-    correct: usize,
-    wrong: usize,
     start_time: Option<Instant>,
     end_time: Option<Instant>,
 }
@@ -72,21 +70,18 @@ impl TextMode {
             current_passage: 0,
             chars,
             cursor: 0,
-            correct: 0,
-            wrong: 0,
             start_time: None,
             end_time: None,
         }
     }
 
-    fn switch_passage(&mut self, index: usize) {
+    fn switch_passage(&mut self, index: usize, ctx: &mut AppContext) {
         self.current_passage = index;
         self.chars = self.passages[index].body.chars().collect();
         self.cursor = 0;
-        self.correct = 0;
-        self.wrong = 0;
         self.start_time = None;
         self.end_time = None;
+        ctx.stats.new_session();
     }
 
     fn is_finished(&self) -> bool {
@@ -97,7 +92,7 @@ impl TextMode {
         self.chars.get(self.cursor).copied()
     }
 
-    fn wpm(&self) -> f64 {
+    fn wpm(&self, stats: &crate::stats::Stats) -> f64 {
         let elapsed = match (self.start_time, self.end_time) {
             (Some(start), Some(end)) => end.duration_since(start),
             (Some(start), None) => start.elapsed(),
@@ -107,17 +102,7 @@ impl TextMode {
         if minutes < 0.01 {
             return 0.0;
         }
-        let total_chars = self.correct + self.wrong;
-        (total_chars as f64 / 5.0) / minutes
-    }
-
-    fn accuracy(&self) -> f64 {
-        let total = self.correct + self.wrong;
-        if total == 0 {
-            100.0
-        } else {
-            (self.correct as f64 / total as f64) * 100.0
-        }
+        (stats.total_attempts() as f64 / 5.0) / minutes
     }
 
     pub fn handle_input(&mut self, key: KeyEvent, ctx: &mut AppContext) -> ModeResult {
@@ -139,14 +124,14 @@ impl TextMode {
                     } else {
                         self.current_passage - 1
                     };
-                    self.switch_passage(idx);
+                    self.switch_passage(idx, ctx);
                 }
                 ModeResult::Stay
             }
             KeyCode::Right => {
                 if self.passages.len() > 1 {
                     let idx = (self.current_passage + 1) % self.passages.len();
-                    self.switch_passage(idx);
+                    self.switch_passage(idx, ctx);
                 }
                 ModeResult::Stay
             }
@@ -162,13 +147,10 @@ impl TextMode {
                     let correct = ch == expected;
                     ctx.stats.record(expected, correct);
                     if correct {
-                        self.correct += 1;
                         self.cursor += 1;
                         if self.is_finished() {
                             self.end_time = Some(Instant::now());
                         }
-                    } else {
-                        self.wrong += 1;
                     }
                 }
                 ModeResult::Stay
@@ -202,6 +184,8 @@ impl TextMode {
         .alignment(Alignment::Center);
         f.render_widget(header, areas.header);
 
+        let session = ctx.stats.session();
+
         // Body: multi-line passage with cursor
         if self.is_finished() {
             let results = Paragraph::new(vec![
@@ -212,8 +196,8 @@ impl TextMode {
                 )),
                 Line::from(format!(
                     "WPM: {:.0}  Accuracy: {:.0}%",
-                    self.wpm(),
-                    self.accuracy()
+                    self.wpm(session),
+                    session.overall_accuracy()
                 )),
                 Line::from(""),
                 Line::from(Span::styled(
@@ -235,12 +219,12 @@ impl TextMode {
         };
         let stats = Paragraph::new(Line::from(vec![
             Span::styled(
-                format!("WPM: {:.0}", self.wpm()),
+                format!("WPM: {:.0}", self.wpm(session)),
                 Style::default().fg(Color::Cyan),
             ),
             Span::raw("  "),
             Span::styled(
-                format!("Accuracy: {:.0}%", self.accuracy()),
+                format!("Accuracy: {:.0}%", session.overall_accuracy()),
                 Style::default().fg(Color::Yellow),
             ),
             Span::raw("  "),

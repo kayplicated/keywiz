@@ -7,7 +7,7 @@ use crate::config::{
     LEVEL_DOWN_THRESHOLD, LEVEL_UP_THRESHOLD, MIN_KEYS_BEFORE_LEVEL_CHANGE, WINDOW_SIZE,
 };
 use crate::layout::Layout;
-use crate::stats::Stats;
+use crate::stats::StatsTracker;
 use rand::prelude::IndexedRandom;
 use std::collections::VecDeque;
 
@@ -48,9 +48,6 @@ pub struct Drill {
     pub(crate) level: DrillLevel,
     chars: Vec<char>,
     pub(crate) current: char,
-    total: usize,
-    pub(crate) correct: usize,
-    pub(crate) wrong: usize,
     pub(crate) streak: usize,
     pub(crate) best_streak: usize,
     /// Rolling window of recent results (true = correct, false = wrong)
@@ -75,9 +72,6 @@ impl Drill {
             level,
             chars,
             current,
-            total: 0,
-            correct: 0,
-            wrong: 0,
             streak: 0,
             best_streak: 0,
             window: VecDeque::with_capacity(WINDOW_SIZE),
@@ -105,8 +99,7 @@ impl Drill {
     }
 
     /// Process a typed character. Returns true if the character was correct.
-    pub fn handle_input(&mut self, ch: char, layout: &Layout, stats: &mut Stats) -> bool {
-        self.total += 1;
+    pub fn handle_input(&mut self, ch: char, layout: &Layout, stats: &mut StatsTracker) -> bool {
         self.keys_at_level += 1;
         self.level_changed = None;
 
@@ -114,14 +107,12 @@ impl Drill {
         stats.record(self.current, is_correct);
 
         if is_correct {
-            self.correct += 1;
             self.streak += 1;
             if self.streak > self.best_streak {
                 self.best_streak = self.streak;
             }
             self.next_char();
         } else {
-            self.wrong += 1;
             self.streak = 0;
         }
 
@@ -158,14 +149,6 @@ impl Drill {
         }
 
         is_correct
-    }
-
-    pub fn accuracy(&self) -> f64 {
-        if self.total == 0 {
-            100.0
-        } else {
-            (self.correct as f64 / self.total as f64) * 100.0
-        }
     }
 }
 

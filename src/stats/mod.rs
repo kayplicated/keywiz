@@ -8,6 +8,9 @@
 //! [`persist`].
 
 pub mod persist;
+pub mod tracker;
+
+pub use tracker::StatsTracker;
 
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -62,6 +65,32 @@ impl Stats {
     /// Iterate over all recorded keys and their records.
     pub fn iter(&self) -> impl Iterator<Item = (&char, &KeyRecord)> {
         self.keys.iter()
+    }
+
+    /// Total attempts summed across all keys.
+    pub fn total_attempts(&self) -> u64 {
+        self.keys.values().map(|r| r.attempts).sum()
+    }
+
+    /// Total correct presses summed across all keys.
+    pub fn total_correct(&self) -> u64 {
+        self.keys.values().map(|r| r.correct).sum()
+    }
+
+    /// Total incorrect presses summed across all keys.
+    pub fn total_wrong(&self) -> u64 {
+        self.total_attempts() - self.total_correct()
+    }
+
+    /// Aggregate accuracy as a percentage in `0.0..=100.0`.
+    /// Returns `100.0` when no keys have been attempted.
+    pub fn overall_accuracy(&self) -> f64 {
+        let total = self.total_attempts();
+        if total == 0 {
+            100.0
+        } else {
+            (self.total_correct() as f64 / total as f64) * 100.0
+        }
     }
 
     /// Return the `n` keys with the lowest accuracy, lowest first.

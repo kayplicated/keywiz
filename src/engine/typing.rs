@@ -3,7 +3,7 @@
 //! Manages a word buffer, tracks cursor position, and calculates stats.
 //! Used by word and text modes — knows nothing about rendering or input events.
 
-use crate::stats::Stats;
+use crate::stats::StatsTracker;
 use crate::words::random_word;
 use std::time::Instant;
 
@@ -16,8 +16,6 @@ pub struct TypingTest {
     pub(crate) char_index: usize,
     /// Are we waiting for a space between words?
     pub(crate) needs_space: bool,
-    pub(crate) correct: usize,
-    pub(crate) wrong: usize,
     start_time: Option<Instant>,
     end_time: Option<Instant>,
 }
@@ -33,8 +31,6 @@ impl TypingTest {
             word_index: 0,
             char_index: 0,
             needs_space: false,
-            correct: 0,
-            wrong: 0,
             start_time: None,
             end_time: None,
         }
@@ -69,7 +65,7 @@ impl TypingTest {
     }
 
     /// Process a typed character.
-    pub fn handle_input(&mut self, ch: char, stats: &mut Stats) {
+    pub fn handle_input(&mut self, ch: char, stats: &mut StatsTracker) {
         if self.is_finished() {
             return;
         }
@@ -81,7 +77,6 @@ impl TypingTest {
             let correct = ch == ' ';
             stats.record(' ', correct);
             if correct {
-                self.correct += 1;
                 self.needs_space = false;
                 self.word_index += 1;
                 self.char_index = 0;
@@ -91,8 +86,6 @@ impl TypingTest {
                 if self.is_finished() {
                     self.end_time = Some(Instant::now());
                 }
-            } else {
-                self.wrong += 1;
             }
             return;
         }
@@ -101,7 +94,6 @@ impl TypingTest {
             let correct = ch == expected;
             stats.record(expected, correct);
             if correct {
-                self.correct += 1;
                 self.input.push(ch);
                 self.char_index += 1;
 
@@ -119,13 +111,13 @@ impl TypingTest {
                     }
                     self.needs_space = true;
                 }
-            } else {
-                self.wrong += 1;
             }
         }
     }
 
-    pub fn wpm(&self) -> f64 {
+    /// Words per minute for the active session.
+    /// `stats` should be the session-scoped layer.
+    pub fn wpm(&self, stats: &crate::stats::Stats) -> f64 {
         let elapsed = match (self.start_time, self.end_time) {
             (Some(start), Some(end)) => end.duration_since(start),
             (Some(start), None) => start.elapsed(),
@@ -136,16 +128,6 @@ impl TypingTest {
             return 0.0;
         }
         // Standard: 5 chars = 1 word
-        let total_chars = self.correct + self.wrong;
-        (total_chars as f64 / 5.0) / minutes
-    }
-
-    pub fn accuracy(&self) -> f64 {
-        let total = self.correct + self.wrong;
-        if total == 0 {
-            100.0
-        } else {
-            (self.correct as f64 / total as f64) * 100.0
-        }
+        (stats.total_attempts() as f64 / 5.0) / minutes
     }
 }

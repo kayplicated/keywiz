@@ -53,6 +53,8 @@ impl WordsMode {
         .alignment(Alignment::Center);
         f.render_widget(header, areas.header);
 
+        let session = ctx.stats.session();
+
         // Words display
         if self.test.is_finished() {
             let results = Paragraph::new(vec![
@@ -63,8 +65,8 @@ impl WordsMode {
                 )),
                 Line::from(format!(
                     "WPM: {:.0}  Accuracy: {:.0}%",
-                    self.test.wpm(),
-                    self.test.accuracy()
+                    self.test.wpm(session),
+                    session.overall_accuracy()
                 )),
             ])
             .alignment(Alignment::Center);
@@ -81,12 +83,12 @@ impl WordsMode {
         };
         let stats = Paragraph::new(Line::from(vec![
             Span::styled(
-                format!("WPM: {:.0}", self.test.wpm()),
+                format!("WPM: {:.0}", self.test.wpm(session)),
                 Style::default().fg(Color::Cyan),
             ),
             Span::raw("  "),
             Span::styled(
-                format!("Accuracy: {:.0}%", self.test.accuracy()),
+                format!("Accuracy: {:.0}%", session.overall_accuracy()),
                 Style::default().fg(Color::Yellow),
             ),
             Span::raw("  "),

@@ -14,22 +14,26 @@ use super::{ActiveMode, ModeResult};
 pub struct SelectMode;
 
 impl SelectMode {
-    pub fn handle_input(&self, key: KeyEvent, ctx: &AppContext) -> ModeResult {
+    pub fn handle_input(&self, key: KeyEvent, ctx: &mut AppContext) -> ModeResult {
         match key.code {
             KeyCode::Esc => ModeResult::Quit,
             KeyCode::Char('1') => {
+                ctx.stats.new_session();
                 let mode = super::drill::DrillMode::new(ctx, DrillLevel::HomeRow);
                 ModeResult::SwitchTo(ActiveMode::Drill(mode))
             }
             KeyCode::Char('2') => {
+                ctx.stats.new_session();
                 let mode = super::words::WordsMode::new(Some(20));
                 ModeResult::SwitchTo(ActiveMode::Words(mode))
             }
             KeyCode::Char('3') => {
+                ctx.stats.new_session();
                 let mode = super::words::WordsMode::new(None);
                 ModeResult::SwitchTo(ActiveMode::Words(mode))
             }
             KeyCode::Char('4') => {
+                ctx.stats.new_session();
                 let mode = super::text::TextMode::new();
                 ModeResult::SwitchTo(ActiveMode::Text(mode))
             }

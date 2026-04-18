@@ -1,0 +1,82 @@
+//! Two-layer stats bookkeeping.
+//!
+//! [`StatsTracker`] holds a persistent [`Stats`] (lifetime-of-layout) and a
+//! session [`Stats`] (reset when a mode starts or resets). Engines call
+//! [`StatsTracker::record`] once per keystroke and both layers are updated.
+//!
+//! This split lets modes show per-session numbers (current WPM, this run's
+//! accuracy) while the persistent layer accumulates data across sessions for
+//! features like the keyboard heatmap and auto-generated drill sets.
+
+use super::Stats;
+
+/// Orchestrates session-scoped and persistent stats.
+///
+/// Records go to both layers. Reading each layer is explicit via
+/// [`session`](Self::session) and [`persistent`](Self::persistent).
+#[derive(Debug, Clone, Default)]
+pub struct StatsTracker {
+    session: Stats,
+    persistent: Stats,
+}
+
+impl StatsTracker {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Record a keystroke into both layers.
+    pub fn record(&mut self, expected: char, correct: bool) {
+        self.session.record(expected, correct);
+        self.persistent.record(expected, correct);
+    }
+
+    /// Start a fresh session. Persistent stats are untouched.
+    pub fn new_session(&mut self) {
+        self.session = Stats::new();
+    }
+
+    /// Stats for the current session only.
+    pub fn session(&self) -> &Stats {
+        &self.session
+    }
+
+    /// Lifetime-of-layout stats.
+    pub fn persistent(&self) -> &Stats {
+        &self.persistent
+    }
+
+    /// Replace the persistent layer wholesale. Used when loading from disk.
+    #[allow(dead_code)] // wired in the disk-persistence step
+    pub fn set_persistent(&mut self, stats: Stats) {
+        self.persistent = stats;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn record_updates_both_layers() {
+        let mut t = StatsTracker::new();
+        t.record('a', true);
+        t.record('a', false);
+
+        assert_eq!(t.session().get('a').unwrap().attempts, 2);
+        assert_eq!(t.persistent().get('a').unwrap().attempts, 2);
+    }
+
+    #[test]
+    fn new_session_clears_session_only() {
+        let mut t = StatsTracker::new();
+        t.record('a', true);
+        t.record('b', false);
+        t.new_session();
+
+        assert!(t.session().get('a').is_none());
+        assert!(t.session().get('b').is_none());
+        assert_eq!(t.persistent().get('a').unwrap().attempts, 1);
+        assert_eq!(t.persistent().get('b').unwrap().attempts, 1);
+    }
+}
