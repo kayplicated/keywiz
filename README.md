@@ -60,6 +60,7 @@ keywiz -l colemak --from qwerty
 `--from <layout>` tells keywiz what your input keyboard *actually sends*, so each keypress is translated to the equivalent position in the target layout. Useful for SSHing into your machine from a vanilla QWERTY laptop while practicing Gallium, or for testing a layout you haven't switched the OS to yet. Pressing physical `j` on QWERTY registers as whatever the target layout puts at that position.
 
 Shipped keyboards (`keyboards/`): `us_intl`, `kyria`, `elora`, `halcyon_elora_v2`.
+
 Shipped layouts (`layouts/`): `qwerty`, `dvorak`, `colemak`, `colemak-dh`, `workman`, `graphite`, `sturdy`, `gallium`, `canary`, `hyperroll`, `engram`, `semimak`, `isrt`.
 
 ### Adding your own
