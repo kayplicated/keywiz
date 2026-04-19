@@ -1,12 +1,12 @@
 {
-  name: "qwerty",
-  short: "QWERTY",
-  // Standard US QWERTY targeting the canonical main_k* id scheme.
-  // Alpha core (k1..k30) + number row (k31..k40) work on any board
-  // following docs/id-convention.md. Outer-column mappings (k41+)
-  // carry ANSI's punctuation; boards without those slots drop them.
+  name: "qwerty-halcyon_elora_v2",
+  short: "QWERTY (Halcyon)",
+  // Halcyon-specific QWERTY variant. Alpha core + number row match
+  // the generic qwerty.json. The left outer-pinky column is
+  // reassigned to the modcolumn (Tab/CapsLock/Shift) since halcyon
+  // has no dedicated modcolumn and typists typically bind those to
+  // firmware layers. Right outer-pinky stays punctuation + Enter.
   mappings: {
-    // ---- top row (main_k1..k10) ----
     main_k1:  { char: ["q", "Q"] },
     main_k2:  { char: ["w", "W"] },
     main_k3:  { char: ["e", "E"] },
@@ -18,7 +18,6 @@
     main_k9:  { char: ["o", "O"] },
     main_k10: { char: ["p", "P"] },
 
-    // ---- home row (main_k11..k20) ----
     main_k11: { char: ["a", "A"] },
     main_k12: { char: ["s", "S"] },
     main_k13: { char: ["d", "D"] },
@@ -30,7 +29,6 @@
     main_k19: { char: ["l", "L"] },
     main_k20: { char: [";", ":"] },
 
-    // ---- bottom row (main_k21..k30) ----
     main_k21: { char: ["z", "Z"] },
     main_k22: { char: ["x", "X"] },
     main_k23: { char: ["c", "C"] },
@@ -42,7 +40,6 @@
     main_k29: { char: [".", ">"] },
     main_k30: { char: ["/", "?"] },
 
-    // ---- number row (main_k31..k40) ----
     main_k31: { char: ["1", "!"] },
     main_k32: { char: ["2", "@"] },
     main_k33: { char: ["3", "#"] },
@@ -54,23 +51,16 @@
     main_k39: { char: ["9", "("] },
     main_k40: { char: ["0", ")"] },
 
-    // ---- outer columns (ANSI punctuation) ----
-    main_k41: { char: ["`", "~"] },     // left outer num row (grave)
-    main_k46: { char: ["-", "_"] },     // right outer num row (minus)
-    main_k47: { char: ["[", "{"] },     // right outer top row
-    main_k48: { char: ["'", "\""] },    // right outer home row (apostrophe)
+    // left outer-pinky column = modcolumn
+    main_k41: { char: ["`", "~"] },
+    main_k42: { named: "tab" },
+    main_k43: { named: "capslock" },
+    main_k44: { named: "shift" },
 
-    // ---- ANSI overflow ----
-    main_k51: { char: ["=", "+"] },     // equal (far right of num row)
-    main_k52: { char: ["]", "}"] },     // right bracket
-    main_k53: { char: ["\\", "|"] },    // backslash
-
-    // ---- named mods ----
-    mods_tab:         { named: "tab" },
-    mods_capslock:    { named: "capslock" },
-    mods_shift_left:  { named: "shift" },
-    mods_shift_right: { named: "shift" },
-    mods_enter:       { named: "enter" },
-    mods_backspace:   { named: "backspace" },
+    // right outer-pinky column = punctuation + enter
+    main_k46: { char: ["-", "_"] },
+    main_k47: { char: ["[", "{"] },
+    main_k48: { char: ["'", "\""] },
+    main_k49: { named: "enter" },
   },
 }

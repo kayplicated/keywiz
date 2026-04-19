@@ -65,11 +65,16 @@ pub fn draw_frame(f: &mut ratatui::Frame, placements: &[Placement], display: &Di
             ),
             Span::raw(suffix),
         ])
-    } else if display.text.is_some() {
-        Line::from(Span::styled(
-            "Text Practice",
-            Style::default().fg(Color::Cyan).bold(),
-        ))
+    } else if let Some(text) = &display.text {
+        Line::from(vec![
+            Span::styled(text.title.clone(), Style::default().fg(Color::Cyan).bold()),
+            Span::raw(format!(
+                "  ({}/{})  ",
+                text.passage_index + 1,
+                text.passage_total
+            )),
+            Span::styled("◀ ▶ switch", Style::default().fg(Color::DarkGray)),
+        ])
     } else {
         Line::from("")
     };
@@ -145,20 +150,27 @@ pub fn render_keyboard(
         return;
     }
 
-    // Compute the widget's pixel bounds so we can center it.
+    // Compute each key's left/right/top/bottom *edges* in terminal
+    // cells, using floor on both sides. Rounding centers instead
+    // would bias half-positive and half-negative fractions in
+    // opposite directions and open 1-cell gaps at zero crossings
+    // (e.g. keys at c=-0.5 and c=0.5 must tile edge-to-edge, but
+    // round() puts them 1 cell apart).
+    let edge = |v: f32, cell: u16| (v * cell as f32).floor() as i32;
+
     let mut min_col = i32::MAX;
     let mut max_col = i32::MIN;
     let mut min_row = i32::MAX;
     let mut max_row = i32::MIN;
     for p in placements {
-        let col = (p.pos_a * CELL_W as f32).round() as i32;
-        let row = (p.pos_b * CELL_H as f32).round() as i32;
-        let w = (p.width * CELL_W as f32).round().max(3.0) as i32;
-        let h = (p.height * CELL_H as f32).round().max(3.0) as i32;
-        min_col = min_col.min(col);
-        max_col = max_col.max(col + w);
-        min_row = min_row.min(row);
-        max_row = max_row.max(row + h);
+        let left = edge(p.pos_a - p.width / 2.0, CELL_W);
+        let right = edge(p.pos_a + p.width / 2.0, CELL_W);
+        let top = edge(p.pos_b - p.height / 2.0, CELL_H);
+        let bottom = edge(p.pos_b + p.height / 2.0, CELL_H);
+        min_col = min_col.min(left);
+        max_col = max_col.max(right);
+        min_row = min_row.min(top);
+        max_row = max_row.max(bottom);
     }
     let widget_w = (max_col - min_col).max(0) as u16;
     let widget_h = (max_row - min_row).max(0) as u16;
@@ -169,27 +181,31 @@ pub fn render_keyboard(
     let highlight_lower = display.highlight_char.map(|c| c.to_ascii_lowercase());
 
     for placement in placements {
-        let col = (placement.pos_a * CELL_W as f32).round() as i32;
-        let row = (placement.pos_b * CELL_H as f32).round() as i32;
-        let x = origin_x as i32 + col - min_col;
-        let y = origin_y as i32 + row - min_row;
+        let left = edge(placement.pos_a - placement.width / 2.0, CELL_W);
+        let right = edge(placement.pos_a + placement.width / 2.0, CELL_W);
+        let top = edge(placement.pos_b - placement.height / 2.0, CELL_H);
+        let bottom = edge(placement.pos_b + placement.height / 2.0, CELL_H);
+
+        let x = origin_x as i32 + left - min_col;
+        let y = origin_y as i32 + top - min_row;
         if x < 0 || y < 0 {
             continue;
         }
         let x = x as u16;
         let y = y as u16;
-        let w = (placement.width * CELL_W as f32).round().max(3.0) as u16;
-        let h = (placement.height * CELL_H as f32).round().max(3.0) as u16;
+        let w = ((right - left).max(3)) as u16;
+        let h = ((bottom - top).max(3)) as u16;
         if x + w > area.x + area.width || y + h > area.y + area.height {
             continue;
         }
         let rect = Rect::new(x, y, w, h);
 
-        // Highlight matching: the engine hands us a char to
-        // highlight, renderer compares to each placement's label
-        // (for Char mappings, label is the lower char).
+        // Highlight matching: only typable keys can be highlighted
+        // as typing targets. Named actions (shift/tab/etc.) whose
+        // labels happen to start with the target char shouldn't
+        // flash up when the user is meant to type a letter.
         let is_highlighted = match highlight_lower {
-            Some(h) => placement.label.chars().next() == Some(h),
+            Some(h) => placement.typable && placement.label.chars().next() == Some(h),
             None => false,
         };
 

@@ -67,6 +67,13 @@ fn draw_words_body(
         return;
     }
 
+    // Clamp the scrolling word display to a readable width on wide
+    // terminals so the cursor stays near the visual center.
+    const MAX_W: u16 = 80;
+    let inner_w = area.width.min(MAX_W);
+    let inner_x = area.x + area.width.saturating_sub(inner_w) / 2;
+    let area = Rect::new(inner_x, area.y, inner_w, area.height);
+
     let width = area.width as usize;
     let half = width / 2;
 
@@ -118,16 +125,23 @@ fn draw_text_body(
         return;
     }
 
-    // Lay out the body as wrapped lines. Minimal: just render
-    // plain body with cursor highlighted.
     let chars: Vec<char> = text.body.chars().collect();
-    let width = area.width as usize;
-    if width < 4 || chars.is_empty() {
+    if chars.is_empty() || area.width < 10 || area.height == 0 {
         return;
     }
-    let inner_w = width.saturating_sub(2);
 
-    // Word-wrap the body into lines.
+    // Clamp body to a readable max width and center within the
+    // allotted area. Wide terminals otherwise smear the passage
+    // across the full screen.
+    const MAX_W: u16 = 80;
+    let inner_w = area.width.min(MAX_W);
+    let inner_x = area.x + area.width.saturating_sub(inner_w) / 2;
+    let area = Rect::new(inner_x, area.y, inner_w, area.height);
+
+    // Word-wrap into lines of at most `area.width` characters,
+    // tracking each char's index in the original body so we can
+    // style by cursor position.
+    let max_w = area.width as usize;
     let mut lines: Vec<Vec<(char, usize)>> = Vec::new();
     let mut current: Vec<(char, usize)> = Vec::new();
     let mut last_space: Option<usize> = None;
@@ -142,7 +156,7 @@ fn draw_text_body(
             last_space = Some(current.len());
         }
         current.push((ch, i));
-        if current.len() >= inner_w {
+        if current.len() >= max_w {
             if let Some(sp) = last_space {
                 let rest = current.split_off(sp + 1);
                 lines.push(std::mem::take(&mut current));
@@ -158,16 +172,16 @@ fn draw_text_body(
         lines.push(current);
     }
 
-    // Window the lines around the cursor.
+    // Window lines around the cursor so the active line stays
+    // roughly centered vertically within the body band.
     let cursor_line_idx = lines
         .iter()
         .position(|l| l.iter().any(|(_, i)| *i == text.cursor))
         .unwrap_or(0);
-    let visible_line_count = (area.height as usize).max(1);
-    let start = cursor_line_idx.saturating_sub(visible_line_count / 2);
-    let end = (start + visible_line_count).min(lines.len());
+    let visible = (area.height as usize).max(1);
+    let start = cursor_line_idx.saturating_sub(visible / 2);
+    let end = (start + visible).min(lines.len());
 
-    let dim = Style::default().fg(Color::DarkGray);
     let done = Style::default().fg(Color::Green);
     let cursor_style = Style::default()
         .fg(Color::White)
@@ -194,19 +208,5 @@ fn draw_text_body(
         })
         .collect();
 
-    // Header with title + counter
-    let mut out: Vec<Line> = Vec::with_capacity(rendered.len() + 2);
-    out.push(Line::from(vec![
-        Span::styled(text.title.clone(), Style::default().fg(Color::Cyan).bold()),
-        Span::raw(format!(
-            "  ({}/{})",
-            text.passage_index + 1,
-            text.passage_total
-        )),
-        Span::styled("  ◀ ▶ switch", dim),
-    ]));
-    out.push(Line::from(""));
-    out.extend(rendered);
-
-    f.render_widget(Paragraph::new(out), area);
+    f.render_widget(Paragraph::new(rendered), area);
 }

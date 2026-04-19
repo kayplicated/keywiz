@@ -12,42 +12,52 @@
 
 use crate::engine::placement::Placement;
 use crate::keyboard::common::PhysicalKey;
-use crate::keyboard::Keyboard;
+use crate::keyboard::{Keyboard, StaggerType};
 use crate::mapping::{KeyMapping, Layout};
 use crate::stats::Stats;
 
-/// Project the active keyboard for a terminal renderer. Produces
-/// placements with `pos_a = c` (column), `pos_b = r` (row), both
-/// in integer-valued f32. Terminal-space stagger rules apply here:
+/// Project the active keyboard for a terminal renderer.
 ///
-/// - **col-stag** blocks use `r`/`c` directly (vertical splay is
-///   flattened — the whole point of the schematic coordinate).
-/// - **row-stag** blocks likewise use `r`/`c` (horizontal splay
-///   would require fractional cells, which terminal can't render
-///   cleanly; keyboards encode the row shift in `c` if they want
-///   it visible).
-/// - **free-form** blocks use `r`/`c` (terminal renders them as a
-///   flat grid; real xy/rotation is the gui renderer's job).
+/// Each block's stagger type drives how the key slots translate to
+/// terminal positions:
+///
+/// - **row-stag**: `pos_a = c + r * 0.5`. Every row shifts half a
+///   slot horizontally relative to the row above (ANSI stagger).
+///   Home row (`r=0`) is the anchor; rows above shift left, rows
+///   below shift right, symmetrically.
+/// - **col-stag**: `pos_a = c`. Columns' vertical splay (real `y`)
+///   is flattened; keys tile as a clean grid in terminal.
+/// - **free-form**: `pos_a = c`. Placed by the schematic slot;
+///   geometric xy + rotation is the gui renderer's job.
 pub fn project_for_terminal(
     keyboard: &dyn Keyboard,
     layout: &Layout,
     stats: &Stats,
 ) -> Vec<Placement> {
-    keyboard
-        .keys()
-        .map(|k| Placement {
-            id: k.id.clone(),
-            pos_a: k.c as f32,
-            pos_b: k.r as f32,
-            pos_r: 0.0,
-            width: 1.0,
-            height: 1.0,
-            finger: k.finger,
-            cluster: k.cluster.clone(),
-            label: label_for(k, layout),
-            heat: heat_for(k, layout, stats),
-        })
-        .collect()
+    let mut out: Vec<Placement> = Vec::new();
+    for block in keyboard.blocks() {
+        let row_shift_factor: f32 = match block.stagger_type() {
+            StaggerType::RowStag => 0.5,
+            StaggerType::ColStag | StaggerType::FreeForm => 0.0,
+        };
+        for k in block.keys() {
+            let pos_a = k.c as f32 + k.r as f32 * row_shift_factor;
+            out.push(Placement {
+                id: k.id.clone(),
+                pos_a,
+                pos_b: k.r as f32,
+                pos_r: 0.0,
+                width: 1.0,
+                height: 1.0,
+                finger: k.finger,
+                cluster: k.cluster.clone(),
+                label: label_for(k, layout),
+                typable: is_typable(k, layout),
+                heat: heat_for(k, layout, stats),
+            });
+        }
+    }
+    out
 }
 
 /// Project for a gui renderer. Produces placements with
@@ -77,9 +87,17 @@ pub fn project_for_gui(
             finger: k.finger,
             cluster: k.cluster.clone(),
             label: label_for(k, layout),
+            typable: is_typable(k, layout),
             heat: heat_for(k, layout, stats),
         })
         .collect()
+}
+
+/// Whether this key produces a typed character under the active
+/// layout. Used by renderers to decide whether a key is a valid
+/// highlight target — named actions (shift, tab, enter) aren't.
+fn is_typable(key: &PhysicalKey, layout: &Layout) -> bool {
+    matches!(layout.get(&key.id), Some(KeyMapping::Char { .. }))
 }
 
 /// Resolve a key's layout mapping to a displayable label.

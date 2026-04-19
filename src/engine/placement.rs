@@ -48,6 +48,11 @@ pub struct Placement {
     /// Pre-formatted label text to display on the key cap. Empty
     /// when the layout doesn't map this key ("dead" / unmapped).
     pub label: String,
+    /// `true` when the layout maps this key to a typed character
+    /// (KeyMapping::Char). `false` for named actions (shift, tab,
+    /// enter) and for unmapped keys. Renderers use this to decide
+    /// whether a key is highlightable as a typing target.
+    pub typable: bool,
     /// Normalized heat level in `0.0..=1.0` for heatmap rendering,
     /// or `None` when the key has no accumulated heat. Renderers
     /// map this to their own color palettes.

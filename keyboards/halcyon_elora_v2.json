@@ -3,111 +3,97 @@
   short: "Halcyon Elora v2",
   description: "Kay's Halcyon Elora v2 from splitkb.com — column-staggered split with aggressive pinky pull-back and 7-key thumb cluster per hand.",
 
-  // A blocks-based keyboard. Each block groups keys by region and
-  // declares a stagger type that drives terminal rendering:
-  //   - col-stag: terminal flattens the vertical splay (uses r/c).
-  //                Desktop/web renderers use the real y.
-  //   - free-form: keys placed by x/y + rotation (fan-shaped
-  //                clusters). Terminal falls back to r/c for layout.
+  // Col-stag main block. Ids follow docs/id-convention.md:
+  //   main_k1..k30  — 30-key alpha core, inner 5 cols per hand
+  //                   × 3 rows (top / home / bottom)
+  //   main_k31..k40 — number row (10 slots, one per alpha col)
+  //   main_k41..k50 — outer columns; halcyon fills the pinky-outer
+  //                   column on each hand across all 4 rows
   //
-  // Col offset convention (oxey-compatible), left→right across one hand:
-  //   pinky outer (-6): pulled back 0.75
-  //   pinky inner (-5): pulled back 0.75
-  //   ring       (-4): pulled back 0.25
-  //   middle     (-3): pushed forward 0.5
-  //   index      (-2): pulled back 0.25
-  //   index-inner(-1): baseline
+  // Geometric y carries the col-stag splay:
+  //   pinky-outer & pinky-inner: pulled back 0.75
+  //   ring:    pulled back 0.25
+  //   middle:  pushed forward 0.5
+  //   index-outer: pulled back 0.25
+  //   index-inner: baseline
   blocks: [
     {
       type: "col-stag",
       cluster: "main",
       keys: [
-        // ---- left number row (r = -2) ----
-        { id: "main_k1",  r: -2, c: -6, x: -6.0, y: -1.25, finger: "LPinky" },
-        { id: "main_k2",  r: -2, c: -5, x: -5.0, y: -1.25, finger: "LPinky" },
-        { id: "main_k3",  r: -2, c: -4, x: -4.0, y: -2.25, finger: "LRing" },
-        { id: "main_k4",  r: -2, c: -3, x: -3.0, y: -2.5,  finger: "LMiddle" },
-        { id: "main_k5",  r: -2, c: -2, x: -2.0, y: -2.25, finger: "LIndex" },
-        { id: "main_k6",  r: -2, c: -1, x: -1.0, y: -2.0,  finger: "LIndex" },
+        // ---- top alpha row (r = -1), main_k1..k10 ----
+        { id: "main_k1",  r: -1, c: -5, x: -5.0, y: -0.25, finger: "LPinky" },
+        { id: "main_k2",  r: -1, c: -4, x: -4.0, y: -1.25, finger: "LRing" },
+        { id: "main_k3",  r: -1, c: -3, x: -3.0, y: -1.5,  finger: "LMiddle" },
+        { id: "main_k4",  r: -1, c: -2, x: -2.0, y: -1.25, finger: "LIndex" },
+        { id: "main_k5",  r: -1, c: -1, x: -1.0, y: -1.0,  finger: "LIndex" },
+        { id: "main_k6",  r: -1, c:  1, x:  1.0, y: -1.0,  finger: "RIndex" },
+        { id: "main_k7",  r: -1, c:  2, x:  2.0, y: -1.25, finger: "RIndex" },
+        { id: "main_k8",  r: -1, c:  3, x:  3.0, y: -1.5,  finger: "RMiddle" },
+        { id: "main_k9",  r: -1, c:  4, x:  4.0, y: -1.25, finger: "RRing" },
+        { id: "main_k10", r: -1, c:  5, x:  5.0, y: -0.25, finger: "RPinky" },
 
-        // ---- left top row (r = -1) ----
-        { id: "main_k7",  r: -1, c: -5, x: -5.0, y: -0.25, finger: "LPinky" },
-        { id: "main_k8",  r: -1, c: -4, x: -4.0, y: -1.25, finger: "LRing" },
-        { id: "main_k9",  r: -1, c: -3, x: -3.0, y: -1.5,  finger: "LMiddle" },
-        { id: "main_k10", r: -1, c: -2, x: -2.0, y: -1.25, finger: "LIndex" },
-        { id: "main_k11", r: -1, c: -1, x: -1.0, y: -1.0,  finger: "LIndex" },
+        // ---- home row (r = 0), main_k11..k20 ----
+        { id: "main_k11", r:  0, c: -5, x: -5.0, y:  0.75, finger: "LPinky" },
+        { id: "main_k12", r:  0, c: -4, x: -4.0, y: -0.25, finger: "LRing" },
+        { id: "main_k13", r:  0, c: -3, x: -3.0, y: -0.5,  finger: "LMiddle" },
+        { id: "main_k14", r:  0, c: -2, x: -2.0, y: -0.25, finger: "LIndex" },
+        { id: "main_k15", r:  0, c: -1, x: -1.0, y:  0.0,  finger: "LIndex" },
+        { id: "main_k16", r:  0, c:  1, x:  1.0, y:  0.0,  finger: "RIndex" },
+        { id: "main_k17", r:  0, c:  2, x:  2.0, y: -0.25, finger: "RIndex" },
+        { id: "main_k18", r:  0, c:  3, x:  3.0, y: -0.5,  finger: "RMiddle" },
+        { id: "main_k19", r:  0, c:  4, x:  4.0, y: -0.25, finger: "RRing" },
+        { id: "main_k20", r:  0, c:  5, x:  5.0, y:  0.75, finger: "RPinky" },
 
-        // ---- left home row (r = 0) ----
-        { id: "main_k12", r:  0, c: -5, x: -5.0, y:  0.75, finger: "LPinky" },
-        { id: "main_k13", r:  0, c: -4, x: -4.0, y: -0.25, finger: "LRing" },
-        { id: "main_k14", r:  0, c: -3, x: -3.0, y: -0.5,  finger: "LMiddle" },
-        { id: "main_k15", r:  0, c: -2, x: -2.0, y: -0.25, finger: "LIndex" },
-        { id: "main_k16", r:  0, c: -1, x: -1.0, y:  0.0,  finger: "LIndex" },
+        // ---- bottom row (r = 1), main_k21..k30 ----
+        { id: "main_k21", r:  1, c: -5, x: -5.0, y:  1.75, finger: "LPinky" },
+        { id: "main_k22", r:  1, c: -4, x: -4.0, y:  0.75, finger: "LRing" },
+        { id: "main_k23", r:  1, c: -3, x: -3.0, y:  0.5,  finger: "LMiddle" },
+        { id: "main_k24", r:  1, c: -2, x: -2.0, y:  0.75, finger: "LIndex" },
+        { id: "main_k25", r:  1, c: -1, x: -1.0, y:  1.0,  finger: "LIndex" },
+        { id: "main_k26", r:  1, c:  1, x:  1.0, y:  1.0,  finger: "RIndex" },
+        { id: "main_k27", r:  1, c:  2, x:  2.0, y:  0.75, finger: "RIndex" },
+        { id: "main_k28", r:  1, c:  3, x:  3.0, y:  0.5,  finger: "RMiddle" },
+        { id: "main_k29", r:  1, c:  4, x:  4.0, y:  0.75, finger: "RRing" },
+        { id: "main_k30", r:  1, c:  5, x:  5.0, y:  1.75, finger: "RPinky" },
 
-        // ---- left bottom row (r = 1) ----
-        { id: "main_k17", r:  1, c: -5, x: -5.0, y:  1.75, finger: "LPinky" },
-        { id: "main_k18", r:  1, c: -4, x: -4.0, y:  0.75, finger: "LRing" },
-        { id: "main_k19", r:  1, c: -3, x: -3.0, y:  0.5,  finger: "LMiddle" },
-        { id: "main_k20", r:  1, c: -2, x: -2.0, y:  0.75, finger: "LIndex" },
-        { id: "main_k21", r:  1, c: -1, x: -1.0, y:  1.0,  finger: "LIndex" },
+        // ---- number row (r = -2), main_k31..k40 ----
+        { id: "main_k31", r: -2, c: -5, x: -5.0, y: -1.25, finger: "LPinky" },
+        { id: "main_k32", r: -2, c: -4, x: -4.0, y: -2.25, finger: "LRing" },
+        { id: "main_k33", r: -2, c: -3, x: -3.0, y: -2.5,  finger: "LMiddle" },
+        { id: "main_k34", r: -2, c: -2, x: -2.0, y: -2.25, finger: "LIndex" },
+        { id: "main_k35", r: -2, c: -1, x: -1.0, y: -2.0,  finger: "LIndex" },
+        { id: "main_k36", r: -2, c:  1, x:  1.0, y: -2.0,  finger: "RIndex" },
+        { id: "main_k37", r: -2, c:  2, x:  2.0, y: -2.25, finger: "RIndex" },
+        { id: "main_k38", r: -2, c:  3, x:  3.0, y: -2.5,  finger: "RMiddle" },
+        { id: "main_k39", r: -2, c:  4, x:  4.0, y: -2.25, finger: "RRing" },
+        { id: "main_k40", r: -2, c:  5, x:  5.0, y: -1.25, finger: "RPinky" },
 
-        // ---- right number row (r = -2) ----
-        { id: "main_k22", r: -2, c:  1, x:  1.0, y: -2.0,  finger: "RIndex" },
-        { id: "main_k23", r: -2, c:  2, x:  2.0, y: -2.25, finger: "RIndex" },
-        { id: "main_k24", r: -2, c:  3, x:  3.0, y: -2.5,  finger: "RMiddle" },
-        { id: "main_k25", r: -2, c:  4, x:  4.0, y: -2.25, finger: "RRing" },
-        { id: "main_k26", r: -2, c:  5, x:  5.0, y: -1.25, finger: "RPinky" },
-        { id: "main_k27", r: -2, c:  6, x:  6.0, y: -1.25, finger: "RPinky" },
-
-        // ---- right top row (r = -1) ----
-        { id: "main_k28", r: -1, c:  1, x:  1.0, y: -1.0,  finger: "RIndex" },
-        { id: "main_k29", r: -1, c:  2, x:  2.0, y: -1.25, finger: "RIndex" },
-        { id: "main_k30", r: -1, c:  3, x:  3.0, y: -1.5,  finger: "RMiddle" },
-        { id: "main_k31", r: -1, c:  4, x:  4.0, y: -1.25, finger: "RRing" },
-        { id: "main_k32", r: -1, c:  5, x:  5.0, y: -0.25, finger: "RPinky" },
-        { id: "main_k33", r: -1, c:  6, x:  6.0, y: -0.25, finger: "RPinky" },
-
-        // ---- right home row (r = 0) ----
-        { id: "main_k34", r:  0, c:  1, x:  1.0, y:  0.0,  finger: "RIndex" },
-        { id: "main_k35", r:  0, c:  2, x:  2.0, y: -0.25, finger: "RIndex" },
-        { id: "main_k36", r:  0, c:  3, x:  3.0, y: -0.5,  finger: "RMiddle" },
-        { id: "main_k37", r:  0, c:  4, x:  4.0, y: -0.25, finger: "RRing" },
-        { id: "main_k38", r:  0, c:  5, x:  5.0, y:  0.75, finger: "RPinky" },
-        { id: "main_k39", r:  0, c:  6, x:  6.0, y:  0.75, finger: "RPinky" },
-
-        // ---- right bottom row (r = 1) ----
-        { id: "main_k40", r:  1, c:  1, x:  1.0, y:  1.0,  finger: "RIndex" },
-        { id: "main_k41", r:  1, c:  2, x:  2.0, y:  0.75, finger: "RIndex" },
-        { id: "main_k42", r:  1, c:  3, x:  3.0, y:  0.5,  finger: "RMiddle" },
-        { id: "main_k43", r:  1, c:  4, x:  4.0, y:  0.75, finger: "RRing" },
-        { id: "main_k44", r:  1, c:  5, x:  5.0, y:  1.75, finger: "RPinky" },
+        // ---- outer pinky columns (halcyon's extra 6th col) ----
+        // main_k41: left outer-pinky number row
+        { id: "main_k41", r: -2, c: -6, x: -6.0, y: -1.25, finger: "LPinky" },
+        // main_k42: left outer-pinky top row
+        { id: "main_k42", r: -1, c: -6, x: -6.0, y: -0.25, finger: "LPinky" },
+        // main_k43: left outer-pinky home row
+        { id: "main_k43", r:  0, c: -6, x: -6.0, y:  0.75, finger: "LPinky" },
+        // main_k44: left outer-pinky bottom row
+        { id: "main_k44", r:  1, c: -6, x: -6.0, y:  1.75, finger: "LPinky" },
+        // main_k46..k49: right outer-pinky column
+        { id: "main_k46", r: -2, c:  6, x:  6.0, y: -1.25, finger: "RPinky" },
+        { id: "main_k47", r: -1, c:  6, x:  6.0, y: -0.25, finger: "RPinky" },
+        { id: "main_k48", r:  0, c:  6, x:  6.0, y:  0.75, finger: "RPinky" },
+        { id: "main_k49", r:  1, c:  6, x:  6.0, y:  1.75, finger: "RPinky" },
       ],
     },
 
-    // Mod column keys — kept in the mods cluster so layouts that
-    // want to remap Caps→Ctrl etc. can target them by semantic id.
-    {
-      type: "col-stag",
-      cluster: "mods",
-      keys: [
-        { id: "mods_tab",        r: -1, c: -6, x: -6.0, y: -0.25, finger: "LPinky" },
-        { id: "mods_capslock",   r:  0, c: -6, x: -6.0, y:  0.75, finger: "LPinky" },
-        { id: "mods_shift_left", r:  1, c: -6, x: -6.0, y:  1.75, finger: "LPinky" },
-        { id: "mods_enter",      r:  1, c:  6, x:  6.0, y:  1.75, finger: "RPinky" },
-      ],
-    },
-
-    // Thumb clusters — geometrically fan-shaped, rendered as two
-    // flat rows in terminal via r/c. Placeholder xy until real
-    // measurements are taken.
+    // Thumb clusters — 7 keys per hand. k1/k2 inner-upper, k3..k7
+    // outer-lower. Placeholder xy.
     {
       type: "free-form",
       cluster: "left_thumb",
       keys: [
-        // inner (upper) row — 2 keys closer to the home-row bottom
         { id: "left_thumb_k1", r: 2, c: -2, x: -2.0, y: 3.0, finger: "LThumb" },
         { id: "left_thumb_k2", r: 2, c: -1, x: -1.0, y: 3.0, finger: "LThumb" },
-        // outer (lower) row — 5 keys fanning out toward the edge
         { id: "left_thumb_k3", r: 3, c: -5, x: -5.0, y: 4.0, finger: "LThumb" },
         { id: "left_thumb_k4", r: 3, c: -4, x: -4.0, y: 4.0, finger: "LThumb" },
         { id: "left_thumb_k5", r: 3, c: -3, x: -3.0, y: 4.0, finger: "LThumb" },

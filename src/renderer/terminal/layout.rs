@@ -61,23 +61,35 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
     let red = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
     let red_dim = Style::default().fg(Color::Red);
 
-    let keyboard_span = match &display.broken_keyboard {
+    let name = Style::default().fg(Color::Gray);
+
+    let keyboard_name = match &display.broken_keyboard {
         Some(b) => Span::styled(b.name.clone(), red),
-        None => Span::styled(display.keyboard_short.clone(), dim),
+        None => Span::styled(display.keyboard_short.clone(), name),
     };
-    let layout_span = match &display.broken_layout {
+    let layout_name = match &display.broken_layout {
         Some(b) => Span::styled(b.name.clone(), red),
-        None => Span::styled(display.layout_short.clone(), dim),
+        None => Span::styled(display.layout_short.clone(), name),
     };
-    let exercise_span = Span::styled(display.exercise_short.clone(), dim);
+    let exercise_name = Span::styled(display.exercise_short.clone(), name);
+
+    // Each group: "Ctrl+↑↓ · Keyboard"; groups separated by "   —   "
+    // so the (binding, name) pairs read as discrete units.
+    let sep = Span::styled("     ", dim);
+    let dot = Span::styled(" · ", dim);
 
     let indicator = Line::from(vec![
-        Span::styled("Ctrl+↑↓  ", dim),
-        keyboard_span,
-        Span::styled("  —  ", dim),
-        layout_span,
-        Span::styled("  Ctrl+←→  ·  Alt+←→  ", dim),
-        exercise_span,
+        Span::styled("Ctrl+↑↓", dim),
+        dot.clone(),
+        keyboard_name,
+        sep.clone(),
+        Span::styled("Ctrl+←→", dim),
+        dot.clone(),
+        layout_name,
+        sep,
+        Span::styled("Alt+←→", dim),
+        dot,
+        exercise_name,
     ]);
 
     let reason = display

@@ -13,9 +13,12 @@ use crate::keyboard::common::{Cluster, Finger, Point};
 #[derive(Debug, Clone)]
 pub struct PhysicalKey {
     pub id: String,
-    /// Schematic row index. Integer. Used by terminal renderer.
+    /// Row slot. Integer. Used by terminal renderer.
     pub r: i32,
-    /// Schematic column index. Integer. Used by terminal renderer.
+    /// Column slot within the row. Integer. Used by terminal
+    /// renderer. Row-stag blocks apply a per-row horizontal
+    /// offset during projection so half-key stagger still shows
+    /// even though c itself is integer.
     pub c: i32,
     /// Geometric x (key-width units from home-row center). Used by
     /// desktop/webui and distance analysis.
