@@ -1,20 +1,13 @@
-//! Heatmap colorization — moved from the old `ui/heatmap.rs`.
+//! Heatmap color gradient for the terminal renderer.
 //!
-//! Drives per-key coloring from accumulated heat in `Stats`.
+//! Input is a normalized heat value `0.0..=1.0` — the engine has
+//! already queried stats and produced it. Output is a ratatui
+//! color sampled from the cool-to-hot gradient.
 
-use crate::stats::{Stats, MAX_HEAT};
 use ratatui::style::Color;
 
-pub fn heat_color(stats: &Stats, ch: char) -> Option<Color> {
-    let record = stats.get(ch)?;
-    if record.heat == 0 {
-        return None;
-    }
-    let t = record.heat as f64 / MAX_HEAT as f64;
-    Some(color_for_heat(t.clamp(0.0, 1.0)))
-}
-
-fn color_for_heat(t: f64) -> Color {
+/// Map a normalized heat level to a ratatui color, cool → hot.
+pub fn color_for_heat(t: f32) -> Color {
     const STOPS: &[(u8, u8, u8)] = &[
         (120, 60, 200),
         (70, 100, 220),
@@ -23,6 +16,7 @@ fn color_for_heat(t: f64) -> Color {
         (240, 140, 50),
         (230, 50, 50),
     ];
+    let t = t.clamp(0.0, 1.0) as f64;
     let segments = STOPS.len() - 1;
     let scaled = t * segments as f64;
     let i = (scaled.floor() as usize).min(segments - 1);

@@ -1,8 +1,8 @@
-//! Ratatui drawing routines for the terminal renderer.
+//! Drawing routines for the terminal renderer.
 //!
-//! Takes pre-computed placements from `placement.rs` and paints
-//! boxes + labels for each key. Colors come from finger assignment
-//! or heatmap depending on whether `heat` is supplied.
+//! Takes a `Placement` (already resolved by the engine) and paints
+//! a box + label in ratatui. Colors come from finger assignment or
+//! heat, depending on the `heatmap_on` toggle from DisplayState.
 
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style, Stylize};
@@ -10,32 +10,31 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-use crate::keyboard::common::PhysicalKey;
-use crate::mapping::KeyMapping;
-use crate::stats::Stats;
+use crate::engine::placement::Placement;
 
 use super::heatmap;
-use super::naming::human_name;
-use super::placement::TerminalPlacement;
+use super::naming;
 
 /// Paint one key in the given rect.
 pub fn draw_key(
     f: &mut Frame,
     rect: Rect,
-    placement: &TerminalPlacement,
-    mapping: Option<&KeyMapping>,
+    placement: &Placement,
     is_highlighted: bool,
-    heat: Option<&Stats>,
+    heatmap_on: bool,
 ) {
-    let Some(mapping) = mapping else {
-        // Unmapped: dim outline.
+    if placement.label.is_empty() {
+        // Unmapped key: dim outline, no label.
         let style = Style::default().fg(Color::DarkGray);
-        f.render_widget(Paragraph::new(box_lines(rect.width, rect.height, "", style)), rect);
+        f.render_widget(
+            Paragraph::new(box_lines(rect.width, rect.height, "", style)),
+            rect,
+        );
         return;
-    };
+    }
 
-    let (label, lower_char) = label_for(mapping, placement.key);
-    let color = color_for(placement.key, lower_char, heat);
+    let label = label_for(placement);
+    let color = color_for(placement, heatmap_on);
 
     if is_highlighted {
         let border = Style::default().fg(color).bold();
@@ -59,34 +58,37 @@ pub fn draw_key(
     }
 }
 
-fn label_for(mapping: &KeyMapping, key: &PhysicalKey) -> (String, Option<char>) {
-    match mapping {
-        KeyMapping::Char { lower, .. } => (lower.to_string(), Some(*lower)),
-        KeyMapping::Named { name } => {
-            // Named mappings get resolved through the id-naming
-            // helper, which knows "shift" → "L-Shift" given the key's
-            // id context. Fall back to the name itself if the helper
-            // doesn't recognize it.
-            let id_guess = format!("mods_{name}");
-            let label = human_name(&id_guess);
-            // If the helper returned the id verbatim (didn't match),
-            // just use the name directly — nicer than "mods_whatever".
-            let label = if label == id_guess {
-                name.clone()
-            } else {
-                label
-            };
-            let _ = key;
-            (label, None)
-        }
+/// Turn the engine-provided label into a display string. For typed
+/// keys the label is already the single char. For named keys the
+/// label is the raw action name; format it as a short terminal
+/// label ("shift" → "Shift", "shift_left" → "L-Shift", etc.).
+fn label_for(placement: &Placement) -> String {
+    // Single-char labels are typed chars — display verbatim.
+    if placement.label.chars().count() == 1 {
+        return placement.label.clone();
+    }
+    // Multi-char labels are named actions. Prefix with "mods_" so
+    // `naming::human_name` can use its mods lookup table; the
+    // prefix is stripped inside the helper when applicable.
+    let id_guess = format!("mods_{}", placement.label);
+    let resolved = naming::human_name(&id_guess);
+    if resolved == id_guess {
+        // naming didn't recognize it — fall back to the raw name
+        // title-cased a little.
+        placement.label.clone()
+    } else {
+        resolved
     }
 }
 
-fn color_for(key: &PhysicalKey, lower_char: Option<char>, heat: Option<&Stats>) -> Color {
-    match (heat, lower_char) {
-        (Some(stats), Some(ch)) => heatmap::heat_color(stats, ch).unwrap_or(Color::DarkGray),
-        _ => key.finger.color(),
+fn color_for(placement: &Placement, heatmap_on: bool) -> Color {
+    if heatmap_on {
+        if let Some(heat) = placement.heat {
+            return heatmap::color_for_heat(heat);
+        }
+        return Color::DarkGray;
     }
+    placement.finger.color()
 }
 
 fn box_lines(w: u16, h: u16, label: &str, style: Style) -> Vec<Line<'static>> {

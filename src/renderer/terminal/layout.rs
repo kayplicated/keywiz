@@ -2,9 +2,11 @@
 //!
 //! `centered_content_layout` carves a mode's screen into header /
 //! body / keyboard / stats / footer bands. `render_footer` paints
-//! the standard two-line footer (indicator line + optional error).
+//! the standard two-line footer from a `DisplayState`.
 
 use ratatui::layout::{Constraint, Layout, Rect};
+
+use crate::engine::placement::DisplayState;
 
 pub struct ContentAreas {
     pub header: Rect,
@@ -46,10 +48,10 @@ pub fn centered_content_layout(area: Rect, body_h: u16, keyboard_h: u16) -> Cont
     }
 }
 
-/// Two-line footer. Line 1 is the keyboard / layout indicator (red
-/// for broken selections); line 2 shows the parse-error reason when
-/// something's broken, blank otherwise.
-pub fn render_footer(f: &mut ratatui::Frame, area: Rect, ctx: &crate::app::AppContext) {
+/// Two-line footer. Line 1: keyboard — layout — exercise indicator
+/// with cycling hints (broken names show in red). Line 2: parse
+/// error reason when something's broken, blank otherwise.
+pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState) {
     use ratatui::layout::Alignment;
     use ratatui::style::{Color, Modifier, Style};
     use ratatui::text::{Line, Span};
@@ -59,30 +61,32 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, ctx: &crate::app::AppCo
     let red = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
     let red_dim = Style::default().fg(Color::Red);
 
-    let engine = ctx.engine();
-
-    let keyboard_span = match engine.broken_keyboard() {
+    let keyboard_span = match &display.broken_keyboard {
         Some(b) => Span::styled(b.name.clone(), red),
-        None => Span::styled(engine.keyboard().short().to_string(), dim),
+        None => Span::styled(display.keyboard_short.clone(), dim),
     };
-    let layout_span = match engine.broken_layout() {
+    let layout_span = match &display.broken_layout {
         Some(b) => Span::styled(b.name.clone(), red),
-        None => Span::styled(engine.layout().short.clone(), dim),
+        None => Span::styled(display.layout_short.clone(), dim),
     };
+    let exercise_span = Span::styled(display.exercise_short.clone(), dim);
 
     let indicator = Line::from(vec![
         Span::styled("Ctrl+↑↓  ", dim),
         keyboard_span,
         Span::styled("  —  ", dim),
         layout_span,
-        Span::styled("  Ctrl+←→", dim),
+        Span::styled("  Ctrl+←→  ·  Alt+←→  ", dim),
+        exercise_span,
     ]);
 
-    let error_line = match engine
-        .broken_keyboard()
+    let reason = display
+        .broken_keyboard
+        .as_ref()
         .map(|b| &b.reason)
-        .or_else(|| engine.broken_layout().map(|b| &b.reason))
-    {
+        .or_else(|| display.broken_layout.as_ref().map(|b| &b.reason));
+
+    let error_line = match reason {
         Some(reason) => Line::from(Span::styled(truncate_reason(reason, 120), red_dim)),
         None => Line::from(""),
     };
