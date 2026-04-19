@@ -18,7 +18,10 @@ use crate::grid::Grid;
 /// internal errors into a string message for the user.
 #[derive(Debug)]
 pub enum ReaderError {
-    /// File could not be opened or read.
+    /// File could not be opened or read. Reserved for readers that do
+    /// their own I/O — the kanata reader takes pre-loaded text and never
+    /// returns this variant.
+    #[allow(dead_code)]
     Io(String),
     /// File parsed but the requested layer/keymap doesn't exist.
     UnknownLayer { name: String, available: Vec<String> },
@@ -55,6 +58,8 @@ pub trait ConfigReader {
     fn read(&self, source: &str, selector: Option<&str>) -> Result<Grid, ReaderError>;
 
     /// List the named layers/keymaps in `source`, in declaration order.
-    /// Empty if the format has no concept of named layers.
+    /// Empty if the format has no concept of named layers. Reserved for a
+    /// future "list layers" CLI subcommand.
+    #[allow(dead_code)]
     fn list_layers(&self, source: &str) -> Vec<String>;
 }

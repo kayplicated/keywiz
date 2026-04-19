@@ -116,20 +116,8 @@ impl GridManager {
         &self.grid
     }
 
-    pub fn current_keyboard(&self) -> &str {
-        &self.current_keyboard
-    }
-
     pub fn current_layout(&self) -> &str {
         &self.current_layout
-    }
-
-    pub fn list_keyboards(&self) -> &[String] {
-        &self.keyboards
-    }
-
-    pub fn list_layouts(&self) -> &[String] {
-        &self.layouts
     }
 
     /* --- setters --- */
@@ -304,7 +292,6 @@ mod tests {
     #[test]
     fn ships_valid_us_intl_and_qwerty() {
         let mgr = GridManager::new().expect("shipped files should load");
-        assert_eq!(mgr.current_keyboard(), "us_intl");
         assert_eq!(mgr.current_layout(), "qwerty");
         let grid = mgr.grid();
         // Every shipped button should have a mapping in qwerty.
@@ -313,9 +300,10 @@ mod tests {
             unmapped, 0,
             "us_intl has {unmapped} button(s) that qwerty doesn't map"
         );
-        // Home row 'a' and 'j' should be present and findable by char.
-        assert!(grid.find_by_char('a').is_some());
-        assert!(grid.find_by_char('j').is_some());
+        // Home row should include 'a' and 'j'.
+        let home = grid.home_row_chars();
+        assert!(home.contains(&'a'));
+        assert!(home.contains(&'j'));
     }
 
     #[test]

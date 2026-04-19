@@ -9,7 +9,7 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 | ![Mode selection menu](assets/menu.png) | ![Key drills](assets/drill.png) |
 | **Mode selection** | **Key Drills** — adaptive level progression |
 | ![Typing practice](assets/words.png) | ![Text practice](assets/text.png) |
-| **Typing Practice** — live WPM and accuracy | **Text Practice** — real passages, split view |
+| **Typing Practice** — live WPM and accuracy | **Text Practice** — type real passages |
 
 ## Features
 
@@ -50,7 +50,14 @@ keywiz -k kyria -l canary
 # Load a kanata .kbd directly (escape hatch for custom layouts)
 keywiz --kanata /path/to/your.kbd
 keywiz --kanata /path/to/your.kbd gallium_v2   # specific layer
+
+# Practice a layout while typing on a different physical keyboard
+keywiz -l colemak --from qwerty
 ```
+
+### Training on a different physical keyboard
+
+`--from <layout>` tells keywiz what your input keyboard *actually sends*, so each keypress is translated to the equivalent position in the target layout. Useful for SSHing into your machine from a vanilla QWERTY laptop while practicing Gallium, or for testing a layout you haven't switched the OS to yet. Pressing physical `j` on QWERTY registers as whatever the target layout puts at that position.
 
 Shipped keyboards (`keyboards/`): `us_intl`, `kyria`, `elora`, `halcyon_elora_v2`.
 Shipped layouts (`layouts/`): `qwerty`, `colemak`, `colemak-dh`, `dvorak`, `canary`, `hyperroll`, `gallium`.

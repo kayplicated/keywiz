@@ -29,8 +29,6 @@ pub struct KeyMapping {
 pub struct Layout {
     pub name: String,
     pub short: String,
-    #[serde(default)]
-    pub description: String,
     pub keys: HashMap<String, KeyMapping>,
 }
 

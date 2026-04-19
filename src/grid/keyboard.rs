@@ -34,8 +34,6 @@ pub struct KeyboardButton {
 pub struct Keyboard {
     pub name: String,
     pub short: String,
-    #[serde(default)]
-    pub description: String,
     pub buttons: Vec<KeyboardButton>,
 }
 
@@ -93,10 +91,4 @@ mod tests {
         assert!(matches!(kb.buttons[1].finger, Finger::RIndex));
     }
 
-    #[test]
-    fn description_is_optional() {
-        let json = r#"{ "name": "t", "short": "T", "buttons": [] }"#;
-        let kb: Keyboard = serde_json::from_str(json).unwrap();
-        assert_eq!(kb.description, "");
-    }
 }

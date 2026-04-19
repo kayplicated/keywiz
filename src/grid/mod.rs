@@ -93,17 +93,6 @@ impl Grid {
         }
     }
 
-    /// Find a button by the character it produces (unshifted).
-    pub fn find_by_char(&self, ch: char) -> Option<&GridButton> {
-        let target = ch.to_ascii_lowercase();
-        self.buttons.iter().find(|b| {
-            b.mapping
-                .as_ref()
-                .map(|m| m.lower == target)
-                .unwrap_or(false)
-        })
-    }
-
     /// All characters produced by buttons at `y` (approximately — within
     /// half a row unit). Only alphabetic characters are returned, so drill
     /// modes can target letters without worrying about punctuation rows.
