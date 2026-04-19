@@ -1,41 +1,46 @@
 mod app;
 mod config;
+mod configreader;
 mod engine;
 mod grid;
 mod keybinds;
-mod layout;
 mod mode;
 mod stats;
+mod translate;
 mod ui;
 mod words;
 
 use std::io;
 
 use app::AppContext;
+use configreader::kanata::KanataReader;
+use configreader::ConfigReader;
 use crossterm::event::{self, Event, KeyEventKind};
-use keybinds::KeybindResult;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
-use layout::kanata;
+use keybinds::KeybindResult;
 use mode::{ActiveMode, ModeResult};
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
+use translate::Translator;
 
 fn main() -> io::Result<()> {
     // Parse args
     let args: Vec<String> = std::env::args().collect();
-    let split = args.iter().any(|a| a == "--split");
     let from_layout = flag_value(&args, "--from");
     let keyboard_flag = flag_value(&args, "-k").or_else(|| flag_value(&args, "--keyboard"));
     let layout_flag = flag_value(&args, "-l").or_else(|| flag_value(&args, "--layout"));
+    let kanata_path = flag_value(&args, "--kanata");
 
-    // Collect indices of args consumed by flags
+    // Collect indices of args consumed by value-taking flags so positional
+    // collection skips both the flag and its value.
     let mut skip_indices = std::collections::HashSet::new();
     for (i, a) in args.iter().enumerate() {
         let a = a.as_str();
-        if a == "--split" {
-            skip_indices.insert(i);
-        } else if matches!(a, "--from" | "-k" | "--keyboard" | "-l" | "--layout") {
+        if matches!(
+            a,
+            "--from" | "-k" | "--keyboard" | "-l" | "--layout" | "--kanata"
+        ) {
             skip_indices.insert(i);
             skip_indices.insert(i + 1);
         }
@@ -47,14 +52,15 @@ fn main() -> io::Result<()> {
         .map(|(_, a)| a)
         .collect();
 
-    // Branch: if -k/-l were passed, use the data-driven grid path.
-    // Otherwise use the legacy kanata path (unchanged behavior).
-    let use_grid_path = keyboard_flag.is_some() || layout_flag.is_some();
-
-    let mut ctx = if use_grid_path {
-        build_grid_context(keyboard_flag.as_deref(), layout_flag.as_deref())?
+    // Branch: --kanata loads from a .kbd; otherwise data-driven grid path.
+    let mut ctx = if let Some(path) = kanata_path {
+        build_kanata_context(&path, positional.first().map(|s| s.as_str()), from_layout.as_deref())?
     } else {
-        build_kanata_context(&positional, split, from_layout.as_deref())?
+        build_grid_context(
+            keyboard_flag.as_deref(),
+            layout_flag.as_deref(),
+            from_layout.as_deref(),
+        )?
     };
 
     // Setup terminal
@@ -84,11 +90,12 @@ fn flag_value(args: &[String], name: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-/// Build an [`AppContext`] via the new data-driven grid path. The legacy
-/// `layout` field is still populated (for now, until modes migrate) using
-/// a stub built from the grid's keyboard name so stats file paths stay
-/// stable and existing code keeps compiling.
-fn build_grid_context(keyboard: Option<&str>, layout: Option<&str>) -> io::Result<AppContext> {
+/// Build an [`AppContext`] via the data-driven grid path.
+fn build_grid_context(
+    keyboard: Option<&str>,
+    layout: Option<&str>,
+    from_layout: Option<&str>,
+) -> io::Result<AppContext> {
     let mut manager = grid::GridManager::new().unwrap_or_else(|e| {
         eprintln!("keywiz: could not load keyboards/layouts: {e}");
         std::process::exit(1);
@@ -106,65 +113,57 @@ fn build_grid_context(keyboard: Option<&str>, layout: Option<&str>) -> io::Resul
         std::process::exit(1);
     }
 
-    // Legacy `layout` field is unused on this path, but still required by
-    // AppContext::new and the modes until the next session consolidates.
-    let stub = layout::qwerty();
-    let ctx = AppContext::new(stub, false, None).with_grid_manager(manager);
-    Ok(ctx)
+    let translator = build_translator(manager.grid().clone(), from_layout);
+    Ok(AppContext::new(manager, translator))
 }
 
-/// Build an [`AppContext`] via the original kanata config path.
+/// Build an [`AppContext`] from a kanata `.kbd` config via the kanata
+/// reader. The reader produces a [`Grid`] that flows through the same
+/// path as JSON-loaded grids.
 fn build_kanata_context(
-    positional: &[&String],
-    split: bool,
+    config_path: &str,
+    layer_selector: Option<&str>,
     from_layout: Option<&str>,
 ) -> io::Result<AppContext> {
-    let config_path = positional
-        .first()
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-            format!("{home}/lab/keywiz/layouts/gallium_v2.kbd")
-        });
-
-    let source = std::fs::read_to_string(&config_path).unwrap_or_else(|e| {
-        eprintln!("Could not read {config_path}: {e}");
-        eprintln!("Usage: keywiz [--split] [--from <layout>] [kanata-config-path] [layer-name]");
-        eprintln!("   or: keywiz -k <keyboard> -l <layout>");
+    let source = std::fs::read_to_string(config_path).unwrap_or_else(|e| {
+        eprintln!("keywiz: could not read {config_path}: {e}");
         std::process::exit(1);
     });
 
-    let layer_name = positional
-        .get(1)
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            kanata::first_layer_name(&source).unwrap_or_else(|| {
-                eprintln!("No deflayer found in {config_path}");
-                std::process::exit(1);
-            })
-        });
-
-    let mut layout = kanata::parse_kanata(&source, &layer_name).unwrap_or_else(|| {
-        eprintln!("Could not find layer '{layer_name}' in {config_path}");
+    let reader = KanataReader;
+    let grid = reader.read(&source, layer_selector).unwrap_or_else(|e| {
+        eprintln!("keywiz: {} reader: {e}", reader.format_name());
         std::process::exit(1);
     });
-    layout.set_colstag(split);
 
-    let translate = from_layout.map(|from_name| {
-        let from = if from_name == "qwerty" {
-            layout::qwerty()
-        } else {
-            kanata::parse_kanata(&source, from_name).unwrap_or_else(|| {
-                eprintln!(
-                    "Could not find layout '{from_name}' (try 'qwerty' or a kanata layer name)"
-                );
-                std::process::exit(1);
-            })
-        };
-        layout.translation_from(&from)
+    let translator = build_translator(grid.clone(), from_layout);
+    let manager = grid::GridManager::single(grid);
+    Ok(AppContext::new(manager, translator))
+}
+
+/// Build a translator from the active [`Grid`] back to the input keyboard.
+/// `from_layout` names a layout in `layouts/` (e.g. `"qwerty"`) describing
+/// what the user's physical keyboard actually sends.
+fn build_translator(target: grid::Grid, from_layout: Option<&str>) -> Translator {
+    let Some(from_name) = from_layout else {
+        return Translator::identity();
+    };
+    // Compose the from-layout against the same keyboard so positional
+    // semantics match.
+    let from_path = std::path::Path::new("layouts").join(format!("{from_name}.json"));
+    let from_layout_data = grid::Layout::load(&from_path).unwrap_or_else(|e| {
+        eprintln!("keywiz: --from {from_name}: {e}");
+        std::process::exit(1);
     });
-
-    Ok(AppContext::new(layout, split, translate))
+    let kb_path = std::path::Path::new("keyboards").join(format!("{}.json", target.keyboard_name));
+    let keyboard = grid::Keyboard::load(&kb_path).unwrap_or_else(|_| {
+        // Kanata-derived grids don't have a matching keyboard file — fall
+        // back to us_intl so translation still works.
+        grid::Keyboard::load(std::path::Path::new("keyboards/us_intl.json"))
+            .expect("us_intl.json should always be present")
+    });
+    let from_grid = grid::Grid::compose(&keyboard, &from_layout_data);
+    Translator::between(&from_grid, &target)
 }
 
 fn run_loop(

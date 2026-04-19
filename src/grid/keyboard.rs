@@ -16,7 +16,7 @@
 use serde::Deserialize;
 use std::path::Path;
 
-use crate::layout::Finger;
+use crate::grid::Finger;
 
 /// One physical key on a keyboard. Coordinates are home-row-centered: x
 /// grows right, y grows down, one unit = one key width / row height.

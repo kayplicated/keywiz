@@ -58,7 +58,7 @@ impl SelectMode {
                 Span::styled("wiz", Style::default().fg(Color::Yellow).bold()),
             ]),
             Line::from(""),
-            Line::from(if ctx.translate.is_some() {
+            Line::from(if !ctx.translator.is_identity() {
                 format!("Layout: {layout_name} (translating from QWERTY)")
             } else {
                 format!("Layout: {layout_name}")

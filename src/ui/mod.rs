@@ -2,7 +2,6 @@
 
 pub mod grid;
 pub mod heatmap;
-pub mod keyboard;
 
 use ratatui::layout::{Constraint, Layout, Rect};
 
@@ -58,13 +57,8 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, ctx: &crate::app::AppCo
     use ratatui::text::{Line, Span};
     use ratatui::widgets::Paragraph;
 
-    let text = match &ctx.grid_manager {
-        Some(mgr) => {
-            let g = mgr.grid();
-            format!("{} — {}", g.keyboard_short, g.layout_short)
-        }
-        None => format!("kanata — {}", ctx.layout.name),
-    };
+    let g = ctx.grid();
+    let text = format!("{} — {}", g.keyboard_short, g.layout_short);
     let para = Paragraph::new(Line::from(Span::styled(
         text,
         Style::default().fg(Color::DarkGray),

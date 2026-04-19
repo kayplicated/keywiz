@@ -1,110 +1,59 @@
 //! Shared application context passed to all modes.
 
-use std::collections::HashMap;
-
 use crate::engine::drill::{CharSource, DrillLevel};
-use crate::grid::GridManager;
-use crate::layout::Layout;
+use crate::grid::{Grid, GridManager};
 use crate::stats::StatsTracker;
+use crate::translate::Translator;
 
 /// Shared state that crosses mode boundaries.
 pub struct AppContext {
-    pub(crate) layout: Layout,
-    pub(crate) split: bool,
     pub(crate) show_keyboard: bool,
     /// When true, the keyboard widget tints keys by accuracy instead of finger color.
     pub(crate) show_heatmap: bool,
-    /// Input translation map: physical key -> target layout key.
-    /// None means input is already in the target layout.
-    pub(crate) translate: Option<HashMap<char, char>>,
+    /// Input character translator. [`Translator::identity`] when the input
+    /// keyboard already matches the target layout.
+    pub(crate) translator: Translator,
     /// Session + persistent per-key stats for the current layout.
     pub(crate) stats: StatsTracker,
-    /// Optional data-driven grid manager. When present, modes and widgets
-    /// that know about it will prefer it over the legacy `layout` field.
-    /// Absent when keywiz was started via the kanata path.
-    pub(crate) grid_manager: Option<GridManager>,
+    /// Owns the active keyboard + layout grid. Always present; the kanata
+    /// path uses [`GridManager::single`] when there's no catalog to cycle.
+    pub(crate) grid_manager: GridManager,
 }
 
 impl AppContext {
-    pub fn new(layout: Layout, split: bool, translate: Option<HashMap<char, char>>) -> Self {
+    pub fn new(grid_manager: GridManager, translator: Translator) -> Self {
         Self {
-            layout,
-            split,
             show_keyboard: true,
             show_heatmap: false,
-            translate,
+            translator,
             stats: StatsTracker::new(),
-            grid_manager: None,
+            grid_manager,
         }
     }
 
-    /// Replace the grid manager (used when booting via the data-driven path).
-    pub fn with_grid_manager(mut self, manager: GridManager) -> Self {
-        self.grid_manager = Some(manager);
-        self
-    }
-
-    /// Translate input character if translation is active.
+    /// Translate input character through the active translator.
     pub fn translate_input(&self, ch: char) -> char {
-        match &self.translate {
-            Some(map) => map.get(&ch).copied().unwrap_or(ch),
-            None => ch,
-        }
+        self.translator.translate(ch)
     }
 
-    /// Alphabetic characters on the home row of the active source.
-    /// Prefers the grid manager when present, falling back to the legacy
-    /// [`Layout`].
-    pub fn home_row_chars(&self) -> Vec<char> {
-        match &self.grid_manager {
-            Some(m) => m.grid().home_row_chars(),
-            None => self.layout.home_row_chars(),
-        }
+    /// Active grid (keyboard + layout).
+    pub fn grid(&self) -> &Grid {
+        self.grid_manager.grid()
     }
 
-    /// Home row plus the row above it.
-    pub fn home_and_top_chars(&self) -> Vec<char> {
-        match &self.grid_manager {
-            Some(m) => m.grid().home_and_top_chars(),
-            None => {
-                // Legacy: home + top row (row index 1 = top row).
-                let mut c = self.layout.home_row_chars();
-                c.extend(
-                    self.layout.rows[1]
-                        .keys
-                        .iter()
-                        .map(|k| k.lower)
-                        .filter(|c| c.is_alphabetic()),
-                );
-                c
-            }
-        }
-    }
-
-    /// All alphabetic characters produced by the active source.
-    pub fn all_chars(&self) -> Vec<char> {
-        match &self.grid_manager {
-            Some(m) => m.grid().all_alpha_chars(),
-            None => self.layout.all_chars(),
-        }
-    }
-
-    /// Name for stats persistence: grid layout name if present,
-    /// otherwise the legacy layout name.
+    /// Name for stats persistence: the active layout's name.
     pub fn stats_key(&self) -> &str {
-        match &self.grid_manager {
-            Some(m) => m.current_layout(),
-            None => &self.layout.name,
-        }
+        self.grid_manager.current_layout()
     }
 }
 
 impl CharSource for AppContext {
     fn chars_for(&self, level: DrillLevel) -> Vec<char> {
+        let g = self.grid();
         match level {
-            DrillLevel::HomeRow => self.home_row_chars(),
-            DrillLevel::HomeAndTop => self.home_and_top_chars(),
-            DrillLevel::AllRows => self.all_chars(),
+            DrillLevel::HomeRow => g.home_row_chars(),
+            DrillLevel::HomeAndTop => g.home_and_top_chars(),
+            DrillLevel::AllRows => g.all_alpha_chars(),
         }
     }
 }

@@ -57,29 +57,21 @@ enum Dir {
     Prev,
 }
 
-/// Cycle to the next/previous keyboard. No-op when no grid manager is
-/// present (the legacy kanata path has a single fixed keyboard).
+/// Cycle to the next/previous keyboard. Single-grid managers (the
+/// kanata path) hold one keyboard, so cycling is a no-op there.
 fn cycle_keyboard(ctx: &mut AppContext, dir: Dir) {
-    let Some(mgr) = ctx.grid_manager.as_mut() else {
-        return;
-    };
-    // Keyboard changes don't touch the layout name, so stats persistence
-    // stays on the same file — no save/reload dance needed.
     let _ = match dir {
-        Dir::Next => mgr.next_keyboard(),
-        Dir::Prev => mgr.prev_keyboard(),
+        Dir::Next => ctx.grid_manager.next_keyboard(),
+        Dir::Prev => ctx.grid_manager.prev_keyboard(),
     };
 }
 
 /// Cycle to the next/previous layout. Layout changes swap the per-layout
 /// persistent stats: save the outgoing, load the incoming.
 fn cycle_layout(ctx: &mut AppContext, dir: Dir) {
-    let Some(mgr) = ctx.grid_manager.as_mut() else {
-        return;
-    };
     let change = match dir {
-        Dir::Next => mgr.next_layout(),
-        Dir::Prev => mgr.prev_layout(),
+        Dir::Next => ctx.grid_manager.next_layout(),
+        Dir::Prev => ctx.grid_manager.prev_layout(),
     };
     let Ok(change) = change else { return };
     stats::persist::save(&change.from, ctx.stats.persistent());

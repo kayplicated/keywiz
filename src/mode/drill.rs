@@ -76,27 +76,15 @@ impl DrillMode {
         .alignment(Alignment::Center);
         f.render_widget(prompt, areas.body);
 
-        // Keyboard — use grid widget when available, legacy otherwise.
         if ctx.show_keyboard {
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            if let Some(mgr) = &ctx.grid_manager {
-                ui::grid::render_grid(
-                    f,
-                    areas.keyboard,
-                    mgr.grid(),
-                    Some(self.drill.current),
-                    heat,
-                );
-            } else {
-                ui::keyboard::render_keyboard(
-                    f,
-                    areas.keyboard,
-                    &ctx.layout,
-                    Some(self.drill.current),
-                    ctx.split,
-                    heat,
-                );
-            }
+            ui::grid::render_grid(
+                f,
+                areas.keyboard,
+                ctx.grid(),
+                Some(self.drill.current),
+                heat,
+            );
         }
 
         // Stats

@@ -65,6 +65,24 @@ impl GridManager {
         Self::with_dirs(Path::new(KEYBOARDS_DIR), Path::new(LAYOUTS_DIR))
     }
 
+    /// Build a manager that owns a single externally-supplied grid (e.g.
+    /// from a config reader). No catalog of alternates — cycling is a
+    /// no-op. Use this when the grid comes from a source other than the
+    /// `keyboards/` + `layouts/` directories.
+    pub fn single(grid: Grid) -> Self {
+        let keyboard = grid.keyboard_name.clone();
+        let layout = grid.layout_name.clone();
+        GridManager {
+            keyboards_dir: PathBuf::new(),
+            layouts_dir: PathBuf::new(),
+            keyboards: vec![keyboard.clone()],
+            layouts: vec![layout.clone()],
+            current_keyboard: keyboard,
+            current_layout: layout,
+            grid,
+        }
+    }
+
     /// Like [`new`] but with explicit directories — used in tests.
     pub fn with_dirs(keyboards_dir: &Path, layouts_dir: &Path) -> Result<Self, GridError> {
         let keyboards = list_json_stems(keyboards_dir);

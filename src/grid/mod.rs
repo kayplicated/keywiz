@@ -32,15 +32,16 @@
 //! active, and exposes setters + cycling methods that a future keybind
 //! layer can call directly (no mode-specific logic involved).
 
+pub mod finger;
 pub mod keyboard;
 pub mod layout;
 pub mod manager;
 
-pub use keyboard::{Keyboard, KeyboardButton};
+pub use keyboard::Keyboard;
 pub use layout::{KeyMapping, Layout};
-pub use manager::{GridManager, LayoutChange};
+pub use manager::GridManager;
 
-use crate::layout::Finger;
+pub use finger::Finger;
 
 /// A physical key composed with its (optional) character mapping.
 #[derive(Debug, Clone)]
