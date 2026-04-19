@@ -1,7 +1,7 @@
 {
   "name": "sturdy",
   "short": "Sturdy",
-  "description": "Sturdy layout from oxey.dev — alternative ergonomic design",
+  "description": "Sturdy — pineapple's colstag layout (use Sturdy-Angle for rowstag boards)",
   "keys": {
     "KEY_GRAVE":      { "lower": "`",  "upper": "~" },
     "KEY_1":          { "lower": "1",  "upper": "!" },

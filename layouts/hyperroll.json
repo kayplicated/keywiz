@@ -1,7 +1,7 @@
 {
   "name": "hyperroll",
   "short": "Hyperroll",
-  "description": "Hyperroll — roll-optimized alt layout",
+  "description": "Hyperroll — semilin's experimental roll-heavy layout",
   "keys": {
     "KEY_GRAVE":      { "lower": "`",  "upper": "~" },
     "KEY_1":          { "lower": "1",  "upper": "!" },

@@ -1,7 +1,7 @@
 {
   "name": "semimak",
   "short": "Semimak",
-  "description": "Semimak (jq variant) — alternative ergonomic layout",
+  "description": "Semimak — semilin's alternative ergonomic layout (colstag-native)",
   "keys": {
     "KEY_GRAVE":      { "lower": "`",  "upper": "~" },
     "KEY_1":          { "lower": "1",  "upper": "!" },
