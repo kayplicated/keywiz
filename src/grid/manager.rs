@@ -116,6 +116,10 @@ impl GridManager {
         &self.grid
     }
 
+    pub fn current_keyboard(&self) -> &str {
+        &self.current_keyboard
+    }
+
     pub fn current_layout(&self) -> &str {
         &self.current_layout
     }

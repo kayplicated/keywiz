@@ -5,6 +5,7 @@ mod engine;
 mod grid;
 mod keybinds;
 mod mode;
+mod prefs;
 mod stats;
 mod translate;
 mod ui;
@@ -53,14 +54,16 @@ fn main() -> io::Result<()> {
         .collect();
 
     // Branch: --kanata loads from a .kbd; otherwise data-driven grid path.
+    // Kanata is always invoked explicitly so prefs don't apply there.
+    let is_kanata = kanata_path.is_some();
     let mut ctx = if let Some(path) = kanata_path {
         build_kanata_context(&path, positional.first().map(|s| s.as_str()), from_layout.as_deref())?
     } else {
-        build_grid_context(
-            keyboard_flag.as_deref(),
-            layout_flag.as_deref(),
-            from_layout.as_deref(),
-        )?
+        // Load last-used prefs as fallback defaults; explicit flags override.
+        let saved = prefs::Prefs::load();
+        let keyboard = keyboard_flag.as_deref().or(saved.keyboard.as_deref());
+        let layout = layout_flag.as_deref().or(saved.layout.as_deref());
+        build_grid_context(keyboard, layout, from_layout.as_deref())?
     };
 
     // Setup terminal
@@ -78,6 +81,12 @@ fn main() -> io::Result<()> {
     let _ = io::stdout().execute(LeaveAlternateScreen);
 
     stats::persist::save(ctx.stats_key(), ctx.stats.persistent());
+    if !is_kanata {
+        prefs::Prefs::save(
+            ctx.grid_manager.current_keyboard(),
+            ctx.stats_key(),
+        );
+    }
 
     result
 }
