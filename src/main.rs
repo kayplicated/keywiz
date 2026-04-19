@@ -23,7 +23,6 @@ use keybinds::KeybindResult;
 use mode::{ActiveMode, ModeResult};
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
-use translate::Translator;
 
 fn main() -> io::Result<()> {
     // Parse args
@@ -52,6 +51,16 @@ fn main() -> io::Result<()> {
         .filter(|(i, _)| *i > 0 && !skip_indices.contains(i))
         .map(|(_, a)| a)
         .collect();
+
+    // Validate --from up front so an unknown layout fails fast with a
+    // clear message; runtime rebuilds then trust the name is loadable.
+    if let Some(name) = from_layout.as_deref() {
+        let path = std::path::Path::new("layouts").join(format!("{name}.json"));
+        if let Err(e) = grid::Layout::load(&path) {
+            eprintln!("keywiz: --from {name}: {e}");
+            std::process::exit(1);
+        }
+    }
 
     // Branch: --kanata loads from a .kbd; otherwise data-driven grid path.
     // Kanata is always invoked explicitly so prefs don't apply there.
@@ -122,8 +131,12 @@ fn build_grid_context(
         std::process::exit(1);
     }
 
-    let translator = build_translator(manager.grid().clone(), from_layout);
-    Ok(AppContext::new(manager, translator))
+    let translator = translate::build(manager.grid(), from_layout);
+    Ok(AppContext::new(
+        manager,
+        translator,
+        from_layout.map(str::to_string),
+    ))
 }
 
 /// Build an [`AppContext`] from a kanata `.kbd` config via the kanata
@@ -145,34 +158,13 @@ fn build_kanata_context(
         std::process::exit(1);
     });
 
-    let translator = build_translator(grid.clone(), from_layout);
+    let translator = translate::build(&grid, from_layout);
     let manager = grid::GridManager::single(grid);
-    Ok(AppContext::new(manager, translator))
-}
-
-/// Build a translator from the active [`Grid`] back to the input keyboard.
-/// `from_layout` names a layout in `layouts/` (e.g. `"qwerty"`) describing
-/// what the user's physical keyboard actually sends.
-fn build_translator(target: grid::Grid, from_layout: Option<&str>) -> Translator {
-    let Some(from_name) = from_layout else {
-        return Translator::identity();
-    };
-    // Compose the from-layout against the same keyboard so positional
-    // semantics match.
-    let from_path = std::path::Path::new("layouts").join(format!("{from_name}.json"));
-    let from_layout_data = grid::Layout::load(&from_path).unwrap_or_else(|e| {
-        eprintln!("keywiz: --from {from_name}: {e}");
-        std::process::exit(1);
-    });
-    let kb_path = std::path::Path::new("keyboards").join(format!("{}.json", target.keyboard_name));
-    let keyboard = grid::Keyboard::load(&kb_path).unwrap_or_else(|_| {
-        // Kanata-derived grids don't have a matching keyboard file — fall
-        // back to us_intl so translation still works.
-        grid::Keyboard::load(std::path::Path::new("keyboards/us_intl.json"))
-            .expect("us_intl.json should always be present")
-    });
-    let from_grid = grid::Grid::compose(&keyboard, &from_layout_data);
-    Translator::between(&from_grid, &target)
+    Ok(AppContext::new(
+        manager,
+        translator,
+        from_layout.map(str::to_string),
+    ))
 }
 
 fn run_loop(

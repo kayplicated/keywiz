@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 
-use crate::grid::Grid;
+use crate::grid::{self, Grid};
 
 /// Translates characters from input-keyboard representation to the
 /// target layout's representation.
@@ -65,6 +65,38 @@ impl Translator {
     pub fn is_identity(&self) -> bool {
         self.map.is_empty()
     }
+}
+
+/// Build a translator from the input keyboard (running `from_layout`) to
+/// the active `target` grid. `from_layout` names a layout in `layouts/`
+/// (e.g. `"qwerty"`). Returns [`Translator::identity`] when `from_layout`
+/// is `None`.
+///
+/// Called at startup and again whenever the user cycles keyboard or
+/// layout so the translator tracks the current target.
+pub fn build(target: &Grid, from_layout: Option<&str>) -> Translator {
+    let Some(from_name) = from_layout else {
+        return Translator::identity();
+    };
+    // Compose the from-layout against the same physical keyboard so
+    // positional semantics match.
+    let from_path = std::path::Path::new("layouts").join(format!("{from_name}.json"));
+    let from_layout_data = match grid::Layout::load(&from_path) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("keywiz: --from {from_name}: {e}");
+            return Translator::identity();
+        }
+    };
+    let kb_path = std::path::Path::new("keyboards").join(format!("{}.json", target.keyboard_name));
+    let keyboard = grid::Keyboard::load(&kb_path).unwrap_or_else(|_| {
+        // Kanata-derived grids don't have a matching keyboard file — fall
+        // back to us_intl so translation still works.
+        grid::Keyboard::load(std::path::Path::new("keyboards/us_intl.json"))
+            .expect("us_intl.json should always be present")
+    });
+    let from_grid = Grid::compose(&keyboard, &from_layout_data);
+    Translator::between(&from_grid, target)
 }
 
 #[cfg(test)]

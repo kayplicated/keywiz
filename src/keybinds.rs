@@ -9,6 +9,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::app::AppContext;
 use crate::stats;
+use crate::translate;
 
 /// What the event loop should do after [`handle_shared`] runs.
 pub enum KeybindResult {
@@ -60,10 +61,13 @@ enum Dir {
 /// Cycle to the next/previous keyboard. Single-grid managers (the
 /// kanata path) hold one keyboard, so cycling is a no-op there.
 fn cycle_keyboard(ctx: &mut AppContext, dir: Dir) {
-    let _ = match dir {
+    let changed = match dir {
         Dir::Next => ctx.grid_manager.next_keyboard(),
         Dir::Prev => ctx.grid_manager.prev_keyboard(),
     };
+    if changed.is_ok() {
+        rebuild_translator(ctx);
+    }
 }
 
 /// Cycle to the next/previous layout. Layout changes swap the per-layout
@@ -78,4 +82,11 @@ fn cycle_layout(ctx: &mut AppContext, dir: Dir) {
     ctx.stats = stats::StatsTracker::new();
     ctx.stats
         .set_persistent(stats::persist::load(&change.to));
+    rebuild_translator(ctx);
+}
+
+/// Rebuild the translator against the current grid. Called after the
+/// active keyboard or layout changes so `--from` stays correct.
+fn rebuild_translator(ctx: &mut AppContext) {
+    ctx.translator = translate::build(ctx.grid(), ctx.from_layout.as_deref());
 }

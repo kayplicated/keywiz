@@ -13,6 +13,11 @@ pub struct AppContext {
     /// Input character translator. [`Translator::identity`] when the input
     /// keyboard already matches the target layout.
     pub(crate) translator: Translator,
+    /// Name of the layout the physical keyboard actually produces
+    /// (`--from`). Kept so the translator can be rebuilt against the
+    /// current target whenever the user cycles keyboard or layout.
+    /// `None` when no `--from` was given.
+    pub(crate) from_layout: Option<String>,
     /// Session + persistent per-key stats for the current layout.
     pub(crate) stats: StatsTracker,
     /// Owns the active keyboard + layout grid. Always present; the kanata
@@ -21,11 +26,16 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    pub fn new(grid_manager: GridManager, translator: Translator) -> Self {
+    pub fn new(
+        grid_manager: GridManager,
+        translator: Translator,
+        from_layout: Option<String>,
+    ) -> Self {
         Self {
             show_keyboard: true,
             show_heatmap: false,
             translator,
+            from_layout,
             stats: StatsTracker::new(),
             grid_manager,
         }
