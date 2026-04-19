@@ -6,10 +6,10 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 
 | | |
 |---|---|
-| ![Mode selection menu](assets/menu.png) | ![Key drills](assets/drill.png) |
+| ![Mode selection menu](assets/menu.png) | ![Key drills on us_intl](assets/drill.png) |
 | **Mode selection** | **Key Drills** — adaptive level progression |
-| ![Typing practice](assets/words.png) | ![Text practice](assets/text.png) |
-| **Typing Practice** — live WPM and accuracy | **Text Practice** — type real passages |
+| ![Typing Practice on Kyria](assets/words.png) | ![Text Practice on Elora with heatmap](assets/text.png) |
+| **Typing Practice** on a Kyria split keyboard with the Hyperroll layout | **Text Practice** on an Elora keyboard with the Gallium layout — F2 heatmap revealing the trouble keys |
 
 ## Features
 
