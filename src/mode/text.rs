@@ -5,7 +5,7 @@
 //! the current position highlighted.
 
 use crate::app::AppContext;
-use crate::ui;
+use crate::renderer::terminal as term;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Alignment;
 use ratatui::style::{Color, Style, Stylize};
@@ -165,7 +165,7 @@ impl TextMode {
             return;
         }
 
-        let areas = ui::centered_content_layout(f.area(), 10, ui::grid::grid_height(ctx.grid()));
+        let areas = term::centered_content_layout(f.area(), 10, term::keyboard_height(ctx.keyboard()));
         let passage = &self.passages[self.current_passage];
 
         // Header: title + passage counter
@@ -244,10 +244,10 @@ impl TextMode {
         .alignment(Alignment::Center);
         f.render_widget(stats, areas.stats);
 
-        ui::render_footer(f, areas.footer, ctx);
+        term::render_footer(f, areas.footer, ctx);
     }
 
-    fn render_passage(&self, f: &mut Frame, areas: &ui::ContentAreas, ctx: &AppContext) {
+    fn render_passage(&self, f: &mut Frame, areas: &term::ContentAreas, ctx: &AppContext) {
         use ratatui::layout::{Constraint, Layout};
 
         // Constrain text to a readable width with horizontal padding
@@ -316,7 +316,7 @@ impl TextMode {
         if ctx.show_keyboard {
             let highlight = self.expected_char().filter(|c| *c != '\n');
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            ui::grid::render_grid(f, areas.keyboard, ctx.grid(), highlight, heat);
+            term::render_keyboard(f, areas.keyboard, ctx.keyboard(), ctx.layout(), highlight, heat);
         }
     }
 

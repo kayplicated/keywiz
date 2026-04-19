@@ -1,8 +1,8 @@
 //! Random word typing mode — finite (20 words) or endless.
 
 use crate::app::AppContext;
-use crate::engine::typing::TypingTest;
-use crate::ui;
+use crate::typing::typing::TypingTest;
+use crate::renderer::terminal as term;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Alignment;
 use ratatui::style::{Color, Style, Stylize};
@@ -37,7 +37,7 @@ impl WordsMode {
     }
 
     pub fn render(&self, f: &mut Frame, ctx: &AppContext) {
-        let areas = ui::centered_content_layout(f.area(), 3, ui::grid::grid_height(ctx.grid()));
+        let areas = term::centered_content_layout(f.area(), 3, term::keyboard_height(ctx.keyboard()));
 
         // Header
         let header = Paragraph::new(Line::from(vec![
@@ -99,10 +99,10 @@ impl WordsMode {
         .alignment(Alignment::Center);
         f.render_widget(stats, areas.stats);
 
-        ui::render_footer(f, areas.footer, ctx);
+        term::render_footer(f, areas.footer, ctx);
     }
 
-    fn render_words(&self, f: &mut Frame, areas: &ui::ContentAreas, ctx: &AppContext) {
+    fn render_words(&self, f: &mut Frame, areas: &term::ContentAreas, ctx: &AppContext) {
         #[derive(Clone)]
         struct StyledChar {
             ch: char,
@@ -169,10 +169,10 @@ impl WordsMode {
         // Keyboard — highlight expected char
         if ctx.show_keyboard {
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            ui::grid::render_grid(
+            term::render_keyboard(
                 f,
                 areas.keyboard,
-                ctx.grid(),
+                ctx.keyboard(), ctx.layout(),
                 self.test.expected_char(),
                 heat,
             );

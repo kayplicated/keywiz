@@ -1,7 +1,7 @@
 //! Mode selection screen — the main menu.
 
 use crate::app::AppContext;
-use crate::engine::drill::DrillLevel;
+use crate::typing::drill::DrillLevel;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::{Color, Style, Stylize};

@@ -1,78 +1,132 @@
 {
-  "name": "halcyon_elora_v2",
-  "short": "Halcyon Elora v2",
-  "description": "Kay's Halcyon Elora v2 from splitkb.com — column-staggered split with aggressive pinky pull-back and 7-key thumb clusters per hand. Thumb cluster xy is schematic and needs real measurements to refine for non-terminal renderers.",
-  "keys": [
-    { "id": "main_k1",  "x": -6.0, "y": -1.25, "cluster": "main", "finger": "LPinky" },
-    { "id": "main_k2",  "x": -5.0, "y": -1.25, "cluster": "main", "finger": "LPinky" },
-    { "id": "main_k3",  "x": -4.0, "y": -2.25, "cluster": "main", "finger": "LRing" },
-    { "id": "main_k4",  "x": -3.0, "y": -2.5,  "cluster": "main", "finger": "LMiddle" },
-    { "id": "main_k5",  "x": -2.0, "y": -2.25, "cluster": "main", "finger": "LIndex" },
-    { "id": "main_k6",  "x": -1.0, "y": -2.0,  "cluster": "main", "finger": "LIndex" },
+  name: "halcyon_elora_v2",
+  short: "Halcyon Elora v2",
+  description: "Kay's Halcyon Elora v2 from splitkb.com — column-staggered split with aggressive pinky pull-back and 7-key thumb cluster per hand.",
 
-    { "id": "mods_tab",        "x": -6.0, "y": -0.25, "cluster": "mods", "finger": "LPinky" },
-    { "id": "main_k7",  "x": -5.0, "y": -0.25, "cluster": "main", "finger": "LPinky" },
-    { "id": "main_k8",  "x": -4.0, "y": -1.25, "cluster": "main", "finger": "LRing" },
-    { "id": "main_k9",  "x": -3.0, "y": -1.5,  "cluster": "main", "finger": "LMiddle" },
-    { "id": "main_k10", "x": -2.0, "y": -1.25, "cluster": "main", "finger": "LIndex" },
-    { "id": "main_k11", "x": -1.0, "y": -1.0,  "cluster": "main", "finger": "LIndex" },
+  // A blocks-based keyboard. Each block groups keys by region and
+  // declares a stagger type that drives terminal rendering:
+  //   - col-stag: terminal flattens the vertical splay (uses r/c).
+  //                Desktop/web renderers use the real y.
+  //   - free-form: keys placed by x/y + rotation (fan-shaped
+  //                clusters). Terminal falls back to r/c for layout.
+  //
+  // Col offset convention (oxey-compatible), left→right across one hand:
+  //   pinky outer (-6): pulled back 0.75
+  //   pinky inner (-5): pulled back 0.75
+  //   ring       (-4): pulled back 0.25
+  //   middle     (-3): pushed forward 0.5
+  //   index      (-2): pulled back 0.25
+  //   index-inner(-1): baseline
+  blocks: [
+    {
+      type: "col-stag",
+      cluster: "main",
+      keys: [
+        // ---- left number row (r = -2) ----
+        { id: "main_k1",  r: -2, c: -6, x: -6.0, y: -1.25, finger: "LPinky" },
+        { id: "main_k2",  r: -2, c: -5, x: -5.0, y: -1.25, finger: "LPinky" },
+        { id: "main_k3",  r: -2, c: -4, x: -4.0, y: -2.25, finger: "LRing" },
+        { id: "main_k4",  r: -2, c: -3, x: -3.0, y: -2.5,  finger: "LMiddle" },
+        { id: "main_k5",  r: -2, c: -2, x: -2.0, y: -2.25, finger: "LIndex" },
+        { id: "main_k6",  r: -2, c: -1, x: -1.0, y: -2.0,  finger: "LIndex" },
 
-    { "id": "mods_capslock",   "x": -6.0, "y":  0.75, "cluster": "mods", "finger": "LPinky" },
-    { "id": "main_k12", "x": -5.0, "y":  0.75, "cluster": "main", "finger": "LPinky" },
-    { "id": "main_k13", "x": -4.0, "y": -0.25, "cluster": "main", "finger": "LRing" },
-    { "id": "main_k14", "x": -3.0, "y": -0.5,  "cluster": "main", "finger": "LMiddle" },
-    { "id": "main_k15", "x": -2.0, "y": -0.25, "cluster": "main", "finger": "LIndex" },
-    { "id": "main_k16", "x": -1.0, "y":  0.0,  "cluster": "main", "finger": "LIndex" },
+        // ---- left top row (r = -1) ----
+        { id: "main_k7",  r: -1, c: -5, x: -5.0, y: -0.25, finger: "LPinky" },
+        { id: "main_k8",  r: -1, c: -4, x: -4.0, y: -1.25, finger: "LRing" },
+        { id: "main_k9",  r: -1, c: -3, x: -3.0, y: -1.5,  finger: "LMiddle" },
+        { id: "main_k10", r: -1, c: -2, x: -2.0, y: -1.25, finger: "LIndex" },
+        { id: "main_k11", r: -1, c: -1, x: -1.0, y: -1.0,  finger: "LIndex" },
 
-    { "id": "mods_shift_left", "x": -6.0, "y":  1.75, "cluster": "mods", "finger": "LPinky" },
-    { "id": "main_k17", "x": -5.0, "y":  1.75, "cluster": "main", "finger": "LPinky" },
-    { "id": "main_k18", "x": -4.0, "y":  0.75, "cluster": "main", "finger": "LRing" },
-    { "id": "main_k19", "x": -3.0, "y":  0.5,  "cluster": "main", "finger": "LMiddle" },
-    { "id": "main_k20", "x": -2.0, "y":  0.75, "cluster": "main", "finger": "LIndex" },
-    { "id": "main_k21", "x": -1.0, "y":  1.0,  "cluster": "main", "finger": "LIndex" },
+        // ---- left home row (r = 0) ----
+        { id: "main_k12", r:  0, c: -5, x: -5.0, y:  0.75, finger: "LPinky" },
+        { id: "main_k13", r:  0, c: -4, x: -4.0, y: -0.25, finger: "LRing" },
+        { id: "main_k14", r:  0, c: -3, x: -3.0, y: -0.5,  finger: "LMiddle" },
+        { id: "main_k15", r:  0, c: -2, x: -2.0, y: -0.25, finger: "LIndex" },
+        { id: "main_k16", r:  0, c: -1, x: -1.0, y:  0.0,  finger: "LIndex" },
 
-    { "id": "main_k22", "x":  1.0, "y": -2.0,  "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k23", "x":  2.0, "y": -2.25, "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k24", "x":  3.0, "y": -2.5,  "cluster": "main", "finger": "RMiddle" },
-    { "id": "main_k25", "x":  4.0, "y": -2.25, "cluster": "main", "finger": "RRing" },
-    { "id": "main_k26", "x":  5.0, "y": -1.25, "cluster": "main", "finger": "RPinky" },
-    { "id": "main_k27", "x":  6.0, "y": -1.25, "cluster": "main", "finger": "RPinky" },
+        // ---- left bottom row (r = 1) ----
+        { id: "main_k17", r:  1, c: -5, x: -5.0, y:  1.75, finger: "LPinky" },
+        { id: "main_k18", r:  1, c: -4, x: -4.0, y:  0.75, finger: "LRing" },
+        { id: "main_k19", r:  1, c: -3, x: -3.0, y:  0.5,  finger: "LMiddle" },
+        { id: "main_k20", r:  1, c: -2, x: -2.0, y:  0.75, finger: "LIndex" },
+        { id: "main_k21", r:  1, c: -1, x: -1.0, y:  1.0,  finger: "LIndex" },
 
-    { "id": "main_k28", "x":  1.0, "y": -1.0,  "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k29", "x":  2.0, "y": -1.25, "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k30", "x":  3.0, "y": -1.5,  "cluster": "main", "finger": "RMiddle" },
-    { "id": "main_k31", "x":  4.0, "y": -1.25, "cluster": "main", "finger": "RRing" },
-    { "id": "main_k32", "x":  5.0, "y": -0.25, "cluster": "main", "finger": "RPinky" },
-    { "id": "main_k33", "x":  6.0, "y": -0.25, "cluster": "main", "finger": "RPinky" },
+        // ---- right number row (r = -2) ----
+        { id: "main_k22", r: -2, c:  1, x:  1.0, y: -2.0,  finger: "RIndex" },
+        { id: "main_k23", r: -2, c:  2, x:  2.0, y: -2.25, finger: "RIndex" },
+        { id: "main_k24", r: -2, c:  3, x:  3.0, y: -2.5,  finger: "RMiddle" },
+        { id: "main_k25", r: -2, c:  4, x:  4.0, y: -2.25, finger: "RRing" },
+        { id: "main_k26", r: -2, c:  5, x:  5.0, y: -1.25, finger: "RPinky" },
+        { id: "main_k27", r: -2, c:  6, x:  6.0, y: -1.25, finger: "RPinky" },
 
-    { "id": "main_k34", "x":  1.0, "y":  0.0,  "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k35", "x":  2.0, "y": -0.25, "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k36", "x":  3.0, "y": -0.5,  "cluster": "main", "finger": "RMiddle" },
-    { "id": "main_k37", "x":  4.0, "y": -0.25, "cluster": "main", "finger": "RRing" },
-    { "id": "main_k38", "x":  5.0, "y":  0.75, "cluster": "main", "finger": "RPinky" },
-    { "id": "main_k39", "x":  6.0, "y":  0.75, "cluster": "main", "finger": "RPinky" },
+        // ---- right top row (r = -1) ----
+        { id: "main_k28", r: -1, c:  1, x:  1.0, y: -1.0,  finger: "RIndex" },
+        { id: "main_k29", r: -1, c:  2, x:  2.0, y: -1.25, finger: "RIndex" },
+        { id: "main_k30", r: -1, c:  3, x:  3.0, y: -1.5,  finger: "RMiddle" },
+        { id: "main_k31", r: -1, c:  4, x:  4.0, y: -1.25, finger: "RRing" },
+        { id: "main_k32", r: -1, c:  5, x:  5.0, y: -0.25, finger: "RPinky" },
+        { id: "main_k33", r: -1, c:  6, x:  6.0, y: -0.25, finger: "RPinky" },
 
-    { "id": "main_k40", "x":  1.0, "y":  1.0,  "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k41", "x":  2.0, "y":  0.75, "cluster": "main", "finger": "RIndex" },
-    { "id": "main_k42", "x":  3.0, "y":  0.5,  "cluster": "main", "finger": "RMiddle" },
-    { "id": "main_k43", "x":  4.0, "y":  0.75, "cluster": "main", "finger": "RRing" },
-    { "id": "main_k44", "x":  5.0, "y":  1.75, "cluster": "main", "finger": "RPinky" },
-    { "id": "mods_enter",      "x":  6.0, "y":  1.75, "cluster": "mods", "finger": "RPinky" },
+        // ---- right home row (r = 0) ----
+        { id: "main_k34", r:  0, c:  1, x:  1.0, y:  0.0,  finger: "RIndex" },
+        { id: "main_k35", r:  0, c:  2, x:  2.0, y: -0.25, finger: "RIndex" },
+        { id: "main_k36", r:  0, c:  3, x:  3.0, y: -0.5,  finger: "RMiddle" },
+        { id: "main_k37", r:  0, c:  4, x:  4.0, y: -0.25, finger: "RRing" },
+        { id: "main_k38", r:  0, c:  5, x:  5.0, y:  0.75, finger: "RPinky" },
+        { id: "main_k39", r:  0, c:  6, x:  6.0, y:  0.75, finger: "RPinky" },
 
-    { "id": "left_thumb_k1", "x": -4.0, "y":  3.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k2", "x": -3.0, "y":  3.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k3", "x": -2.0, "y":  3.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k4", "x": -1.0, "y":  3.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k5", "x": -4.0, "y":  4.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k6", "x": -3.0, "y":  4.0, "cluster": "left_thumb", "finger": "LThumb" },
-    { "id": "left_thumb_k7", "x": -2.0, "y":  4.0, "cluster": "left_thumb", "finger": "LThumb" },
+        // ---- right bottom row (r = 1) ----
+        { id: "main_k40", r:  1, c:  1, x:  1.0, y:  1.0,  finger: "RIndex" },
+        { id: "main_k41", r:  1, c:  2, x:  2.0, y:  0.75, finger: "RIndex" },
+        { id: "main_k42", r:  1, c:  3, x:  3.0, y:  0.5,  finger: "RMiddle" },
+        { id: "main_k43", r:  1, c:  4, x:  4.0, y:  0.75, finger: "RRing" },
+        { id: "main_k44", r:  1, c:  5, x:  5.0, y:  1.75, finger: "RPinky" },
+      ],
+    },
 
-    { "id": "right_thumb_k1", "x":  1.0, "y":  3.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k2", "x":  2.0, "y":  3.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k3", "x":  3.0, "y":  3.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k4", "x":  4.0, "y":  3.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k5", "x":  2.0, "y":  4.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k6", "x":  3.0, "y":  4.0, "cluster": "right_thumb", "finger": "RThumb" },
-    { "id": "right_thumb_k7", "x":  4.0, "y":  4.0, "cluster": "right_thumb", "finger": "RThumb" }
-  ]
+    // Mod column keys — kept in the mods cluster so layouts that
+    // want to remap Caps→Ctrl etc. can target them by semantic id.
+    {
+      type: "col-stag",
+      cluster: "mods",
+      keys: [
+        { id: "mods_tab",        r: -1, c: -6, x: -6.0, y: -0.25, finger: "LPinky" },
+        { id: "mods_capslock",   r:  0, c: -6, x: -6.0, y:  0.75, finger: "LPinky" },
+        { id: "mods_shift_left", r:  1, c: -6, x: -6.0, y:  1.75, finger: "LPinky" },
+        { id: "mods_enter",      r:  1, c:  6, x:  6.0, y:  1.75, finger: "RPinky" },
+      ],
+    },
+
+    // Thumb clusters — geometrically fan-shaped, rendered as two
+    // flat rows in terminal via r/c. Placeholder xy until real
+    // measurements are taken.
+    {
+      type: "free-form",
+      cluster: "left_thumb",
+      keys: [
+        // inner (upper) row — 2 keys closer to the home-row bottom
+        { id: "left_thumb_k1", r: 2, c: -2, x: -2.0, y: 3.0, finger: "LThumb" },
+        { id: "left_thumb_k2", r: 2, c: -1, x: -1.0, y: 3.0, finger: "LThumb" },
+        // outer (lower) row — 5 keys fanning out toward the edge
+        { id: "left_thumb_k3", r: 3, c: -5, x: -5.0, y: 4.0, finger: "LThumb" },
+        { id: "left_thumb_k4", r: 3, c: -4, x: -4.0, y: 4.0, finger: "LThumb" },
+        { id: "left_thumb_k5", r: 3, c: -3, x: -3.0, y: 4.0, finger: "LThumb" },
+        { id: "left_thumb_k6", r: 3, c: -2, x: -2.0, y: 4.0, finger: "LThumb" },
+        { id: "left_thumb_k7", r: 3, c: -1, x: -1.0, y: 4.0, finger: "LThumb" },
+      ],
+    },
+    {
+      type: "free-form",
+      cluster: "right_thumb",
+      keys: [
+        { id: "right_thumb_k1", r: 2, c:  1, x:  1.0, y: 3.0, finger: "RThumb" },
+        { id: "right_thumb_k2", r: 2, c:  2, x:  2.0, y: 3.0, finger: "RThumb" },
+        { id: "right_thumb_k3", r: 3, c:  1, x:  1.0, y: 4.0, finger: "RThumb" },
+        { id: "right_thumb_k4", r: 3, c:  2, x:  2.0, y: 4.0, finger: "RThumb" },
+        { id: "right_thumb_k5", r: 3, c:  3, x:  3.0, y: 4.0, finger: "RThumb" },
+        { id: "right_thumb_k6", r: 3, c:  4, x:  4.0, y: 4.0, finger: "RThumb" },
+        { id: "right_thumb_k7", r: 3, c:  5, x:  5.0, y: 4.0, finger: "RThumb" },
+      ],
+    },
+  ],
 }

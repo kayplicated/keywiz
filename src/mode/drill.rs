@@ -1,8 +1,8 @@
 //! Key drill mode — single character at a time with adaptive difficulty.
 
 use crate::app::AppContext;
-use crate::engine::drill::{Drill, DrillLevel};
-use crate::ui;
+use crate::typing::drill::{Drill, DrillLevel};
+use crate::renderer::terminal as term;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Alignment;
 use ratatui::style::{Color, Style, Stylize};
@@ -30,7 +30,7 @@ impl DrillMode {
                 let ch = ctx.translate_input(ch);
                 // Snapshot level char sets so the engine can take &mut stats
                 // without co-borrowing the rest of ctx.
-                let source = crate::engine::drill::LevelChars::from_source(ctx);
+                let source = crate::typing::drill::LevelChars::from_source(ctx);
                 self.drill.handle_input(ch, &source, &mut ctx.stats);
                 ModeResult::Stay
             }
@@ -39,7 +39,7 @@ impl DrillMode {
     }
 
     pub fn render(&self, f: &mut Frame, ctx: &AppContext) {
-        let areas = ui::centered_content_layout(f.area(), 3, ui::grid::grid_height(ctx.grid()));
+        let areas = term::centered_content_layout(f.area(), 3, term::keyboard_height(ctx.keyboard()));
 
         // Header
         let header = Paragraph::new(Line::from(vec![
@@ -78,10 +78,10 @@ impl DrillMode {
 
         if ctx.show_keyboard {
             let heat = ctx.show_heatmap.then(|| ctx.stats.persistent());
-            ui::grid::render_grid(
+            term::render_keyboard(
                 f,
                 areas.keyboard,
-                ctx.grid(),
+                ctx.keyboard(), ctx.layout(),
                 Some(self.drill.current),
                 heat,
             );
@@ -122,6 +122,6 @@ impl DrillMode {
         .alignment(Alignment::Center);
         f.render_widget(stats, areas.stats);
 
-        ui::render_footer(f, areas.footer, ctx);
+        term::render_footer(f, areas.footer, ctx);
     }
 }

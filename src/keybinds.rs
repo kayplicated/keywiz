@@ -1,26 +1,15 @@
 //! Global keybinds handled before per-mode input.
-//!
-//! Lives here so the event loop stays small and adding a new global
-//! shortcut is one edit in one file. Each keybind either mutates
-//! [`AppContext`] directly or routes through [`GridManager`] — no
-//! mode-specific logic.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::app::AppContext;
 use crate::stats;
-use crate::translate;
 
-/// What the event loop should do after [`handle_shared`] runs.
 pub enum KeybindResult {
-    /// Keybind handled; skip mode dispatch for this key.
     Handled,
-    /// No global binding matched; forward to the active mode.
     Passthrough,
 }
 
-/// Apply any global keybind triggered by `key`. Returns [`KeybindResult`]
-/// so the caller knows whether to forward the event to the active mode.
 pub fn handle_shared(key: KeyEvent, ctx: &mut AppContext) -> KeybindResult {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
@@ -58,35 +47,24 @@ enum Dir {
     Prev,
 }
 
-/// Cycle to the next/previous keyboard. Single-grid managers (the
-/// kanata path) hold one keyboard, so cycling is a no-op there.
 fn cycle_keyboard(ctx: &mut AppContext, dir: Dir) {
-    let changed = match dir {
-        Dir::Next => ctx.grid_manager.next_keyboard(),
-        Dir::Prev => ctx.grid_manager.prev_keyboard(),
+    let result = match dir {
+        Dir::Next => ctx.engine_mut().next_keyboard(),
+        Dir::Prev => ctx.engine_mut().prev_keyboard(),
     };
-    if changed.is_ok() {
-        rebuild_translator(ctx);
+    if result.is_ok() {
+        ctx.rebuild_translator();
     }
 }
 
-/// Cycle to the next/previous layout. Layout changes swap the per-layout
-/// persistent stats: save the outgoing, load the incoming.
 fn cycle_layout(ctx: &mut AppContext, dir: Dir) {
-    let change = match dir {
-        Dir::Next => ctx.grid_manager.next_layout(),
-        Dir::Prev => ctx.grid_manager.prev_layout(),
+    let result = match dir {
+        Dir::Next => ctx.engine_mut().next_layout(),
+        Dir::Prev => ctx.engine_mut().prev_layout(),
     };
-    let Ok(change) = change else { return };
+    let Ok(change) = result else { return };
     stats::persist::save(&change.from, ctx.stats.persistent());
     ctx.stats = stats::StatsTracker::new();
-    ctx.stats
-        .set_persistent(stats::persist::load(&change.to));
-    rebuild_translator(ctx);
-}
-
-/// Rebuild the translator against the current grid. Called after the
-/// active keyboard or layout changes so `--from` stays correct.
-fn rebuild_translator(ctx: &mut AppContext) {
-    ctx.translator = translate::build(ctx.grid(), ctx.from_layout.as_deref());
+    ctx.stats.set_persistent(stats::persist::load(&change.to));
+    ctx.rebuild_translator();
 }

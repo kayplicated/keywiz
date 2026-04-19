@@ -1,0 +1,105 @@
+//! Page-level layout helpers for terminal modes.
+//!
+//! `centered_content_layout` carves a mode's screen into header /
+//! body / keyboard / stats / footer bands. `render_footer` paints
+//! the standard two-line footer (indicator line + optional error).
+
+use ratatui::layout::{Constraint, Layout, Rect};
+
+pub struct ContentAreas {
+    pub header: Rect,
+    pub body: Rect,
+    pub keyboard: Rect,
+    pub stats: Rect,
+    pub footer: Rect,
+}
+
+pub fn centered_content_layout(area: Rect, body_h: u16, keyboard_h: u16) -> ContentAreas {
+    // Footer is two lines: indicator + optional error message.
+    let content_h: u16 = 1 + 1 + body_h + 1 + keyboard_h + 1 + 1 + 1 + 2;
+    let [_, center, _] = Layout::vertical([
+        Constraint::Fill(1),
+        Constraint::Length(content_h),
+        Constraint::Fill(1),
+    ])
+    .areas(area);
+
+    let [header, _, body, _, keyboard, _, stats, _, footer] = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(1),
+        Constraint::Length(body_h),
+        Constraint::Length(1),
+        Constraint::Length(keyboard_h),
+        Constraint::Length(1),
+        Constraint::Length(1),
+        Constraint::Length(1),
+        Constraint::Length(2),
+    ])
+    .areas(center);
+
+    ContentAreas {
+        header,
+        body,
+        keyboard,
+        stats,
+        footer,
+    }
+}
+
+/// Two-line footer. Line 1 is the keyboard / layout indicator (red
+/// for broken selections); line 2 shows the parse-error reason when
+/// something's broken, blank otherwise.
+pub fn render_footer(f: &mut ratatui::Frame, area: Rect, ctx: &crate::app::AppContext) {
+    use ratatui::layout::Alignment;
+    use ratatui::style::{Color, Modifier, Style};
+    use ratatui::text::{Line, Span};
+    use ratatui::widgets::Paragraph;
+
+    let dim = Style::default().fg(Color::DarkGray);
+    let red = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+    let red_dim = Style::default().fg(Color::Red);
+
+    let engine = ctx.engine();
+
+    let keyboard_span = match engine.broken_keyboard() {
+        Some(b) => Span::styled(b.name.clone(), red),
+        None => Span::styled(engine.keyboard().short().to_string(), dim),
+    };
+    let layout_span = match engine.broken_layout() {
+        Some(b) => Span::styled(b.name.clone(), red),
+        None => Span::styled(engine.layout().short.clone(), dim),
+    };
+
+    let indicator = Line::from(vec![
+        Span::styled("Ctrl+↑↓  ", dim),
+        keyboard_span,
+        Span::styled("  —  ", dim),
+        layout_span,
+        Span::styled("  Ctrl+←→", dim),
+    ]);
+
+    let error_line = match engine
+        .broken_keyboard()
+        .map(|b| &b.reason)
+        .or_else(|| engine.broken_layout().map(|b| &b.reason))
+    {
+        Some(reason) => Line::from(Span::styled(truncate_reason(reason, 120), red_dim)),
+        None => Line::from(""),
+    };
+
+    f.render_widget(
+        Paragraph::new(vec![indicator, error_line]).alignment(Alignment::Center),
+        area,
+    );
+}
+
+fn truncate_reason(reason: &str, max: usize) -> String {
+    let trimmed = reason.find(':').map_or(reason, |i| &reason[i + 1..]).trim();
+    if trimmed.chars().count() <= max {
+        trimmed.to_string()
+    } else {
+        let mut s: String = trimmed.chars().take(max - 1).collect();
+        s.push('…');
+        s
+    }
+}

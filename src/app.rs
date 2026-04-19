@@ -1,75 +1,84 @@
 //! Shared application context passed to all modes.
 
-use crate::engine::drill::{CharSource, DrillLevel};
-use crate::grid::{Grid, GridManager};
+use crate::engine::{Engine, Translator};
+use crate::keyboard::Keyboard;
+use crate::mapping::{KeyMapping, Layout};
 use crate::stats::StatsTracker;
-use crate::translate::Translator;
+use crate::typing::drill::{CharSource, DrillLevel};
 
-/// Shared state that crosses mode boundaries.
 pub struct AppContext {
     pub(crate) show_keyboard: bool,
-    /// When true, the keyboard widget tints keys by accuracy instead of finger color.
     pub(crate) show_heatmap: bool,
-    /// Input character translator. [`Translator::identity`] when the input
-    /// keyboard already matches the target layout.
     pub(crate) translator: Translator,
-    /// Name of the layout the physical keyboard actually produces
-    /// (`--from`). Kept so the translator can be rebuilt against the
-    /// current target whenever the user cycles keyboard or layout.
-    /// `None` when no `--from` was given.
     pub(crate) from_layout: Option<String>,
-    /// Session + persistent per-key stats for the current layout.
     pub(crate) stats: StatsTracker,
-    /// Owns the active keyboard + layout grid. Always present; the kanata
-    /// path uses [`GridManager::single`] when there's no catalog to cycle.
-    pub(crate) grid_manager: GridManager,
+    pub(crate) engine: Engine,
 }
 
 impl AppContext {
-    pub fn new(
-        grid_manager: GridManager,
-        translator: Translator,
-        from_layout: Option<String>,
-    ) -> Self {
-        Self {
+    pub fn new(engine: Engine, from_layout: Option<String>) -> Self {
+        let translator = Translator::identity();
+        let mut ctx = Self {
             show_keyboard: true,
             show_heatmap: false,
             translator,
-            from_layout,
+            from_layout: from_layout.clone(),
             stats: StatsTracker::new(),
-            grid_manager,
-        }
+            engine,
+        };
+        ctx.rebuild_translator();
+        ctx
     }
 
-    /// Translate input character through the active translator.
     pub fn translate_input(&self, ch: char) -> char {
         self.translator.translate(ch)
     }
 
-    /// Active grid (keyboard + layout).
-    pub fn grid(&self) -> &Grid {
-        self.grid_manager.grid()
+    pub fn keyboard(&self) -> &dyn Keyboard {
+        self.engine.keyboard()
     }
 
-    /// Read-only access to the grid manager for UI that needs to see
-    /// broken-selection state.
-    pub fn grid_manager(&self) -> &GridManager {
-        &self.grid_manager
+    pub fn layout(&self) -> &Layout {
+        self.engine.layout()
     }
 
-    /// Name for stats persistence: the active layout's name.
+    /// Rebuild the input-character translator against the current
+    /// layout. Called after keyboard/layout changes so `--from`
+    /// keeps tracking the active target.
+    pub fn rebuild_translator(&mut self) {
+        self.translator =
+            crate::engine::translate::build(self.engine.layout(), self.from_layout.as_deref());
+    }
+
+    pub fn engine(&self) -> &Engine {
+        &self.engine
+    }
+
+    pub fn engine_mut(&mut self) -> &mut Engine {
+        &mut self.engine
+    }
+
     pub fn stats_key(&self) -> &str {
-        self.grid_manager.current_layout()
+        self.engine.current_layout()
     }
 }
 
 impl CharSource for AppContext {
     fn chars_for(&self, level: DrillLevel) -> Vec<char> {
-        let g = self.grid();
-        match level {
-            DrillLevel::HomeRow => g.home_row_chars(),
-            DrillLevel::HomeAndTop => g.home_and_top_chars(),
-            DrillLevel::AllRows => g.all_alpha_chars(),
-        }
+        let want_rows: &[i32] = match level {
+            DrillLevel::HomeRow => &[0],
+            DrillLevel::HomeAndTop => &[0, -1],
+            DrillLevel::AllRows => &[-2, -1, 0, 1],
+        };
+        let keyboard = self.keyboard();
+        let layout = self.layout();
+        keyboard
+            .keys()
+            .filter(|k| want_rows.contains(&k.r))
+            .filter_map(|k| match layout.get(&k.id) {
+                Some(KeyMapping::Char { lower, .. }) if lower.is_alphabetic() => Some(*lower),
+                _ => None,
+            })
+            .collect()
     }
 }
