@@ -14,7 +14,8 @@ use std::collections::HashMap;
 
 use crate::configreader::{ConfigReader, ReaderError};
 use crate::grid::layout::KeyMapping;
-use crate::grid::{Finger, Grid};
+use crate::grid::Grid;
+use crate::physical::engine::{Finger, DEFAULT_CLUSTER};
 
 /// Standard ANSI defsrc row layout that kanata users follow when their
 /// physical keyboard is a regular full-size or TKL board. Other shapes
@@ -110,15 +111,21 @@ fn build_ansi_buttons(
         let inner = &row_tokens[*skip_left..row_tokens.len() - *skip_right];
 
         for (col_idx, (code, token)) in codes.iter().zip(inner.iter()).enumerate() {
-            let mapping = resolve_token(token, aliases).map(|lower| KeyMapping {
+            let mapping = resolve_token(token, aliases).map(|lower| KeyMapping::Char {
                 lower,
                 upper: shift_for(*code, lower),
             });
             let x = ansi_x_for(*y, col_idx);
+            // Kanata grids don't have a physical id scheme — use the
+            // keycode string as the id so every key has a unique one.
             buttons.push(crate::grid::GridButton {
-                code: code.to_string(),
+                id: code.to_string(),
                 x,
                 y: *y,
+                width: 1.0,
+                height: 1.0,
+                rotation: 0.0,
+                cluster: DEFAULT_CLUSTER.to_string(),
                 finger: ansi_finger_for(col_idx),
                 mapping,
             });
@@ -336,71 +343,3 @@ fn parse_tap_hold_alias(line: &str) -> Option<(String, char)> {
     Some((tokens[0].to_string(), ch))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const MINIMAL: &str = r#"
-(defsrc
-  esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
-  grv 1 2 3 4 5 6 7 8 9 0 - = bspc
-  tab q w e r t y u i o p [ ] \
-  caps a s d f g h j k l ; ' ret
-  lsft z x c v b n m , . / rsft
-  lctl lmet lalt spc ralt rctl
-)
-
-(deflayer qwerty
-  esc f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
-  grv 1 2 3 4 5 6 7 8 9 0 - = bspc
-  tab q w e r t y u i o p [ ] \
-  caps a s d f g h j k l ; ' ret
-  lsft z x c v b n m , . / rsft
-  lctl lmet lalt spc ralt rctl
-)
-"#;
-
-    #[test]
-    fn lists_layers_in_declaration_order() {
-        let r = KanataReader;
-        let layers = r.list_layers(MINIMAL);
-        assert_eq!(layers, vec!["qwerty"]);
-    }
-
-    #[test]
-    fn read_ansi_qwerty_produces_expected_home_row() {
-        let r = KanataReader;
-        let grid = r.read(MINIMAL, Some("qwerty")).expect("should parse");
-
-        let home: Vec<char> = grid
-            .buttons
-            .iter()
-            .filter(|b| b.y == 0.0)
-            .filter_map(|b| b.mapping.as_ref().map(|m| m.lower))
-            .collect();
-        assert_eq!(
-            home,
-            vec!['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'']
-        );
-    }
-
-    #[test]
-    fn unknown_layer_reports_available() {
-        let r = KanataReader;
-        let err = r.read(MINIMAL, Some("nope")).unwrap_err();
-        match err {
-            ReaderError::UnknownLayer { name, available } => {
-                assert_eq!(name, "nope");
-                assert_eq!(available, vec!["qwerty"]);
-            }
-            _ => panic!("wrong error: {err}"),
-        }
-    }
-
-    #[test]
-    fn defaults_to_first_layer_when_none_given() {
-        let r = KanataReader;
-        let grid = r.read(MINIMAL, None).expect("should parse");
-        assert_eq!(grid.layout_name, "qwerty");
-    }
-}

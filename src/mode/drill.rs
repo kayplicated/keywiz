@@ -39,7 +39,7 @@ impl DrillMode {
     }
 
     pub fn render(&self, f: &mut Frame, ctx: &AppContext) {
-        let areas = ui::centered_content_layout(f.area(), 3);
+        let areas = ui::centered_content_layout(f.area(), 3, ui::grid::grid_height(ctx.grid()));
 
         // Header
         let header = Paragraph::new(Line::from(vec![

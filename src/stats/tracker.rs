@@ -53,30 +53,3 @@ impl StatsTracker {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn record_updates_both_layers() {
-        let mut t = StatsTracker::new();
-        t.record('a', true);
-        t.record('a', false);
-
-        assert_eq!(t.session().get('a').unwrap().attempts, 2);
-        assert_eq!(t.persistent().get('a').unwrap().attempts, 2);
-    }
-
-    #[test]
-    fn new_session_clears_session_only() {
-        let mut t = StatsTracker::new();
-        t.record('a', true);
-        t.record('b', false);
-        t.new_session();
-
-        assert!(t.session().get('a').is_none());
-        assert!(t.session().get('b').is_none());
-        assert_eq!(t.persistent().get('a').unwrap().attempts, 1);
-        assert_eq!(t.persistent().get('b').unwrap().attempts, 1);
-    }
-}

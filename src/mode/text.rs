@@ -165,7 +165,7 @@ impl TextMode {
             return;
         }
 
-        let areas = ui::centered_content_layout(f.area(), 10);
+        let areas = ui::centered_content_layout(f.area(), 10, ui::grid::grid_height(ctx.grid()));
         let passage = &self.passages[self.current_passage];
 
         // Header: title + passage counter

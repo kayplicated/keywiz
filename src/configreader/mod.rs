@@ -11,6 +11,8 @@
 //! in `dispatch_by_extension` (or whatever the caller chooses to use).
 
 pub mod kanata;
+pub mod keyboard;
+pub mod layout;
 
 use crate::grid::Grid;
 

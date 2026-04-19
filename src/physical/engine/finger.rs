@@ -1,8 +1,9 @@
-//! Finger assignments and their associated terminal colors.
+//! The typing fingers.
 //!
-//! Used by both the keyboard widget (to color each key by which finger
-//! types it) and the heatmap (as the fallback color when a key has no
-//! accumulated heat).
+//! A finger assignment is a property of a physical key on a specific
+//! keyboard — decided by the board's designer and the typist's fingering
+//! convention. Lives in the engine module because it's part of the
+//! coordinate/layout vocabulary, not an attribute of any particular key.
 
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,8 @@ pub enum Finger {
     LRing,
     LMiddle,
     LIndex,
+    LThumb,
+    RThumb,
     RIndex,
     RMiddle,
     RRing,
@@ -20,12 +23,15 @@ pub enum Finger {
 }
 
 impl Finger {
+    /// Terminal color used to tint keys assigned to this finger.
     pub fn color(self) -> Color {
         match self {
             Finger::LPinky => Color::Red,
             Finger::LRing => Color::Yellow,
             Finger::LMiddle => Color::Green,
             Finger::LIndex => Color::Cyan,
+            Finger::LThumb => Color::DarkGray,
+            Finger::RThumb => Color::DarkGray,
             Finger::RIndex => Color::Blue,
             Finger::RMiddle => Color::Magenta,
             Finger::RRing => Color::Yellow,

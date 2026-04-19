@@ -5,6 +5,7 @@ mod engine;
 mod grid;
 mod keybinds;
 mod mode;
+mod physical;
 mod prefs;
 mod stats;
 mod translate;
@@ -56,7 +57,7 @@ fn main() -> io::Result<()> {
     // clear message; runtime rebuilds then trust the name is loadable.
     if let Some(name) = from_layout.as_deref() {
         let path = std::path::Path::new("layouts").join(format!("{name}.json"));
-        if let Err(e) = grid::Layout::load(&path) {
+        if let Err(e) = configreader::layout::load(&path) {
             eprintln!("keywiz: --from {name}: {e}");
             std::process::exit(1);
         }

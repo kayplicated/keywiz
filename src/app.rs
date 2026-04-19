@@ -51,6 +51,12 @@ impl AppContext {
         self.grid_manager.grid()
     }
 
+    /// Read-only access to the grid manager for UI that needs to see
+    /// broken-selection state.
+    pub fn grid_manager(&self) -> &GridManager {
+        &self.grid_manager
+    }
+
     /// Name for stats persistence: the active layout's name.
     pub fn stats_key(&self) -> &str {
         self.grid_manager.current_layout()
