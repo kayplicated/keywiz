@@ -298,16 +298,27 @@ mod tests {
         let mgr = GridManager::new().expect("shipped files should load");
         assert_eq!(mgr.current_layout(), "qwerty");
         let grid = mgr.grid();
-        // Every shipped button should have a mapping in qwerty.
-        let unmapped = grid.buttons.iter().filter(|b| b.mapping.is_none()).count();
-        assert_eq!(
-            unmapped, 0,
-            "us_intl has {unmapped} button(s) that qwerty doesn't map"
+        // Every letter-producing key should have a qwerty mapping. Mod-column
+        // keys (Tab, CapsLock, Shift, Enter, Backspace, …) are physical
+        // switches that no layout maps to characters — they're fine unmapped.
+        let unmapped_letters: Vec<&str> = grid
+            .buttons
+            .iter()
+            .filter(|b| b.mapping.is_none() && is_letter_code(&b.code))
+            .map(|b| b.code.as_str())
+            .collect();
+        assert!(
+            unmapped_letters.is_empty(),
+            "qwerty should map every letter key; missing: {unmapped_letters:?}"
         );
         // Home row should include 'a' and 'j'.
         let home = grid.home_row_chars();
         assert!(home.contains(&'a'));
         assert!(home.contains(&'j'));
+    }
+
+    fn is_letter_code(code: &str) -> bool {
+        code.len() == 5 && code.starts_with("KEY_") && code.as_bytes()[4].is_ascii_uppercase()
     }
 
     #[test]
