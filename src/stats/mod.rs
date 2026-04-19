@@ -106,6 +106,18 @@ impl Stats {
         self.keys.get(&ch)
     }
 
+    /// Normalized heat for a key in `0.0..=1.0`, or `None` if the
+    /// key has no accumulated heat. Renderers use this to pick a
+    /// color from their own palette without knowing the heat
+    /// model's integer step range.
+    pub fn heat_for(&self, ch: char) -> Option<f32> {
+        let record = self.keys.get(&ch)?;
+        if record.heat == 0 {
+            return None;
+        }
+        Some((record.heat as f32 / MAX_HEAT as f32).clamp(0.0, 1.0))
+    }
+
     /// Iterate over all recorded keys and their records.
     pub fn iter(&self) -> impl Iterator<Item = (&char, &KeyRecord)> {
         self.keys.iter()

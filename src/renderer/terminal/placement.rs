@@ -51,25 +51,25 @@ pub fn place_block<'a>(block: &'a dyn Block) -> Vec<TerminalPlacement<'a>> {
     }
 }
 
-/// Row-stag: r dictates row, c dictates column baseline, fractional
-/// x on top for per-row horizontal offset (ANSI row-stagger).
+/// Row-stag: r dictates row, fractional x honored for per-row
+/// horizontal offset (ANSI row-stagger). Position is computed from
+/// the key's *left edge* (`x - width/2`) so keys with half-integer
+/// centers still tile edge-to-edge cleanly. Rounding center points
+/// would bias half-positives and half-negatives in opposite
+/// directions, opening a 1-cell gap at x=0.
 fn place_rowstag<'a>(block: &'a dyn Block) -> Vec<TerminalPlacement<'a>> {
     block
         .keys()
         .map(|k| {
-            // c gives integer column; fractional x on top of that
-            // lets row-stag express per-row shifts (top row offset
-            // 0.5 relative to home, etc.). We anchor c at 0 meaning
-            // "the column position x=0 would map to" — but since our
-            // c values are already the schematic column and x tracks
-            // real position, just use x for placement on row-stag.
-            let col = (k.x * CELL_W as f32).round() as i32;
-            let row = k.r * CELL_H;
+            let left_edge = (k.x - k.width / 2.0) * CELL_W as f32;
+            let right_edge = (k.x + k.width / 2.0) * CELL_W as f32;
+            let col = left_edge.floor() as i32;
+            let width = (right_edge.floor() as i32 - col).max(3);
             TerminalPlacement {
                 key: k,
                 col,
-                row,
-                width: (k.width * CELL_W as f32).round().max(3.0) as i32,
+                row: k.r * CELL_H,
+                width,
                 height: CELL_H,
             }
         })

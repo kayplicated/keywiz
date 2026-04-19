@@ -11,8 +11,13 @@
 //! on the previous working selection.
 
 pub mod catalog;
+pub mod placement;
+pub mod projector;
 pub mod state;
 pub mod translate;
 
+pub use placement::{
+    BrokenDisplay, DisplayState, Placement, TextDisplay, WordsChar, WordsCharStatus, WordsDisplay,
+};
 pub use state::{BrokenSelection, Engine, EngineError, LayoutChange};
 pub use translate::Translator;

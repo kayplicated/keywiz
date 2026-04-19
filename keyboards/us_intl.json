@@ -1,63 +1,92 @@
 {
-  "name": "us_intl",
-  "short": "US International",
-  "description": "ANSI row-stagger keyboard — full alpha block including mod column (Tab/CapsLock/Shift/Enter/Backspace)",
-  "buttons": [
-    { "code": "KEY_GRAVE",      "x": -7.0, "y": -2.0, "finger": "LPinky" },
-    { "code": "KEY_1",          "x": -6.0, "y": -2.0, "finger": "LPinky" },
-    { "code": "KEY_2",          "x": -5.0, "y": -2.0, "finger": "LRing" },
-    { "code": "KEY_3",          "x": -4.0, "y": -2.0, "finger": "LMiddle" },
-    { "code": "KEY_4",          "x": -3.0, "y": -2.0, "finger": "LIndex" },
-    { "code": "KEY_5",          "x": -2.0, "y": -2.0, "finger": "LIndex" },
-    { "code": "KEY_6",          "x": -1.0, "y": -2.0, "finger": "RIndex" },
-    { "code": "KEY_7",          "x":  0.0, "y": -2.0, "finger": "RIndex" },
-    { "code": "KEY_8",          "x":  1.0, "y": -2.0, "finger": "RMiddle" },
-    { "code": "KEY_9",          "x":  2.0, "y": -2.0, "finger": "RRing" },
-    { "code": "KEY_0",          "x":  3.0, "y": -2.0, "finger": "RPinky" },
-    { "code": "KEY_MINUS",      "x":  4.0, "y": -2.0, "finger": "RPinky" },
-    { "code": "KEY_EQUAL",      "x":  5.0, "y": -2.0, "finger": "RPinky" },
-    { "code": "KEY_BACKSPACE",  "x":  6.0, "y": -2.0, "finger": "RPinky" },
+  name: "us_intl",
+  short: "US International",
+  description: "ANSI row-stagger keyboard — full alpha block plus the mod column (Tab, CapsLock, Shift, Enter, Backspace).",
 
-    { "code": "KEY_TAB",        "x": -6.5, "y": -1.0, "finger": "LPinky" },
-    { "code": "KEY_Q",          "x": -5.5, "y": -1.0, "finger": "LPinky" },
-    { "code": "KEY_W",          "x": -4.5, "y": -1.0, "finger": "LRing" },
-    { "code": "KEY_E",          "x": -3.5, "y": -1.0, "finger": "LMiddle" },
-    { "code": "KEY_R",          "x": -2.5, "y": -1.0, "finger": "LIndex" },
-    { "code": "KEY_T",          "x": -1.5, "y": -1.0, "finger": "LIndex" },
-    { "code": "KEY_Y",          "x": -0.5, "y": -1.0, "finger": "RIndex" },
-    { "code": "KEY_U",          "x":  0.5, "y": -1.0, "finger": "RIndex" },
-    { "code": "KEY_I",          "x":  1.5, "y": -1.0, "finger": "RMiddle" },
-    { "code": "KEY_O",          "x":  2.5, "y": -1.0, "finger": "RRing" },
-    { "code": "KEY_P",          "x":  3.5, "y": -1.0, "finger": "RPinky" },
-    { "code": "KEY_LEFTBRACE",  "x":  4.5, "y": -1.0, "finger": "RPinky" },
-    { "code": "KEY_RIGHTBRACE", "x":  5.5, "y": -1.0, "finger": "RPinky" },
-    { "code": "KEY_BACKSLASH",  "x":  6.5, "y": -1.0, "finger": "RPinky" },
+  // Row-stagger: each row slides horizontally relative to the one
+  // above. Terminal honors the fractional x offsets per row, so the
+  // classic ANSI shift shows up visibly.
+  //
+  // Convention:
+  //   r = -2 (number row) — starts at x = -7
+  //   r = -1 (top row)    — starts at x = -6.5 (+0.5 shift)
+  //   r =  0 (home row)   — starts at x = -6   (+1.0 shift vs number)
+  //   r =  1 (bottom row) — starts at x = -5.5 (+1.5 shift vs number)
+  blocks: [
+    {
+      type: "row-stag",
+      cluster: "main",
+      keys: [
+        // ---- number row (r = -2) ----
+        { id: "main_k1",  r: -2, c: -7, x: -7.0, y: -2.0, finger: "LPinky" },
+        { id: "main_k2",  r: -2, c: -6, x: -6.0, y: -2.0, finger: "LPinky" },
+        { id: "main_k3",  r: -2, c: -5, x: -5.0, y: -2.0, finger: "LRing" },
+        { id: "main_k4",  r: -2, c: -4, x: -4.0, y: -2.0, finger: "LMiddle" },
+        { id: "main_k5",  r: -2, c: -3, x: -3.0, y: -2.0, finger: "LIndex" },
+        { id: "main_k6",  r: -2, c: -2, x: -2.0, y: -2.0, finger: "LIndex" },
+        { id: "main_k7",  r: -2, c: -1, x: -1.0, y: -2.0, finger: "RIndex" },
+        { id: "main_k8",  r: -2, c:  0, x:  0.0, y: -2.0, finger: "RIndex" },
+        { id: "main_k9",  r: -2, c:  1, x:  1.0, y: -2.0, finger: "RMiddle" },
+        { id: "main_k10", r: -2, c:  2, x:  2.0, y: -2.0, finger: "RRing" },
+        { id: "main_k11", r: -2, c:  3, x:  3.0, y: -2.0, finger: "RPinky" },
+        { id: "main_k12", r: -2, c:  4, x:  4.0, y: -2.0, finger: "RPinky" },
+        { id: "main_k13", r: -2, c:  5, x:  5.0, y: -2.0, finger: "RPinky" },
 
-    { "code": "KEY_CAPSLOCK",   "x": -6.0, "y":  0.0, "finger": "LPinky" },
-    { "code": "KEY_A",          "x": -5.0, "y":  0.0, "finger": "LPinky" },
-    { "code": "KEY_S",          "x": -4.0, "y":  0.0, "finger": "LRing" },
-    { "code": "KEY_D",          "x": -3.0, "y":  0.0, "finger": "LMiddle" },
-    { "code": "KEY_F",          "x": -2.0, "y":  0.0, "finger": "LIndex" },
-    { "code": "KEY_G",          "x": -1.0, "y":  0.0, "finger": "LIndex" },
-    { "code": "KEY_H",          "x":  0.0, "y":  0.0, "finger": "RIndex" },
-    { "code": "KEY_J",          "x":  1.0, "y":  0.0, "finger": "RIndex" },
-    { "code": "KEY_K",          "x":  2.0, "y":  0.0, "finger": "RMiddle" },
-    { "code": "KEY_L",          "x":  3.0, "y":  0.0, "finger": "RRing" },
-    { "code": "KEY_SEMICOLON",  "x":  4.0, "y":  0.0, "finger": "RPinky" },
-    { "code": "KEY_APOSTROPHE", "x":  5.0, "y":  0.0, "finger": "RPinky" },
-    { "code": "KEY_ENTER",      "x":  6.0, "y":  0.0, "finger": "RPinky" },
+        // ---- top row (r = -1), shifted 0.5 right ----
+        { id: "main_k14", r: -1, c: -6, x: -5.5, y: -1.0, finger: "LPinky" },
+        { id: "main_k15", r: -1, c: -5, x: -4.5, y: -1.0, finger: "LRing" },
+        { id: "main_k16", r: -1, c: -4, x: -3.5, y: -1.0, finger: "LMiddle" },
+        { id: "main_k17", r: -1, c: -3, x: -2.5, y: -1.0, finger: "LIndex" },
+        { id: "main_k18", r: -1, c: -2, x: -1.5, y: -1.0, finger: "LIndex" },
+        { id: "main_k19", r: -1, c: -1, x: -0.5, y: -1.0, finger: "RIndex" },
+        { id: "main_k20", r: -1, c:  0, x:  0.5, y: -1.0, finger: "RIndex" },
+        { id: "main_k21", r: -1, c:  1, x:  1.5, y: -1.0, finger: "RMiddle" },
+        { id: "main_k22", r: -1, c:  2, x:  2.5, y: -1.0, finger: "RRing" },
+        { id: "main_k23", r: -1, c:  3, x:  3.5, y: -1.0, finger: "RPinky" },
+        { id: "main_k24", r: -1, c:  4, x:  4.5, y: -1.0, finger: "RPinky" },
+        { id: "main_k25", r: -1, c:  5, x:  5.5, y: -1.0, finger: "RPinky" },
+        { id: "main_k26", r: -1, c:  6, x:  6.5, y: -1.0, finger: "RPinky" },
 
-    { "code": "KEY_LEFTSHIFT",  "x": -5.5, "y":  1.0, "finger": "LPinky" },
-    { "code": "KEY_Z",          "x": -4.5, "y":  1.0, "finger": "LPinky" },
-    { "code": "KEY_X",          "x": -3.5, "y":  1.0, "finger": "LRing" },
-    { "code": "KEY_C",          "x": -2.5, "y":  1.0, "finger": "LMiddle" },
-    { "code": "KEY_V",          "x": -1.5, "y":  1.0, "finger": "LIndex" },
-    { "code": "KEY_B",          "x": -0.5, "y":  1.0, "finger": "LIndex" },
-    { "code": "KEY_N",          "x":  0.5, "y":  1.0, "finger": "RIndex" },
-    { "code": "KEY_M",          "x":  1.5, "y":  1.0, "finger": "RIndex" },
-    { "code": "KEY_COMMA",      "x":  2.5, "y":  1.0, "finger": "RMiddle" },
-    { "code": "KEY_DOT",        "x":  3.5, "y":  1.0, "finger": "RRing" },
-    { "code": "KEY_SLASH",      "x":  4.5, "y":  1.0, "finger": "RPinky" },
-    { "code": "KEY_RIGHTSHIFT", "x":  5.5, "y":  1.0, "finger": "RPinky" }
-  ]
+        // ---- home row (r = 0), shifted 1.0 right of number row ----
+        { id: "main_k27", r:  0, c: -5, x: -5.0, y:  0.0, finger: "LPinky" },
+        { id: "main_k28", r:  0, c: -4, x: -4.0, y:  0.0, finger: "LRing" },
+        { id: "main_k29", r:  0, c: -3, x: -3.0, y:  0.0, finger: "LMiddle" },
+        { id: "main_k30", r:  0, c: -2, x: -2.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k31", r:  0, c: -1, x: -1.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k32", r:  0, c:  0, x:  0.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k33", r:  0, c:  1, x:  1.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k34", r:  0, c:  2, x:  2.0, y:  0.0, finger: "RMiddle" },
+        { id: "main_k35", r:  0, c:  3, x:  3.0, y:  0.0, finger: "RRing" },
+        { id: "main_k36", r:  0, c:  4, x:  4.0, y:  0.0, finger: "RPinky" },
+        { id: "main_k37", r:  0, c:  5, x:  5.0, y:  0.0, finger: "RPinky" },
+
+        // ---- bottom row (r = 1), shifted 1.5 right of number row ----
+        { id: "main_k38", r:  1, c: -4, x: -4.5, y:  1.0, finger: "LPinky" },
+        { id: "main_k39", r:  1, c: -3, x: -3.5, y:  1.0, finger: "LRing" },
+        { id: "main_k40", r:  1, c: -2, x: -2.5, y:  1.0, finger: "LMiddle" },
+        { id: "main_k41", r:  1, c: -1, x: -1.5, y:  1.0, finger: "LIndex" },
+        { id: "main_k42", r:  1, c:  0, x: -0.5, y:  1.0, finger: "LIndex" },
+        { id: "main_k43", r:  1, c:  1, x:  0.5, y:  1.0, finger: "RIndex" },
+        { id: "main_k44", r:  1, c:  2, x:  1.5, y:  1.0, finger: "RIndex" },
+        { id: "main_k45", r:  1, c:  3, x:  2.5, y:  1.0, finger: "RMiddle" },
+        { id: "main_k46", r:  1, c:  4, x:  3.5, y:  1.0, finger: "RRing" },
+        { id: "main_k47", r:  1, c:  5, x:  4.5, y:  1.0, finger: "RPinky" },
+      ],
+    },
+
+    // Mod column — semantic ids. Tab/Caps/LShift/RShift sit on the
+    // left edge, Enter/Backspace on the right edge.
+    {
+      type: "row-stag",
+      cluster: "mods",
+      keys: [
+        { id: "mods_backspace",  r: -2, c:  6, x:  6.0, y: -2.0, finger: "RPinky" },
+        { id: "mods_tab",        r: -1, c: -7, x: -6.5, y: -1.0, finger: "LPinky" },
+        { id: "mods_capslock",   r:  0, c: -6, x: -6.0, y:  0.0, finger: "LPinky" },
+        { id: "mods_enter",      r:  0, c:  6, x:  6.0, y:  0.0, finger: "RPinky" },
+        { id: "mods_shift_left", r:  1, c: -5, x: -5.5, y:  1.0, finger: "LPinky" },
+        { id: "mods_shift_right",r:  1, c:  6, x:  5.5, y:  1.0, finger: "RPinky" },
+      ],
+    },
+  ],
 }
