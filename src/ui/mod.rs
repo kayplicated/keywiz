@@ -48,21 +48,23 @@ pub fn centered_content_layout(area: Rect, body_h: u16) -> ContentAreas {
     }
 }
 
-/// Render the standard footer: dim `keyboard — layout` indicator, centered.
-/// Safe to call from every mode; falls back to the legacy layout name when
-/// no grid manager is present.
+/// Render the standard footer: dim `keyboard — layout` indicator with
+/// cycling hints on each side, centered.
 pub fn render_footer(f: &mut ratatui::Frame, area: Rect, ctx: &crate::app::AppContext) {
     use ratatui::layout::Alignment;
     use ratatui::style::{Color, Style};
     use ratatui::text::{Line, Span};
     use ratatui::widgets::Paragraph;
 
+    let dim = Style::default().fg(Color::DarkGray);
     let g = ctx.grid();
-    let text = format!("{} — {}", g.keyboard_short, g.layout_short);
-    let para = Paragraph::new(Line::from(Span::styled(
-        text,
-        Style::default().fg(Color::DarkGray),
-    )))
-    .alignment(Alignment::Center);
-    f.render_widget(para, area);
+
+    let line = Line::from(vec![
+        Span::styled("Ctrl+↑↓  ", dim),
+        Span::styled(g.keyboard_short.clone(), dim),
+        Span::styled("  —  ", dim),
+        Span::styled(g.layout_short.clone(), dim),
+        Span::styled("  Ctrl+←→", dim),
+    ]);
+    f.render_widget(Paragraph::new(line).alignment(Alignment::Center), area);
 }
