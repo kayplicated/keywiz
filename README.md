@@ -20,7 +20,7 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 - **Text practice** — type through real passages, arrow keys to switch texts
 - **Heatmap overlay** — F2 colors the keyboard by where you actually struggle, accumulated across sessions
 - **Smart word selection** — words you type quietly bias toward your weak keys, so practice targets itself
-- **Many layouts + keyboards** — QWERTY, Colemak, Colemak-DH, Dvorak, Canary, Hyperroll, Gallium across US, Kyria, and Elora hardware — cycle between them with Ctrl+arrows while the app is running
+- **Many layouts + keyboards** — 13 shipped layouts (QWERTY, Dvorak, Colemak, Colemak-DH, Workman, Graphite, Sturdy, Gallium, Canary, Hyperroll, Engram, Semimak, ISRT) across US, Kyria, and Elora hardware — cycle between them with Ctrl+arrows while the app is running
 - **Data-driven** — keyboards and layouts are JSON files; drop your own in `keyboards/` or `layouts/` and they show up in the cycle
 - **Toggle keyboard** with Tab — fly blind when you're ready
 - **Kanata escape hatch** — point keywiz at a `.kbd` config for one-off layouts not in the shipped catalog
@@ -60,7 +60,7 @@ keywiz -l colemak --from qwerty
 `--from <layout>` tells keywiz what your input keyboard *actually sends*, so each keypress is translated to the equivalent position in the target layout. Useful for SSHing into your machine from a vanilla QWERTY laptop while practicing Gallium, or for testing a layout you haven't switched the OS to yet. Pressing physical `j` on QWERTY registers as whatever the target layout puts at that position.
 
 Shipped keyboards (`keyboards/`): `us_intl`, `kyria`, `elora`, `halcyon_elora_v2`.
-Shipped layouts (`layouts/`): `qwerty`, `colemak`, `colemak-dh`, `dvorak`, `canary`, `hyperroll`, `gallium`.
+Shipped layouts (`layouts/`): `qwerty`, `dvorak`, `colemak`, `colemak-dh`, `workman`, `graphite`, `sturdy`, `gallium`, `canary`, `hyperroll`, `engram`, `semimak`, `isrt`.
 
 ### Adding your own
 
