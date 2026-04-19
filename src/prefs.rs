@@ -13,6 +13,8 @@ use std::path::PathBuf;
 pub struct Prefs {
     pub keyboard: Option<String>,
     pub layout: Option<String>,
+    #[serde(default)]
+    pub exercise: Option<String>,
 }
 
 impl Prefs {
@@ -28,9 +30,11 @@ impl Prefs {
         serde_json::from_str(&content).unwrap_or_default()
     }
 
-    /// Save the keyboard + layout pair. Failures are logged to stderr
-    /// and swallowed — preferences are QoL, never load-bearing.
-    pub fn save(keyboard: &str, layout: &str) {
+    /// Save the active keyboard / layout / exercise so the next
+    /// launch resumes where the user left off. Failures are logged
+    /// to stderr and swallowed — preferences are QoL, never
+    /// load-bearing.
+    pub fn save(keyboard: &str, layout: &str, exercise: &str) {
         let Some(path) = prefs_path() else {
             return;
         };
@@ -43,6 +47,7 @@ impl Prefs {
         let prefs = Prefs {
             keyboard: Some(keyboard.to_string()),
             layout: Some(layout.to_string()),
+            exercise: Some(exercise.to_string()),
         };
         let json = match serde_json::to_string_pretty(&prefs) {
             Ok(j) => j,

@@ -46,6 +46,7 @@ fn main() -> io::Result<()> {
     let saved = prefs::Prefs::load();
     let keyboard = keyboard_flag.as_deref().or(saved.keyboard.as_deref());
     let layout = layout_flag.as_deref().or(saved.layout.as_deref());
+    let exercise = saved.exercise.as_deref();
 
     let mut engine = Engine::new(from_layout).unwrap_or_else(|e| {
         eprintln!("keywiz: could not load keyboards/layouts: {e}");
@@ -61,6 +62,9 @@ fn main() -> io::Result<()> {
     {
         eprintln!("keywiz: {e}");
     }
+    if let Some(name) = exercise {
+        engine.set_exercise(name);
+    }
 
     terminal::enable_raw_mode()?;
     io::stdout().execute(EnterAlternateScreen)?;
@@ -72,7 +76,11 @@ fn main() -> io::Result<()> {
     let _ = io::stdout().execute(LeaveAlternateScreen);
 
     engine.persist_stats();
-    prefs::Prefs::save(engine.current_keyboard(), engine.current_layout());
+    prefs::Prefs::save(
+        engine.current_keyboard(),
+        engine.current_layout(),
+        engine.current_exercise(),
+    );
 
     result
 }
