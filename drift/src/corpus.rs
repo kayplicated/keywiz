@@ -20,6 +20,9 @@ pub struct Corpus {
     pub chars: HashMap<char, f64>,
     /// Per-bigram frequency (%). Key is the 2-char string unchanged.
     pub bigrams: HashMap<(char, char), f64>,
+    /// Per-trigram frequency (%). Empty if the corpus doesn't supply
+    /// trigrams (some older formats didn't).
+    pub trigrams: HashMap<(char, char, char), f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,6 +30,8 @@ struct RawCorpus {
     name: String,
     chars: HashMap<String, f64>,
     bigrams: HashMap<String, f64>,
+    #[serde(default)]
+    trigrams: HashMap<String, f64>,
 }
 
 impl Corpus {
@@ -61,11 +66,27 @@ impl Corpus {
             })
             .collect();
 
+        let trigrams = raw
+            .trigrams
+            .into_iter()
+            .filter_map(|(k, v)| {
+                let mut it = k.chars();
+                let a = it.next()?;
+                let b = it.next()?;
+                let c = it.next()?;
+                if it.next().is_some() {
+                    return None;
+                }
+                Some(((a, b, c), v))
+            })
+            .collect();
+
         Ok(Corpus {
             name: raw.name,
             path: path.to_path_buf(),
             chars,
             bigrams,
+            trigrams,
         })
     }
 
@@ -102,6 +123,7 @@ impl Corpus {
 
         let mut chars: HashMap<char, f64> = HashMap::new();
         let mut bigrams: HashMap<(char, char), f64> = HashMap::new();
+        let mut trigrams: HashMap<(char, char, char), f64> = HashMap::new();
 
         for (corpus, weight) in inputs {
             let share = weight / total_weight;
@@ -110,6 +132,9 @@ impl Corpus {
             }
             for (&pair, &freq) in &corpus.bigrams {
                 *bigrams.entry(pair).or_insert(0.0) += freq * share;
+            }
+            for (&tri, &freq) in &corpus.trigrams {
+                *trigrams.entry(tri).or_insert(0.0) += freq * share;
             }
         }
 
@@ -124,6 +149,7 @@ impl Corpus {
             path: PathBuf::new(),
             chars,
             bigrams,
+            trigrams,
         })
     }
 }

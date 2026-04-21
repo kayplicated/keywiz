@@ -7,7 +7,7 @@
 use owo_colors::OwoColorize;
 
 use crate::keyboard::Finger;
-use crate::score::{BigramDetail, ScoreReport};
+use crate::score::{BigramDetail, ScoreReport, TrigramCategory, TrigramDetail};
 
 /// Print a single score report in the default text format.
 pub fn print(report: &ScoreReport) {
@@ -32,6 +32,9 @@ pub fn print(report: &ScoreReport) {
     print_top_details("Top SFBs (same-finger bigrams)", &report.top_sfbs);
     print_top_details("Top cross-row (scissor-like)", &report.top_scissors);
     print_top_details("Top rolls", &report.top_rolls);
+
+    print_trigram_breakdown(&report.trigram_categories, report.trigram_cost);
+    print_top_trigrams(&report.top_trigrams);
 
     println!(
         "{} {:.3}",
@@ -111,6 +114,44 @@ fn print_top_details(title: &str, details: &[BigramDetail]) {
     for d in details {
         println!(
             "  {} → {:.3}% of typing, contribution {:+.3}",
+            d.label.bright_yellow(),
+            d.freq,
+            d.contribution
+        );
+    }
+    println!();
+}
+
+fn print_trigram_breakdown(categories: &[TrigramCategory], total: f64) {
+    if categories.is_empty() {
+        return;
+    }
+    println!("{}", "Trigram breakdown (by rule category):".bold());
+    for cat in categories {
+        println!(
+            "  {:<20} {:>6.2}%  cost {:+.3}",
+            cat.name,
+            cat.trigram_pct,
+            cat.total_cost
+        );
+    }
+    println!(
+        "  {:<20} {:+.3}",
+        "Trigram cost total:".bold(),
+        total
+    );
+    println!();
+}
+
+fn print_top_trigrams(details: &[TrigramDetail]) {
+    if details.is_empty() {
+        return;
+    }
+    println!("{}", "Top trigram contributions:".bold());
+    for d in details.iter().take(12) {
+        println!(
+            "  [{}] {} → {:.3}% × {:+.3}",
+            d.category.bright_blue(),
             d.label.bright_yellow(),
             d.freq,
             d.contribution

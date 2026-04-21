@@ -91,12 +91,18 @@ pub fn run() -> Result<()> {
     let corpora = load_corpora(&cli.corpus, &cli.blend, &config)?;
     let keyboard = load_keyboard(cli.keyboard.as_deref())?;
 
+    // Build the trigram pipeline once for the whole run.
+    let pipeline = match config.trigram.as_ref() {
+        Some(tbl) => crate::trigram::build_pipeline(tbl)?,
+        None => crate::trigram::TrigramPipeline::empty(),
+    };
+
     match cli.cmd {
         Command::Score { layout } => {
             let layout = Layout::load(&layout, &keyboard)?;
             let reports: Vec<_> = corpora
                 .iter()
-                .map(|c| score::score(&layout, &keyboard, c, &config))
+                .map(|c| score::score(&layout, &keyboard, c, &config, &pipeline))
                 .collect();
             emit_score(&reports, cli.json)?;
         }
@@ -107,8 +113,8 @@ pub fn run() -> Result<()> {
                 .iter()
                 .map(|c| {
                     (
-                        score::score(&a, &keyboard, c, &config),
-                        score::score(&b, &keyboard, c, &config),
+                        score::score(&a, &keyboard, c, &config, &pipeline),
+                        score::score(&b, &keyboard, c, &config, &pipeline),
                     )
                 })
                 .collect();
@@ -137,9 +143,23 @@ pub fn run() -> Result<()> {
                 pinned: pin.chars().collect(),
                 seed: seed_rng,
             };
-            let result =
-                crate::generate::generate(&seed_layout, &keyboard, &corpora[0], &config, &opts);
-            emit_generate(&result, &keyboard, &corpora[0], &config, cli.json, output.as_deref())?;
+            let result = crate::generate::generate(
+                &seed_layout,
+                &keyboard,
+                &corpora[0],
+                &config,
+                &pipeline,
+                &opts,
+            );
+            emit_generate(
+                &result,
+                &keyboard,
+                &corpora[0],
+                &config,
+                &pipeline,
+                cli.json,
+                output.as_deref(),
+            )?;
         }
     }
 
@@ -154,11 +174,12 @@ fn emit_generate(
     keyboard: &crate::keyboard::Keyboard,
     corpus: &crate::corpus::Corpus,
     config: &Config,
+    pipeline: &crate::trigram::TrigramPipeline,
     json: bool,
     output: Option<&std::path::Path>,
 ) -> Result<()> {
     // Score the best layout to produce a full report.
-    let best_report = score::score(&result.best, keyboard, corpus, config);
+    let best_report = score::score(&result.best, keyboard, corpus, config, pipeline);
 
     if json {
         #[derive(serde::Serialize)]

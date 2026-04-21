@@ -7,9 +7,13 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
+use toml::Value;
 
-/// Root config struct. Mirrors `drift.toml`.
-#[derive(Debug, Clone, Deserialize)]
+/// Root config struct. Mirrors `drift.toml`. Sections relevant to
+/// the bigram pipeline deserialize directly; the `[trigram]` section
+/// is kept as a raw [`Value`] so its pluggable-rule subtables can
+/// be parsed by the trigram registry at pipeline-build time.
+#[derive(Debug, Clone)]
 pub struct Config {
     pub corpus: CorpusConfig,
     pub bigram: BigramWeights,
@@ -17,6 +21,21 @@ pub struct Config {
     pub row: RowWeights,
     pub finger: FingerWeights,
     pub asymmetric: AsymmetricRules,
+    /// Raw `[trigram]` subtable; `None` if the section is absent.
+    pub trigram: Option<Value>,
+}
+
+/// Intermediate struct used purely for deserialization. All
+/// strongly-typed fields go through this; `[trigram]` is captured
+/// separately to preserve its pluggable shape.
+#[derive(Debug, Clone, Deserialize)]
+struct RawConfig {
+    corpus: CorpusConfig,
+    bigram: BigramWeights,
+    roll: RollWeights,
+    row: RowWeights,
+    finger: FingerWeights,
+    asymmetric: AsymmetricRules,
 }
 
 /// Corpus-related settings.
@@ -82,9 +101,23 @@ impl Config {
     pub fn load_from(path: &Path) -> Result<Self> {
         let text = std::fs::read_to_string(path)
             .with_context(|| format!("reading config: {}", path.display()))?;
-        let cfg: Config = toml::from_str(&text)
+        let raw: RawConfig = toml::from_str(&text)
             .with_context(|| format!("parsing config: {}", path.display()))?;
-        Ok(cfg)
+        let value: Value = toml::from_str(&text)
+            .with_context(|| format!("reparsing config as Value: {}", path.display()))?;
+        let trigram = value
+            .as_table()
+            .and_then(|t| t.get("trigram"))
+            .cloned();
+        Ok(Config {
+            corpus: raw.corpus,
+            bigram: raw.bigram,
+            roll: raw.roll,
+            row: raw.row,
+            finger: raw.finger,
+            asymmetric: raw.asymmetric,
+            trigram,
+        })
     }
 
     /// Load `drift.toml` from the crate root.

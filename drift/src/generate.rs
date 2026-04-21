@@ -21,6 +21,7 @@ use crate::corpus::Corpus;
 use crate::keyboard::{Key, Keyboard};
 use crate::layout::Layout;
 use crate::score;
+use crate::trigram::TrigramPipeline;
 
 /// Parameters for a generate run.
 #[derive(Debug, Clone)]
@@ -75,6 +76,7 @@ pub fn generate(
     keyboard: &Keyboard,
     corpus: &Corpus,
     config: &Config,
+    pipeline: &TrigramPipeline,
     opts: &GenerateOptions,
 ) -> GenerateResult {
     let mut rng: StdRng = match opts.seed {
@@ -104,7 +106,7 @@ pub fn generate(
         .collect();
 
     if swappable.len() < 2 {
-        let initial_score = score_from_entries(&entries, seed, keyboard, corpus, config);
+        let initial_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
         return GenerateResult {
             best: seed.clone(),
             best_score: initial_score,
@@ -115,7 +117,7 @@ pub fn generate(
         };
     }
 
-    let mut current_score = score_from_entries(&entries, seed, keyboard, corpus, config);
+    let mut current_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
     let initial_score = current_score;
 
     let mut best_entries = entries.clone();
@@ -140,7 +142,7 @@ pub fn generate(
         entries[i].1 = key_j;
         entries[j].1 = key_i;
 
-        let new_score = score_from_entries(&entries, seed, keyboard, corpus, config);
+        let new_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
         let delta = new_score - current_score;
 
         let temp = cooling_temp(step, opts);
@@ -208,6 +210,7 @@ fn score_from_entries(
     keyboard: &Keyboard,
     corpus: &Corpus,
     config: &Config,
+    pipeline: &TrigramPipeline,
 ) -> f64 {
     let positions: HashMap<char, Key> = entries
         .iter()
@@ -217,5 +220,5 @@ fn score_from_entries(
         name: seed.name.clone(),
         positions,
     };
-    score::score(&candidate, keyboard, corpus, config).total_score
+    score::score(&candidate, keyboard, corpus, config, pipeline).total_score
 }

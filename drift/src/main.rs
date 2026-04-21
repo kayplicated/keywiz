@@ -12,6 +12,7 @@ mod layout;
 mod motion;
 mod report;
 mod score;
+mod trigram;
 
 fn main() -> anyhow::Result<()> {
     cli::run()

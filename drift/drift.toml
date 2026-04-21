@@ -88,3 +88,74 @@ right_pinky = 1.0
 index_middle_forward_ok = true
 middle_ring_forward_ok = true
 ring_pinky_forward_ok = true
+
+# ------------------------------------------------------------------
+# Trigram scoring — pluggable rules.
+#
+# `[trigram] rules` lists which rule modules participate. Each
+# listed rule reads its own `[trigram.<name>]` subtable for tunables.
+# Unknown names are a hard error, so typos surface immediately.
+#
+# Any rule can be disabled by removing its name from the list; the
+# subtable can stay behind without effect. Add new rules by dropping
+# a file under src/trigram/rules/ and wiring it in registry.rs.
+# ------------------------------------------------------------------
+
+[trigram]
+rules = [
+    "inward_roll",
+    "outward_roll",
+    "onehand",
+    "alternate",
+    "redirect",
+    "bad_redirect",
+    "pinky_terminal",
+    "flexion_cascade",
+    "row_cascade",
+]
+
+[trigram.inward_roll]
+# pinky->ring->middle, etc. Clean 3-finger sequence toward thumb.
+weight = 3.0
+# Skip rolls (e.g. pinky->ring->index): scaled by this fraction.
+skip_multiplier = 0.7
+# Reduce (or increase) reward when the roll ends on a pinky.
+end_on_pinky_multiplier = 1.0
+
+[trigram.outward_roll]
+# index->middle->ring, etc. Toward pinky edge.
+weight = 2.5
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 0.6
+
+[trigram.onehand]
+# Same-hand, not a clean roll or redirect.
+weight = 1.0
+
+[trigram.alternate]
+# L-R-L or R-L-R; small positive baseline reward.
+weight = 0.4
+
+[trigram.redirect]
+# Same-hand direction flip, at least one index finger anchoring.
+weight = -3.0
+
+[trigram.bad_redirect]
+# Same-hand direction flip with no index finger — no anchor.
+weight = -5.0
+
+[trigram.pinky_terminal]
+# Small per-trigram penalty when a same-hand trigram lands on pinky.
+penalty = -0.5
+
+[trigram.flexion_cascade]
+# Drift-specific: reward same-hand trigrams confined to home+bot
+# rows with at least one row change. Captures the biomechanical
+# advantage of flexion sequences on col-stag.
+weight = 1.5
+
+[trigram.row_cascade]
+# Drift-specific: penalty for same-hand trigrams that hit all three
+# alpha rows in sequence. The "key" pattern on drifter was the
+# motivating example.
+weight = -3.0

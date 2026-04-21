@@ -13,6 +13,7 @@ use crate::corpus::Corpus;
 use crate::keyboard::{Finger, Key, Keyboard};
 use crate::layout::Layout;
 use crate::motion::{classify, CrossRowKind, Motion, RollDirection};
+use crate::trigram::{TrigramContext, TrigramPipeline};
 
 /// Detailed score breakdown for a single layout.
 #[derive(Debug, Clone, Serialize)]
@@ -44,6 +45,33 @@ pub struct ScoreReport {
     pub top_sfbs: Vec<BigramDetail>,
     pub top_scissors: Vec<BigramDetail>,
     pub top_rolls: Vec<BigramDetail>,
+
+    /// Per-category trigram contributions, one entry per rule that fired.
+    pub trigram_categories: Vec<TrigramCategory>,
+
+    /// Top trigram hits per category (bounded list for reporting).
+    pub top_trigrams: Vec<TrigramDetail>,
+
+    /// Sum of all trigram rule contributions. Already folded into
+    /// `total_score`; exposed separately for reporting.
+    pub trigram_cost: f64,
+}
+
+/// Aggregate of all trigram hits under a single rule category.
+#[derive(Debug, Clone, Serialize)]
+pub struct TrigramCategory {
+    pub name: String,
+    pub trigram_pct: f64,
+    pub total_cost: f64,
+}
+
+/// A single trigram's contribution, for detailed reports.
+#[derive(Debug, Clone, Serialize)]
+pub struct TrigramDetail {
+    pub category: String,
+    pub label: String,
+    pub freq: f64,
+    pub contribution: f64,
 }
 
 /// Per-row percentages.
@@ -87,11 +115,17 @@ pub struct BigramDetail {
 }
 
 /// Run the scoring pipeline.
+///
+/// The caller must pre-build the trigram pipeline (or pass an empty
+/// one via [`TrigramPipeline::empty`]) so the hot path stays free of
+/// config-parsing errors. In practice [`crate::cli`] builds the
+/// pipeline once at startup and reuses it across corpora.
 pub fn score(
     layout: &Layout,
     keyboard: &Keyboard,
     corpus: &Corpus,
     config: &Config,
+    pipeline: &TrigramPipeline,
 ) -> ScoreReport {
     let mut tally = MotionTally::default();
     let mut row_pct = RowDistribution::default();
@@ -122,6 +156,39 @@ pub fn score(
         let motion = classify(ka, kb, &config.asymmetric);
         apply_motion(motion, freq, ka, kb, a, b, config, &mut tally,
                      &mut sfb_details, &mut scissor_details, &mut roll_details);
+    }
+
+    // Per-trigram scoring. Each active rule gets a chance at every
+    // trigram; hits accumulate by category.
+    let mut trigram_cost = 0.0;
+    let mut category_totals: HashMap<&'static str, (f64, f64)> = HashMap::new();
+    let mut trigram_details: Vec<TrigramDetail> = Vec::new();
+
+    if !pipeline.is_empty() {
+        for (&(a, b, c), &freq) in &corpus.trigrams {
+            let (Some(ka), Some(kb), Some(kc)) = (
+                layout.position(a),
+                layout.position(b),
+                layout.position(c),
+            ) else {
+                continue;
+            };
+            let ctx = TrigramContext::new([a, b, c], [ka, kb, kc], freq);
+            for rule in &pipeline.rules {
+                if let Some(hit) = rule.evaluate(&ctx) {
+                    let entry = category_totals.entry(hit.category).or_insert((0.0, 0.0));
+                    entry.0 += freq;
+                    entry.1 += hit.cost;
+                    trigram_cost += hit.cost;
+                    trigram_details.push(TrigramDetail {
+                        category: hit.category.to_string(),
+                        label: hit.label,
+                        freq,
+                        contribution: hit.cost,
+                    });
+                }
+            }
+        }
     }
 
     // Strength-weighted finger load: load / weight.
@@ -160,12 +227,39 @@ pub fn score(
         + tally.sfb_cost
         + tally.scissor_cost
         + tally.stretch_cost
-        + finger_overload_cost;
+        + finger_overload_cost
+        + trigram_cost;
 
     // Sort detail vectors and keep top 10 of each.
     sort_and_truncate(&mut sfb_details, 10);
     sort_and_truncate(&mut scissor_details, 10);
     sort_and_truncate(&mut roll_details, 10);
+
+    // Roll up trigram categories.
+    let mut trigram_categories: Vec<TrigramCategory> = category_totals
+        .into_iter()
+        .map(|(name, (pct, cost))| TrigramCategory {
+            name: name.to_string(),
+            trigram_pct: pct,
+            total_cost: cost,
+        })
+        .collect();
+    trigram_categories.sort_by(|a, b| {
+        b.total_cost
+            .abs()
+            .partial_cmp(&a.total_cost.abs())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Sort + trim trigram details. Keep top 10 by absolute
+    // contribution across all categories, for the headline list.
+    trigram_details.sort_by(|a, b| {
+        b.contribution
+            .abs()
+            .partial_cmp(&a.contribution.abs())
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    trigram_details.truncate(30);
 
     ScoreReport {
         layout_name: layout.name.clone(),
@@ -180,6 +274,9 @@ pub fn score(
         top_sfbs: sfb_details,
         top_scissors: scissor_details,
         top_rolls: roll_details,
+        trigram_categories,
+        top_trigrams: trigram_details,
+        trigram_cost,
     }
 }
 
