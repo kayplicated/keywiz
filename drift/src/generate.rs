@@ -10,15 +10,14 @@
 //! drift's generator opinions that diverge from oxey in exactly the
 //! axes that matter to the user (flexion, col-stag).
 
-use std::collections::HashMap;
-
 use rand::Rng;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
 use crate::config::Config;
 use crate::corpus::Corpus;
-use crate::keyboard::{Key, Keyboard};
+use crate::delta::ScoreAccumulator;
+use crate::keyboard::Keyboard;
 use crate::layout::Layout;
 use crate::score;
 use crate::trigram::TrigramPipeline;
@@ -73,7 +72,7 @@ pub struct GenerateResult {
 /// pin constraints) and follows the Metropolis-Hastings criterion.
 pub fn generate(
     seed: &Layout,
-    keyboard: &Keyboard,
+    _keyboard: &Keyboard,
     corpus: &Corpus,
     config: &Config,
     pipeline: &TrigramPipeline,
@@ -90,25 +89,25 @@ pub fn generate(
         .map(|c| c.to_ascii_lowercase())
         .collect();
 
-    // Build mutable state: vector of (char, Key) pairs. Order doesn't
-    // matter; we swap keys between entries during annealing.
-    let mut entries: Vec<(char, Key)> = seed
-        .positions
-        .iter()
-        .map(|(&ch, key)| (ch, key.clone()))
-        .collect();
+    // Running layout state: start from the seed, mutate in place.
+    let mut layout = Layout {
+        name: seed.name.clone(),
+        positions: seed.positions.clone(),
+    };
 
-    // Precompute which indices are swappable.
-    let swappable: Vec<usize> = entries
-        .iter()
-        .enumerate()
-        .filter_map(|(i, (ch, _))| (!pinned_set.contains(ch)).then_some(i))
+    // Only these chars may be swapped.
+    let swappable: Vec<char> = layout
+        .positions
+        .keys()
+        .copied()
+        .filter(|ch| !pinned_set.contains(ch))
         .collect();
 
     if swappable.len() < 2 {
-        let initial_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
+        let accumulator = ScoreAccumulator::init(&layout, corpus, config, pipeline);
+        let initial_score = accumulator.total;
         return GenerateResult {
-            best: seed.clone(),
+            best: layout.clone(),
             best_score: initial_score,
             initial_score,
             iterations: 0,
@@ -117,33 +116,29 @@ pub fn generate(
         };
     }
 
-    let mut current_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
-    let initial_score = current_score;
-
-    let mut best_entries = entries.clone();
-    let mut best_score = current_score;
+    // Accumulator holds the live total + enough indexes to score a
+    // swap in O(affected ngrams) instead of full O(corpus).
+    let mut accumulator = ScoreAccumulator::init(&layout, corpus, config, pipeline);
+    let initial_score = accumulator.total;
+    let mut best_layout = layout.clone();
+    let mut best_score = accumulator.total;
 
     let mut accepted = 0usize;
     let mut uphill_accepted = 0usize;
 
     for step in 0..opts.iterations {
-        // Pick two distinct swappable indices.
-        let i = swappable[rng.random_range(0..swappable.len())];
-        let mut j = swappable[rng.random_range(0..swappable.len())];
-        while j == i {
-            j = swappable[rng.random_range(0..swappable.len())];
+        // Pick two distinct swappable chars.
+        let a = swappable[rng.random_range(0..swappable.len())];
+        let mut b = swappable[rng.random_range(0..swappable.len())];
+        while b == a {
+            b = swappable[rng.random_range(0..swappable.len())];
         }
 
-        // Swap the Key geometry between the two chars (not the chars
-        // themselves). The char at index i keeps its char but takes
-        // the Key of index j, and vice versa.
-        let key_i = entries[i].1.clone();
-        let key_j = entries[j].1.clone();
-        entries[i].1 = key_j;
-        entries[j].1 = key_i;
-
-        let new_score = score_from_entries(&entries, seed, keyboard, corpus, config, pipeline);
-        let delta = new_score - current_score;
+        // Preview the swap's impact on the total score without
+        // touching any state.
+        let candidate_score =
+            accumulator.swap_delta(&layout, a, b, corpus, config, pipeline);
+        let delta = candidate_score - accumulator.total;
 
         let temp = cooling_temp(step, opts);
         let accept = if delta >= 0.0 {
@@ -154,34 +149,48 @@ pub fn generate(
         };
 
         if accept {
-            current_score = new_score;
+            swap_chars_in_layout(&mut layout, a, b);
+            accumulator.commit_swap(&layout, a, b, corpus, config, pipeline);
             accepted += 1;
             if delta < 0.0 {
                 uphill_accepted += 1;
             }
-
-            if new_score > best_score {
-                best_score = new_score;
-                best_entries = entries.clone();
+            if accumulator.total > best_score {
+                best_score = accumulator.total;
+                best_layout = layout.clone();
             }
-        } else {
-            // Revert.
-            let key_i = entries[i].1.clone();
-            let key_j = entries[j].1.clone();
-            entries[i].1 = key_j;
-            entries[j].1 = key_i;
         }
-    }
-
-    let mut positions = HashMap::new();
-    for (ch, key) in best_entries {
-        positions.insert(ch, key);
     }
 
     let best = Layout {
         name: format!("{}-generated", seed.name),
-        positions,
+        positions: best_layout.positions,
     };
+
+    // Consistency check: the delta-tracked `best_score` should
+    // agree with a fresh FastTotalOnly rescore to ~epsilon. If
+    // they diverge more than 0.01 we've accumulated drift — which
+    // would be a bug in ScoreAccumulator.
+    if std::env::var("DRIFT_CHECK_DELTA").is_ok() {
+        let fresh = score::score(
+            &best,
+            _keyboard,
+            corpus,
+            config,
+            pipeline,
+            score::ScoreMode::FastTotalOnly,
+        )
+        .total_score;
+        let gap = (best_score - fresh).abs();
+        if gap > 0.01 {
+            eprintln!(
+                "delta-score drift: best_score={:.6} fresh={:.6} gap={:.6}",
+                best_score, fresh, gap
+            );
+        } else {
+            eprintln!("delta-score OK: gap={:.6}", gap);
+        }
+    }
 
     GenerateResult {
         best,
@@ -190,6 +199,17 @@ pub fn generate(
         iterations: opts.iterations,
         accepted,
         uphill_accepted,
+    }
+}
+
+/// Swap the positions of chars `a` and `b` in the layout in place.
+fn swap_chars_in_layout(layout: &mut Layout, a: char, b: char) {
+    if let (Some(ka), Some(kb)) = (
+        layout.positions.remove(&a),
+        layout.positions.remove(&b),
+    ) {
+        layout.positions.insert(a, kb);
+        layout.positions.insert(b, ka);
     }
 }
 
@@ -202,33 +222,3 @@ fn cooling_temp(step: usize, opts: &GenerateOptions) -> f64 {
     opts.temp_start + (opts.temp_end - opts.temp_start) * t
 }
 
-/// Score a candidate from its entries by temporarily building a
-/// [`Layout`] view. Used inside the SA loop with the fast scoring
-/// mode that skips detail collection and prunes low-frequency
-/// n-grams.
-fn score_from_entries(
-    entries: &[(char, Key)],
-    seed: &Layout,
-    keyboard: &Keyboard,
-    corpus: &Corpus,
-    config: &Config,
-    pipeline: &TrigramPipeline,
-) -> f64 {
-    let positions: HashMap<char, Key> = entries
-        .iter()
-        .map(|(ch, key)| (*ch, key.clone()))
-        .collect();
-    let candidate = Layout {
-        name: seed.name.clone(),
-        positions,
-    };
-    score::score(
-        &candidate,
-        keyboard,
-        corpus,
-        config,
-        pipeline,
-        score::ScoreMode::FastTotalOnly,
-    )
-    .total_score
-}

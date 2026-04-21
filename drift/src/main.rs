@@ -6,6 +6,7 @@
 mod cli;
 mod config;
 mod corpus;
+mod delta;
 mod generate;
 mod keyboard;
 mod layout;
