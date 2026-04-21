@@ -12,6 +12,8 @@ use crate::keyboard::{Block, StaggerType};
 
 #[derive(Debug, Clone)]
 pub struct FreeFormBlock {
+    /// Staged for future per-cluster theming / addressing.
+    #[allow(dead_code)]
     pub cluster: String,
     pub keys: Vec<PhysicalKey>,
 }

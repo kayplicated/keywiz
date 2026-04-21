@@ -11,6 +11,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::engine::placement::Placement;
+use crate::keyboard::common::Finger;
 
 use super::heatmap;
 use super::naming;
@@ -88,7 +89,25 @@ fn color_for(placement: &Placement, heatmap_on: bool) -> Color {
         }
         return Color::DarkGray;
     }
-    placement.finger.color()
+    finger_color(placement.finger)
+}
+
+/// Terminal theming: finger → ratatui color. Kept here (not on
+/// `Finger` itself) because ratatui is a renderer-specific concern —
+/// the data layer stays presentation-agnostic.
+fn finger_color(finger: Finger) -> Color {
+    match finger {
+        Finger::LPinky => Color::Red,
+        Finger::LRing => Color::Yellow,
+        Finger::LMiddle => Color::Green,
+        Finger::LIndex => Color::Cyan,
+        Finger::LThumb => Color::DarkGray,
+        Finger::RThumb => Color::DarkGray,
+        Finger::RIndex => Color::Blue,
+        Finger::RMiddle => Color::Magenta,
+        Finger::RRing => Color::Yellow,
+        Finger::RPinky => Color::Red,
+    }
 }
 
 fn box_lines(w: u16, h: u16, label: &str, style: Style) -> Vec<Line<'static>> {

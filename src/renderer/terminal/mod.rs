@@ -18,7 +18,7 @@ pub mod heatmap;
 pub mod layout;
 pub mod naming;
 
-pub use layout::{centered_content_layout, render_footer, ContentAreas};
+pub use layout::{centered_content_layout, render_footer};
 
 use ratatui::layout::Rect;
 use ratatui::Frame;
@@ -66,15 +66,13 @@ pub fn draw_frame(f: &mut ratatui::Frame, placements: &[Placement], display: &Di
             Span::raw(suffix),
         ])
     } else if let Some(text) = &display.text {
-        Line::from(vec![
-            Span::styled(text.title.clone(), Style::default().fg(Color::Cyan).bold()),
-            Span::raw(format!(
-                "  ({}/{})  ",
-                text.passage_index + 1,
-                text.passage_total
-            )),
-            Span::styled("◀ ▶ switch", Style::default().fg(Color::DarkGray)),
-        ])
+        // Position (n/m) and the switch hint live in the footer;
+        // header carries only the passage title so the eye has
+        // one less thing to parse while reading.
+        Line::from(vec![Span::styled(
+            text.title.clone(),
+            Style::default().fg(Color::Cyan).bold(),
+        )])
     } else {
         Line::from("")
     };

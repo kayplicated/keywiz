@@ -32,10 +32,14 @@ pub struct PhysicalKey {
 }
 
 impl PhysicalKey {
+    /// Staged for gui / bigram distance analysis.
+    #[allow(dead_code)]
     pub fn position(&self) -> Point {
         Point::new(self.x, self.y)
     }
 
+    /// Staged for gui / bigram distance analysis.
+    #[allow(dead_code)]
     pub fn distance_to(&self, other: &PhysicalKey) -> f32 {
         self.position().distance_to(other.position())
     }

@@ -28,7 +28,6 @@ enum MappingRecord {
 
 #[derive(Debug, Deserialize)]
 struct LayoutRecord {
-    name: String,
     short: String,
     mappings: HashMap<String, MappingRecord>,
 }
@@ -69,7 +68,6 @@ pub fn load(path: &Path) -> Result<Layout, String> {
     }
 
     Ok(Layout {
-        name: record.name,
         short: record.short,
         mappings,
     })

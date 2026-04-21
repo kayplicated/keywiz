@@ -1,14 +1,16 @@
-//! Kanata `.kbd` config reader.
+//! Kanata `.kbd` config reader — **staged, not yet implemented.**
 //!
-//! Currently a stub — the old kanata reader produced the legacy
-//! `Grid` type, which no longer exists. Porting to the new
-//! Keyboard/Layout split needs a thoughtful pass: a kanata config
-//! is both physical layout (defsrc) and character mapping (deflayer
-//! tokens). The port produces a synthetic keyboard JSON equivalent
-//! plus a matching layout, composed through the engine like any
-//! other pair.
+//! Porting from the old Grid-producing reader to the new
+//! Keyboard/Layout split: a kanata config is both physical layout
+//! (defsrc) and character mapping (deflayer tokens). The port
+//! produces a synthetic keyboard + matching layout, composed
+//! through the engine like any other pair.
 //!
-//! Until ported, the `--kanata` CLI flag returns an error.
+//! Until implemented, the `--kanata` CLI flag errors out in
+//! `main.rs`. The types below are the intended shape; callers
+//! don't exist yet.
+
+#![allow(dead_code)]
 
 use std::path::Path;
 
@@ -27,6 +29,6 @@ impl std::fmt::Display for KanataError {
 /// Not yet implemented — see module docs.
 pub fn load(_path: &Path, _layer: Option<&str>) -> Result<(), KanataError> {
     Err(KanataError(
-        "kanata integration is temporarily disabled during the engine refactor".into(),
+        "kanata integration is not yet implemented".into(),
     ))
 }

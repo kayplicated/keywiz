@@ -116,7 +116,7 @@ fn draw_text_body(
             )),
             Line::from(""),
             Line::from(Span::styled(
-                "◀ ▶ to switch passage, ESC to go back",
+                "Alt+←→ next passage · ESC to quit",
                 Style::default().fg(Color::DarkGray),
             )),
         ])

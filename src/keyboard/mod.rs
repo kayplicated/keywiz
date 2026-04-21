@@ -16,9 +16,11 @@
 pub mod blocks;
 pub mod common;
 
-pub use common::{Bounds, Cluster, Finger, PhysicalKey, Point, DEFAULT_CLUSTER};
+pub use common::PhysicalKey;
 
 use std::path::Path;
+
+use common::Bounds;
 
 /// The three structural stagger types a block can declare.
 ///
@@ -42,6 +44,8 @@ pub enum StaggerType {
 /// of `PhysicalKey`s.
 pub trait Block {
     fn stagger_type(&self) -> StaggerType;
+    /// Staged for future per-cluster theming / addressing.
+    #[allow(dead_code)]
     fn cluster(&self) -> &str;
     fn keys(&self) -> Box<dyn Iterator<Item = &PhysicalKey> + '_>;
 }
@@ -51,6 +55,11 @@ pub trait Block {
 ///
 /// Consumers (engine, renderers, integrations) depend on this trait,
 /// not on any concrete type.
+///
+/// `name` / `description` / `key` / `bounds` are staged for gui
+/// renderers and integration tooling; today only `short` / `keys`
+/// / `blocks` have callers.
+#[allow(dead_code)]
 pub trait Keyboard {
     fn name(&self) -> &str;
     fn short(&self) -> &str;

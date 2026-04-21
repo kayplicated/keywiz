@@ -1,7 +1,9 @@
 //! The typing fingers — a per-key property assigned by the keyboard's
 //! designer + the typist's fingering convention.
+//!
+//! Pure data. Per-renderer theming (e.g. finger → Color) lives with
+//! the renderer, not here.
 
-use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -16,21 +18,4 @@ pub enum Finger {
     RMiddle,
     RRing,
     RPinky,
-}
-
-impl Finger {
-    pub fn color(self) -> Color {
-        match self {
-            Finger::LPinky => Color::Red,
-            Finger::LRing => Color::Yellow,
-            Finger::LMiddle => Color::Green,
-            Finger::LIndex => Color::Cyan,
-            Finger::LThumb => Color::DarkGray,
-            Finger::RThumb => Color::DarkGray,
-            Finger::RIndex => Color::Blue,
-            Finger::RMiddle => Color::Magenta,
-            Finger::RRing => Color::Yellow,
-            Finger::RPinky => Color::Red,
-        }
-    }
 }

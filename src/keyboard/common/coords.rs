@@ -2,6 +2,12 @@
 //!
 //! All coordinates are in key-width units. Home row center = origin.
 //! x grows right, y grows down.
+//!
+//! Staged for gui renderers (desktop, webui) and geometric analysis
+//! (bigram distance, reach effort). The terminal renderer uses
+//! schematic `r`/`c` instead.
+
+#![allow(dead_code)]
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {

@@ -9,7 +9,7 @@ pub mod coords;
 pub mod finger;
 pub mod key;
 
-pub use cluster::{Cluster, DEFAULT_CLUSTER};
+pub use cluster::Cluster;
 pub use coords::{Bounds, Point};
 pub use finger::Finger;
 pub use key::PhysicalKey;

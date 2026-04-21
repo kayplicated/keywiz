@@ -23,19 +23,8 @@ pub enum KeyMapping {
     Named { name: String },
 }
 
-impl KeyMapping {
-    pub fn lower_char(&self) -> Option<char> {
-        if let KeyMapping::Char { lower, .. } = self {
-            Some(*lower)
-        } else {
-            None
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Layout {
-    pub name: String,
     pub short: String,
     pub mappings: HashMap<String, KeyMapping>,
 }
@@ -43,19 +32,5 @@ pub struct Layout {
 impl Layout {
     pub fn get(&self, id: &str) -> Option<&KeyMapping> {
         self.mappings.get(id)
-    }
-
-    /// Reverse lookup: given a typed character, find the id that
-    /// would produce it. Used by the engine to translate terminal
-    /// input back to physical ids. Shifted characters are resolved
-    /// too. Returns the first match; ambiguous layouts (same char
-    /// assigned to multiple ids) are their author's problem.
-    pub fn id_for_char(&self, ch: char) -> Option<&str> {
-        self.mappings.iter().find_map(|(id, m)| match m {
-            KeyMapping::Char { lower, upper } if *lower == ch || *upper == ch => {
-                Some(id.as_str())
-            }
-            _ => None,
-        })
     }
 }

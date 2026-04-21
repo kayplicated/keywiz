@@ -6,8 +6,12 @@ use crate::keyboard::{Block, Keyboard};
 
 #[derive(Debug, Clone)]
 pub struct BlocksKeyboard {
+    /// Staged for gui / integration tooling surfacing the full name.
+    #[allow(dead_code)]
     pub name: String,
     pub short: String,
+    /// Staged for gui / integration tooling surfacing the blurb.
+    #[allow(dead_code)]
     pub description: String,
     pub blocks: Vec<BlockKind>,
 }

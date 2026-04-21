@@ -5,4 +5,7 @@
 
 pub type Cluster = String;
 
+/// Default cluster for blocks that don't declare one. Staged for
+/// future use; current loaders require an explicit cluster per block.
+#[allow(dead_code)]
 pub const DEFAULT_CLUSTER: &str = "main";

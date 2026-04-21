@@ -71,14 +71,28 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
         Some(b) => Span::styled(b.name.clone(), red),
         None => Span::styled(display.layout_short.clone(), name),
     };
-    let exercise_name = Span::styled(display.exercise_short.clone(), name);
+
+    // Exercise category + instance indicator. Category text always
+    // includes `(n/m)` — for drill it renders as `(—/—)` so the
+    // user reads "this category has no sub-axis" instead of
+    // wondering why the indicator looks different from others.
+    let (inst_i, inst_total) = display.exercise_instance;
+    let counter = if inst_total == 0 {
+        "(—/—)".to_string()
+    } else {
+        format!("({inst_i}/{inst_total})")
+    };
+    let category_span = Span::styled(
+        format!("{} {}", display.exercise_short, counter),
+        name,
+    );
 
     // Each group: "Ctrl+↑↓ · Keyboard"; groups separated by "   —   "
     // so the (binding, name) pairs read as discrete units.
     let sep = Span::styled("     ", dim);
     let dot = Span::styled(" · ", dim);
 
-    let indicator = Line::from(vec![
+    let mut indicator_spans = vec![
         Span::styled("Ctrl+↑↓", dim),
         dot.clone(),
         keyboard_name,
@@ -86,11 +100,20 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
         Span::styled("Ctrl+←→", dim),
         dot.clone(),
         layout_name,
-        sep,
-        Span::styled("Alt+←→", dim),
-        dot,
-        exercise_name,
-    ]);
+        sep.clone(),
+        Span::styled("Alt+↑↓", dim),
+        dot.clone(),
+        category_span,
+    ];
+    // Only show the instance binding when there's an instance to
+    // select; drill has no sideways axis so the key-hint is omitted.
+    if let Some(label) = &display.exercise_instance_label {
+        indicator_spans.push(sep);
+        indicator_spans.push(Span::styled("Alt+←→", dim));
+        indicator_spans.push(dot);
+        indicator_spans.push(Span::styled(label.clone(), name));
+    }
+    let indicator = Line::from(indicator_spans);
 
     let reason = display
         .broken_keyboard
