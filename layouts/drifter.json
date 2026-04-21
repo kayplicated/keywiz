@@ -1,0 +1,100 @@
+{
+  name: "drifter",
+  short: "Drifter",
+  // Drifter — flexion-biased col-stag layout for the Halcyon Elora
+  // v2. Final form after seven iterations; prior experiments live
+  // under layouts.bak/ (drifter-v1 through drifter-v6 and the
+  // inverted-row drifter-v8 reference).
+  //
+  // Shape:
+  //
+  //   q j m w _    _ x ' _ z          alpha top: 3 keys unbound
+  //   n r t s g    p h e a i          home row matches gallium
+  //   b l d c v    k f u o y          common letters live here
+  //
+  // Right thumb cluster (lower row, k3..k5):  ; . ,
+  //
+  // Design choices that carried through:
+  //   - Both hands' common letters cluster in home + bottom, so
+  //     alternation bigrams in prose land in the same row territory
+  //     rather than splitting hands across rows (see drift's
+  //     hand_territory rule).
+  //   - Top row holds only rare letters (q j m w x z) and `'`.
+  //   - Right hand's bottom row `k f u o y` forms a clean
+  //     adjacent-finger sequence: `of`/`fo`/`ou`/`you` roll cleanly.
+  //   - `'` stays on the alpha grid at RM-top because it appears
+  //     inside words (don't, it's, what's) and reaching to the
+  //     thumb mid-word would break typing rhythm.
+  //   - `, ; .` moved to the right thumb cluster; none of these
+  //     appear mid-word in English, so thumb-reach is natural at
+  //     clause/sentence boundaries.
+  //
+  // Three alpha positions are intentionally unbound (LII-top,
+  // RII-top, RR-top). keywiz skips them during drilling; firmware
+  // can bind them to layer-hold, macros, or whatever.
+  mappings: {
+    // ---- top row (main_k1..k10) ----
+    main_k1:  { char: ["q", "Q"] },
+    main_k2:  { char: ["j", "J"] },   // was x; j moved here from LII-top
+    main_k3:  { char: ["m", "M"] },
+    main_k4:  { char: ["w", "W"] },
+    // main_k5 intentionally empty (firmware: thumb)
+    // main_k6 intentionally empty (firmware: thumb MO)
+    main_k7:  { char: ["x", "X"] },   // was .; x moved here from LR-top
+    main_k8:  { char: ["'", "\""] },
+    // main_k9 intentionally empty (firmware: thumb)
+    main_k10: { char: ["z", "Z"] },   // was ,; z moved here from RII-top
+
+    // ---- home row (main_k11..k20) ----
+    main_k11: { char: ["n", "N"] },
+    main_k12: { char: ["r", "R"] },
+    main_k13: { char: ["t", "T"] },
+    main_k14: { char: ["s", "S"] },
+    main_k15: { char: ["g", "G"] },
+    main_k16: { char: ["p", "P"] },
+    main_k17: { char: ["h", "H"] },
+    main_k18: { char: ["e", "E"] },
+    main_k19: { char: ["a", "A"] },
+    main_k20: { char: ["i", "I"] },
+
+    // ---- bottom row (main_k21..k30) ----
+    main_k21: { char: ["b", "B"] },
+    main_k22: { char: ["l", "L"] },
+    main_k23: { char: ["d", "D"] },
+    main_k24: { char: ["c", "C"] },
+    main_k25: { char: ["v", "V"] },
+    main_k26: { char: ["k", "K"] },
+    main_k27: { char: ["f", "F"] },
+    main_k28: { char: ["u", "U"] },
+    main_k29: { char: ["o", "O"] },
+    main_k30: { char: ["y", "Y"] },
+
+    // ---- number row (main_k31..k40) ----
+    main_k31: { char: ["1", "!"] },
+    main_k32: { char: ["2", "@"] },
+    main_k33: { char: ["3", "#"] },
+    main_k34: { char: ["4", "$"] },
+    main_k35: { char: ["5", "%"] },
+    main_k36: { char: ["6", "^"] },
+    main_k37: { char: ["7", "&"] },
+    main_k38: { char: ["8", "*"] },
+    main_k39: { char: ["9", "("] },
+    main_k40: { char: ["0", ")"] },
+
+    // ---- right thumb cluster — punctuation moved off the alpha grid ----
+    // `'` stays on alpha (k8) because it appears inside contractions
+    // mid-word; reaching to the thumb for every `don't`/`it's`
+    // would break typing rhythm. `; . ,` move here.
+    right_thumb_k3: { char: [";", ":"] },
+    right_thumb_k4: { char: [".", ">"] },
+    right_thumb_k5: { char: [",", "<"] },
+
+    // ---- named mods ----
+    mods_tab:         { named: "tab" },
+    mods_capslock:    { named: "capslock" },
+    mods_shift_left:  { named: "shift" },
+    mods_shift_right: { named: "shift" },
+    mods_enter:       { named: "enter" },
+    mods_backspace:   { named: "backspace" },
+  },
+}
