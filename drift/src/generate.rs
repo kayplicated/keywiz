@@ -203,7 +203,9 @@ fn cooling_temp(step: usize, opts: &GenerateOptions) -> f64 {
 }
 
 /// Score a candidate from its entries by temporarily building a
-/// [`Layout`] view. Used inside the SA loop.
+/// [`Layout`] view. Used inside the SA loop with the fast scoring
+/// mode that skips detail collection and prunes low-frequency
+/// n-grams.
 fn score_from_entries(
     entries: &[(char, Key)],
     seed: &Layout,
@@ -220,5 +222,13 @@ fn score_from_entries(
         name: seed.name.clone(),
         positions,
     };
-    score::score(&candidate, keyboard, corpus, config, pipeline).total_score
+    score::score(
+        &candidate,
+        keyboard,
+        corpus,
+        config,
+        pipeline,
+        score::ScoreMode::FastTotalOnly,
+    )
+    .total_score
 }

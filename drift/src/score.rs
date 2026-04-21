@@ -15,6 +15,29 @@ use crate::layout::Layout;
 use crate::motion::{classify, CrossRowKind, Motion, RollDirection};
 use crate::trigram::{TrigramContext, TrigramPipeline};
 
+/// Minimum bigram frequency (%) to apply full motion classification.
+/// Extremely rare bigrams contribute noise to the score and aren't
+/// worth the per-iteration cost in SA. Tune downward to capture
+/// more; tune upward for faster generation.
+const MIN_BIGRAM_FREQ: f64 = 0.001;
+
+/// Minimum trigram frequency (%) to evaluate against rules. Same
+/// rationale as [`MIN_BIGRAM_FREQ`]. English trigrams have a long
+/// tail below 0.01% that collectively barely moves the score.
+const MIN_TRIGRAM_FREQ: f64 = 0.01;
+
+/// What to compute when scoring a layout.
+///
+/// `Full` is used by the CLI report path and captures every per-
+/// bigram and per-trigram detail for display. `FastTotalOnly` is
+/// used by simulated annealing: skip detail collection, skip very
+/// low-frequency n-grams, return only aggregate totals.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScoreMode {
+    Full,
+    FastTotalOnly,
+}
+
 /// Detailed score breakdown for a single layout.
 #[derive(Debug, Clone, Serialize)]
 pub struct ScoreReport {
@@ -120,13 +143,20 @@ pub struct BigramDetail {
 /// one via [`TrigramPipeline::empty`]) so the hot path stays free of
 /// config-parsing errors. In practice [`crate::cli`] builds the
 /// pipeline once at startup and reuses it across corpora.
+///
+/// `mode` controls what information is accumulated. The CLI uses
+/// [`ScoreMode::Full`]; SA uses [`ScoreMode::FastTotalOnly`] to skip
+/// detail collection and prune low-frequency n-grams.
 pub fn score(
     layout: &Layout,
     keyboard: &Keyboard,
     corpus: &Corpus,
     config: &Config,
     pipeline: &TrigramPipeline,
+    mode: ScoreMode,
 ) -> ScoreReport {
+    let collect_details = mode == ScoreMode::Full;
+    let prune = mode == ScoreMode::FastTotalOnly;
     let mut tally = MotionTally::default();
     let mut row_pct = RowDistribution::default();
     let mut finger_pct: HashMap<Finger, f64> = HashMap::new();
@@ -147,15 +177,24 @@ pub fn score(
         *finger_pct.entry(key.finger).or_insert(0.0) += freq;
     }
 
-    // Per-bigram scoring.
+    // Per-bigram scoring. In fast mode, prune bigrams below the
+    // frequency threshold — they contribute noise at SA timescales.
     for (&(a, b), &freq) in &corpus.bigrams {
+        if prune && freq < MIN_BIGRAM_FREQ {
+            continue;
+        }
         let (Some(ka), Some(kb)) = (layout.position(a), layout.position(b)) else {
             continue;
         };
 
         let motion = classify(ka, kb, &config.asymmetric);
-        apply_motion(motion, freq, ka, kb, a, b, config, &mut tally,
-                     &mut sfb_details, &mut scissor_details, &mut roll_details);
+        apply_motion(
+            motion, freq, ka, kb, a, b, config, collect_details,
+            &mut tally,
+            &mut sfb_details,
+            &mut scissor_details,
+            &mut roll_details,
+        );
     }
 
     // Per-trigram scoring. Each active rule gets a chance at every
@@ -166,6 +205,9 @@ pub fn score(
 
     if !pipeline.is_empty() {
         for (&(a, b, c), &freq) in &corpus.trigrams {
+            if prune && freq < MIN_TRIGRAM_FREQ {
+                continue;
+            }
             let (Some(ka), Some(kb), Some(kc)) = (
                 layout.position(a),
                 layout.position(b),
@@ -176,16 +218,18 @@ pub fn score(
             let ctx = TrigramContext::new([a, b, c], [ka, kb, kc], freq);
             for rule in &pipeline.rules {
                 if let Some(hit) = rule.evaluate(&ctx) {
-                    let entry = category_totals.entry(hit.category).or_insert((0.0, 0.0));
-                    entry.0 += freq;
-                    entry.1 += hit.cost;
                     trigram_cost += hit.cost;
-                    trigram_details.push(TrigramDetail {
-                        category: hit.category.to_string(),
-                        label: hit.label,
-                        freq,
-                        contribution: hit.cost,
-                    });
+                    if collect_details {
+                        let entry = category_totals.entry(hit.category).or_insert((0.0, 0.0));
+                        entry.0 += freq;
+                        entry.1 += hit.cost;
+                        trigram_details.push(TrigramDetail {
+                            category: hit.category.to_string(),
+                            label: hit.label,
+                            freq,
+                            contribution: hit.cost,
+                        });
+                    }
                 }
             }
         }
@@ -288,6 +332,7 @@ fn apply_motion(
     a: char,
     b: char,
     config: &Config,
+    collect_details: bool,
     tally: &mut MotionTally,
     sfb_details: &mut Vec<BigramDetail>,
     scissor_details: &mut Vec<BigramDetail>,
@@ -306,12 +351,14 @@ fn apply_motion(
             tally.sfb_pct += freq;
             let cost = freq * config.bigram.sfb_penalty;
             tally.sfb_cost += cost;
-            sfb_details.push(BigramDetail {
-                pair: (a, b),
-                freq,
-                contribution: cost,
-                label: format!("SFB {}{}", a, b),
-            });
+            if collect_details {
+                sfb_details.push(BigramDetail {
+                    pair: (a, b),
+                    freq,
+                    contribution: cost,
+                    label: format!("SFB {}{}", a, b),
+                });
+            }
         }
         Motion::Roll { direction, .. } => {
             let mult = match direction {
@@ -324,20 +371,22 @@ fn apply_motion(
                 RollDirection::Inward => tally.roll_inward_pct += freq,
                 RollDirection::Outward => tally.roll_outward_pct += freq,
             }
-            roll_details.push(BigramDetail {
-                pair: (a, b),
-                freq,
-                contribution: bonus,
-                label: format!(
-                    "{} {}{}",
-                    match direction {
-                        RollDirection::Inward => "Inward",
-                        RollDirection::Outward => "Outward",
-                    },
-                    a,
-                    b
-                ),
-            });
+            if collect_details {
+                roll_details.push(BigramDetail {
+                    pair: (a, b),
+                    freq,
+                    contribution: bonus,
+                    label: format!(
+                        "{} {}{}",
+                        match direction {
+                            RollDirection::Inward => "Inward",
+                            RollDirection::Outward => "Outward",
+                        },
+                        a,
+                        b
+                    ),
+                });
+            }
         }
         Motion::SameRowSkip { .. } => {
             tally.same_row_skip_pct += freq;
@@ -355,12 +404,14 @@ fn apply_motion(
                 CrossRowKind::Extension => tally.cross_row_extension_pct += freq,
                 CrossRowKind::FullCross => tally.cross_row_full_pct += freq,
             }
-            scissor_details.push(BigramDetail {
-                pair: (a, b),
-                freq,
-                contribution: cost,
-                label: format!("{:?} {}{}", kind, a, b),
-            });
+            if collect_details {
+                scissor_details.push(BigramDetail {
+                    pair: (a, b),
+                    freq,
+                    contribution: cost,
+                    label: format!("{:?} {}{}", kind, a, b),
+                });
+            }
         }
         Motion::AdjacentForwardOk { .. } => {
             tally.cross_row_exempt_pct += freq;

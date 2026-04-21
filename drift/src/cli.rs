@@ -102,7 +102,9 @@ pub fn run() -> Result<()> {
             let layout = Layout::load(&layout, &keyboard)?;
             let reports: Vec<_> = corpora
                 .iter()
-                .map(|c| score::score(&layout, &keyboard, c, &config, &pipeline))
+                .map(|c| score::score(
+                    &layout, &keyboard, c, &config, &pipeline, score::ScoreMode::Full,
+                ))
                 .collect();
             emit_score(&reports, cli.json)?;
         }
@@ -113,8 +115,12 @@ pub fn run() -> Result<()> {
                 .iter()
                 .map(|c| {
                     (
-                        score::score(&a, &keyboard, c, &config, &pipeline),
-                        score::score(&b, &keyboard, c, &config, &pipeline),
+                        score::score(
+                            &a, &keyboard, c, &config, &pipeline, score::ScoreMode::Full,
+                        ),
+                        score::score(
+                            &b, &keyboard, c, &config, &pipeline, score::ScoreMode::Full,
+                        ),
                     )
                 })
                 .collect();
@@ -178,8 +184,9 @@ fn emit_generate(
     json: bool,
     output: Option<&std::path::Path>,
 ) -> Result<()> {
-    // Score the best layout to produce a full report.
-    let best_report = score::score(&result.best, keyboard, corpus, config, pipeline);
+    // Score the best layout with full detail for the report path.
+    let best_report =
+        score::score(&result.best, keyboard, corpus, config, pipeline, score::ScoreMode::Full);
 
     if json {
         #[derive(serde::Serialize)]
