@@ -77,6 +77,9 @@ fn construct_rule(name: &str, sub: Option<&Value>) -> Result<Box<dyn TrigramRule
             sub,
         )?)),
         "row_cascade" => Ok(Box::new(rules::row_cascade::RowCascade::from_config(sub)?)),
+        "hand_territory" => Ok(Box::new(rules::hand_territory::HandTerritory::from_config(
+            sub,
+        )?)),
         other => Err(anyhow!("unknown trigram rule: {other}")),
     }
 }

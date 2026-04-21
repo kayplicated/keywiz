@@ -112,6 +112,7 @@ rules = [
     "pinky_terminal",
     "flexion_cascade",
     "row_cascade",
+    "hand_territory",
 ]
 
 [trigram.inward_roll]
@@ -159,3 +160,23 @@ weight = 1.5
 # alpha rows in sequence. The "key" pattern on drifter was the
 # motivating example.
 weight = -3.0
+
+[trigram.hand_territory]
+# Drift-specific: cross-hand row-synchrony. For each alternation
+# pair inside a trigram, applies a reward or penalty based on the
+# row delta between the two hands' keystrokes.
+#
+# The motivating observation is that gallium puts the right hand's
+# common letters on home+top while the left hand's common letters
+# sit on home+bot, so alternation bigrams in prose split the hands
+# across different rows. Drifter keeps both hands' common letters
+# in home+bot, so alternation pairs land in matched territory.
+#
+# Each adjacent cross-hand pair inside the trigram contributes
+# once, so a full alternation trigram (L-R-L or R-L-R) emits two
+# contributions and a partial alternation emits one.
+#
+# Disable by removing `hand_territory` from the `rules` list above.
+same_row_reward = 0.5    # both keys on same row (usually home<->home)
+one_row_penalty = -0.3   # home<->top or home<->bot
+two_row_penalty = -1.0   # top<->bot; hands splitting vertical territory

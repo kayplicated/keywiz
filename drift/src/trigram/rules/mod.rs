@@ -6,6 +6,7 @@
 
 pub mod alternate;
 pub mod flexion_cascade;
+pub mod hand_territory;
 pub mod onehand;
 pub mod pinky_terminal;
 pub mod redirect;
