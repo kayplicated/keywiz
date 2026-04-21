@@ -31,11 +31,6 @@ impl StatsTracker {
         self.persistent.record(expected, correct);
     }
 
-    /// Start a fresh session. Persistent stats are untouched.
-    pub fn new_session(&mut self) {
-        self.session = Stats::new();
-    }
-
     /// Stats for the current session only.
     pub fn session(&self) -> &Stats {
         &self.session
@@ -47,7 +42,6 @@ impl StatsTracker {
     }
 
     /// Replace the persistent layer wholesale. Used when loading from disk.
-    #[allow(dead_code)] // wired in the disk-persistence step
     pub fn set_persistent(&mut self, stats: Stats) {
         self.persistent = stats;
     }
