@@ -1,0 +1,90 @@
+# drift.toml — default configuration.
+#
+# Defaults are deliberately NEUTRAL on row-direction. A layout is
+# scored by bigram geometry alone, with no hidden "top bad / bottom
+# good" bias. Gallium scores on its merits, drifter scores on its
+# merits, reality wins.
+#
+# To bias the scorer toward a specific ergonomic philosophy, load a
+# preset via `--preset` or tweak the [row] multipliers directly.
+
+[corpus]
+# Path is relative to the drift crate root.
+default = "../oxeylyzer/static/language_data/english.json"
+
+[bigram]
+# How bigram motions are weighted.
+# Negative values are penalties; positive values are rewards.
+#
+# sfb_penalty:     Same-finger bigram. Per-use cost, scaled by freq.
+# scissor_penalty: Adjacent-finger cross-row (after asymmetric rules).
+# lateral_penalty: Same-finger motion with significant dx component.
+sfb_penalty = -7.0
+scissor_penalty = -2.0
+lateral_penalty = -1.0
+
+[roll]
+# Reward for clean same-hand roll patterns. All additive bonuses.
+#
+# same_row_adjacent:  both keys on same row, adjacent fingers.
+# inward_multiplier:  bonus multiplier for inward rolls (toward index).
+# outward_multiplier: bonus multiplier for outward rolls (toward pinky).
+same_row_adjacent = 2.0
+inward_multiplier = 1.1
+outward_multiplier = 1.0
+
+[row]
+# Cross-row motion cost multipliers.
+#
+# Applied after a bigram is classified as "adjacent-finger cross-row"
+# (i.e. a scissor or stretch). These multipliers modulate the
+# scissor_penalty above based on WHICH direction the motion goes.
+#
+# At all values = 1.0, top and bottom are treated equivalently.
+# Below 1.0 = cheaper than baseline (reward-ish).
+# Above 1.0 = more expensive than baseline (penalty-ish).
+#
+# Default: neutral. Override with presets for specific hand biases.
+flexion = 1.0       # home<->bot motion
+extension = 1.0     # home<->top motion
+full_cross = 1.2    # top<->bot (spans two rows, genuinely harder)
+
+[finger]
+# Per-finger load weights. Higher = this finger can absorb more work
+# cheaply (so its per-keystroke cost is lower).
+#
+# Defaults reflect piano-pedagogy hierarchy for sustained typing:
+# middle is the power finger (backed by full hand column), ring
+# nearly as strong, index is agile-but-not-powerful, pinky weakest.
+# This diverges from the common "index is strongest" typing dogma,
+# which is based on force-isolation tests rather than endurance.
+#
+# overload_penalty: multiplier applied to the squared-load penalty.
+# For each finger, cost = (load_pct² / weight) × overload_penalty.
+# Quadratic means overloaded fingers hurt much more than balanced
+# ones. Set to 0 to disable this axis entirely (bigram-only scoring).
+overload_penalty = -0.05
+left_pinky = 1.0
+left_ring = 1.8
+left_middle = 2.0
+left_index = 1.5
+right_index = 1.5
+right_middle = 2.0
+right_ring = 1.8
+right_pinky = 1.0
+
+[asymmetric]
+# Biomechanical "a finger forward of its neighbor is the rest shape"
+# rules. When enabled, an adjacent-finger cross-row motion is NOT
+# classified as a scissor IF the outer finger is at a physically
+# more-extended y than the inner finger.
+#
+# This captures the fact that on col-stag keyboards, ring-above-pinky
+# or middle-above-ring is the natural resting shape — "reaching" to
+# that shape isn't a scissor.
+#
+# Disable any of these to make drift more punishing about cross-row
+# geometry on specific finger pairs.
+index_middle_forward_ok = true
+middle_ring_forward_ok = true
+ring_pinky_forward_ok = true

@@ -1,3 +1,6 @@
+[workspace]
+members = ["drift"]
+
 [package]
 name = "keywiz"
 version = "0.1.0"
