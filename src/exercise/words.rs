@@ -1,5 +1,6 @@
-//! Words exercises — finite (N words) and endless typing of
-//! randomly-picked words.
+//! Words exercise — type N randomly-picked words, or practice
+//! endlessly. The word count is an instance-axis parameter
+//! (`Alt+←/→`); `count = 0` means endless.
 
 use std::time::Instant;
 
@@ -152,68 +153,38 @@ fn random_word_unweighted() -> String {
     random_word(&empty)
 }
 
-pub struct WordsFinite(WordsCore);
+pub struct WordsExercise(WordsCore);
 
-impl WordsFinite {
-    pub fn new(count: usize) -> Self {
-        WordsFinite(WordsCore::new(Some(count)))
+impl WordsExercise {
+    /// Build a words exercise with `count` target words. `count = 0`
+    /// means endless practice with no finish condition.
+    pub fn new(count: u32) -> Self {
+        let target = if count == 0 { None } else { Some(count as usize) };
+        WordsExercise(WordsCore::new(target))
     }
 }
 
-impl Exercise for WordsFinite {
+impl Exercise for WordsExercise {
     fn name(&self) -> &str {
-        "words-20"
+        "words"
     }
 
     fn short(&self) -> &str {
-        "Words 20"
+        "Words"
     }
 
     fn expected(&self) -> Option<char> {
         self.0.expected()
     }
 
-    fn advance(&mut self) {
-        self.0.advance()
+    fn advance(&mut self, _stats: &crate::stats::Stats, correct: bool) {
+        if correct {
+            self.0.advance()
+        }
     }
 
     fn is_done(&self) -> bool {
         self.0.is_finished()
-    }
-
-    fn fill_display(&self, display: &mut DisplayState) {
-        display.words = Some(self.0.to_display());
-        display.highlight_char = self.0.expected();
-    }
-}
-
-pub struct WordsEndless(WordsCore);
-
-impl WordsEndless {
-    pub fn new() -> Self {
-        WordsEndless(WordsCore::new(None))
-    }
-}
-
-impl Exercise for WordsEndless {
-    fn name(&self) -> &str {
-        "words-endless"
-    }
-
-    fn short(&self) -> &str {
-        "Words Endless"
-    }
-
-    fn expected(&self) -> Option<char> {
-        self.0.expected()
-    }
-
-    fn advance(&mut self) {
-        self.0.advance()
-    }
-
-    fn is_done(&self) -> bool {
-        false
     }
 
     fn fill_display(&self, display: &mut DisplayState) {

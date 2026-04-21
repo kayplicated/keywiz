@@ -1,7 +1,9 @@
 //! Passage-typing exercise — type through multi-line text loaded
-//! from files in `texts/`. Arrow Left / Right switches passages.
+//! from files in `texts/`. Passage switching is engine-level
+//! (Alt+←/→), so this exercise is built at a specific passage index
+//! and doesn't own the sideways navigation itself.
 
-use crossterm::event::{KeyCode, KeyEvent};
+use std::sync::OnceLock;
 use std::time::Instant;
 
 use crate::engine::placement::{DisplayState, TextDisplay};
@@ -12,25 +14,42 @@ struct Passage {
     body: String,
 }
 
+/// Cached passage list. Loaded on first use; stable thereafter
+/// within a single run so the engine's instance-count bound
+/// matches what `TextExercise::new` will find.
+static PASSAGES: OnceLock<Vec<Passage>> = OnceLock::new();
+
+fn passages() -> &'static [Passage] {
+    PASSAGES.get_or_init(|| load_passages("texts"))
+}
+
 pub struct TextExercise {
-    passages: Vec<Passage>,
     current: usize,
     chars: Vec<char>,
     cursor: usize,
+    #[allow(dead_code)]
     start_time: Option<Instant>,
+    #[allow(dead_code)]
     end_time: Option<Instant>,
 }
 
 impl TextExercise {
-    pub fn new() -> Self {
-        let passages = load_passages("texts");
-        let chars = passages
-            .first()
+    /// Build a text exercise positioned at `passage_index`. Out-of-
+    /// range indices clamp to the first passage (or yield an empty
+    /// exercise when `texts/` is empty).
+    pub fn new(passage_index: usize) -> Self {
+        let all = passages();
+        let current = if all.is_empty() {
+            0
+        } else {
+            passage_index.min(all.len() - 1)
+        };
+        let chars = all
+            .get(current)
             .map(|p| p.body.chars().collect())
             .unwrap_or_default();
         TextExercise {
-            passages,
-            current: 0,
+            current,
             chars,
             cursor: 0,
             start_time: None,
@@ -38,15 +57,15 @@ impl TextExercise {
         }
     }
 
-    fn switch_passage(&mut self, index: usize) {
-        if self.passages.is_empty() {
-            return;
-        }
-        self.current = index % self.passages.len();
-        self.chars = self.passages[self.current].body.chars().collect();
-        self.cursor = 0;
-        self.start_time = None;
-        self.end_time = None;
+    /// Number of passages available on disk.
+    pub fn passage_count() -> usize {
+        passages().len()
+    }
+
+    /// Title of the passage at `index`, if any. Used by the footer
+    /// to show which passage the user is currently on.
+    pub fn passage_title(index: usize) -> Option<String> {
+        passages().get(index).map(|p| p.title.clone())
     }
 }
 
@@ -63,7 +82,10 @@ impl Exercise for TextExercise {
         self.chars.get(self.cursor).copied()
     }
 
-    fn advance(&mut self) {
+    fn advance(&mut self, _stats: &crate::stats::Stats, correct: bool) {
+        if !correct {
+            return;
+        }
         if self.start_time.is_none() {
             self.start_time = Some(Instant::now());
         }
@@ -79,41 +101,17 @@ impl Exercise for TextExercise {
 
     fn fill_display(&self, display: &mut DisplayState) {
         display.highlight_char = self.expected();
-        if self.passages.is_empty() {
+        let all = passages();
+        if all.is_empty() {
             return;
         }
-        let passage = &self.passages[self.current];
+        let passage = &all[self.current];
         display.text = Some(TextDisplay {
             title: passage.title.clone(),
-            passage_index: self.current,
-            passage_total: self.passages.len(),
             body: passage.body.clone(),
             cursor: self.cursor,
             is_finished: self.is_done(),
         });
-    }
-
-    fn handle_control(&mut self, key: KeyEvent) -> bool {
-        match key.code {
-            KeyCode::Left => {
-                if self.passages.len() > 1 {
-                    let idx = if self.current == 0 {
-                        self.passages.len() - 1
-                    } else {
-                        self.current - 1
-                    };
-                    self.switch_passage(idx);
-                }
-                true
-            }
-            KeyCode::Right => {
-                if self.passages.len() > 1 {
-                    self.switch_passage(self.current + 1);
-                }
-                true
-            }
-            _ => false,
-        }
     }
 }
 

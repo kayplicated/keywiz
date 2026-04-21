@@ -52,10 +52,6 @@ impl Translator {
     pub fn translate(&self, ch: char) -> char {
         self.map.get(&ch).copied().unwrap_or(ch)
     }
-
-    pub fn is_identity(&self) -> bool {
-        self.map.is_empty()
-    }
 }
 
 /// Build a translator from the named input layout to the active

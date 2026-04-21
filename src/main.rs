@@ -1,4 +1,3 @@
-mod config;
 mod engine;
 mod exercise;
 mod integrations;
@@ -63,7 +62,7 @@ fn main() -> io::Result<()> {
         eprintln!("keywiz: {e}");
     }
     if let Some(name) = exercise {
-        engine.set_exercise(name);
+        engine.set_exercise_from_pref(name);
     }
 
     terminal::enable_raw_mode()?;
@@ -79,7 +78,7 @@ fn main() -> io::Result<()> {
     prefs::Prefs::save(
         engine.current_keyboard(),
         engine.current_layout(),
-        engine.current_exercise(),
+        &engine.current_exercise(),
     );
 
     result
@@ -124,18 +123,23 @@ fn run_loop(
                 Classified::PrevLayout => {
                     let _ = engine.prev_layout();
                 }
-                Classified::NextExercise => {
+                Classified::NextExerciseCategory => {
                     engine.persist_stats();
-                    engine.next_exercise();
+                    engine.next_exercise_category();
                 }
-                Classified::PrevExercise => {
+                Classified::PrevExerciseCategory => {
                     engine.persist_stats();
-                    engine.prev_exercise();
+                    engine.prev_exercise_category();
                 }
-                Classified::Control(k) => {
-                    // Let the active exercise consume arrow keys etc.
-                    engine.handle_exercise_control(k);
+                Classified::NextExerciseInstance => {
+                    engine.persist_stats();
+                    engine.next_exercise_instance();
                 }
+                Classified::PrevExerciseInstance => {
+                    engine.persist_stats();
+                    engine.prev_exercise_instance();
+                }
+                Classified::Ignored => {}
             }
         }
     }
@@ -150,9 +154,18 @@ enum Classified {
     PrevKeyboard,
     NextLayout,
     PrevLayout,
-    NextExercise,
-    PrevExercise,
-    Control(KeyEvent),
+    /// Alt+↓ — next exercise category (drill / words / text).
+    NextExerciseCategory,
+    /// Alt+↑ — previous exercise category.
+    PrevExerciseCategory,
+    /// Alt+→ — next instance within the current category.
+    NextExerciseInstance,
+    /// Alt+← — previous instance within the current category.
+    PrevExerciseInstance,
+    /// Any key that the main loop has no binding for — arrows
+    /// without modifiers, function keys we don't handle, etc.
+    /// Swallowed silently.
+    Ignored,
 }
 
 fn classify(key: KeyEvent) -> Classified {
@@ -167,10 +180,11 @@ fn classify(key: KeyEvent) -> Classified {
         KeyCode::Down if ctrl => Classified::NextKeyboard,
         KeyCode::Left if ctrl => Classified::PrevLayout,
         KeyCode::Right if ctrl => Classified::NextLayout,
-        KeyCode::Left if alt => Classified::PrevExercise,
-        KeyCode::Right if alt => Classified::NextExercise,
+        KeyCode::Up if alt => Classified::PrevExerciseCategory,
+        KeyCode::Down if alt => Classified::NextExerciseCategory,
+        KeyCode::Left if alt => Classified::PrevExerciseInstance,
+        KeyCode::Right if alt => Classified::NextExerciseInstance,
         KeyCode::Char(ch) => Classified::Typing(ch),
-        KeyCode::Left | KeyCode::Right | KeyCode::Up | KeyCode::Down => Classified::Control(key),
-        _ => Classified::Control(key),
+        _ => Classified::Ignored,
     }
 }

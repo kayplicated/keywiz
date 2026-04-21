@@ -19,7 +19,6 @@ use crate::stats::{self, StatsTracker};
 #[derive(Debug, Clone)]
 pub struct LayoutChange {
     pub from: String,
-    pub to: String,
 }
 
 #[derive(Debug, Clone)]
@@ -56,7 +55,11 @@ impl std::fmt::Display for EngineError {
     }
 }
 
-/// Outcome of processing one input char.
+/// Outcome of processing one input char. Staged for metrics / stats
+/// hooks — today main.rs discards the return value, but the fields
+/// are the obvious seam for per-hit side effects (sound, haptics,
+/// session timers, end-of-exercise dispatch).
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct KeystrokeResult {
     pub hit: bool,
@@ -71,7 +74,14 @@ pub struct Engine {
     layouts: Vec<String>,
     current_keyboard: String,
     current_layout: String,
-    current_exercise: String,
+    /// Active exercise category (`drill`, `words`, `text`).
+    current_category: String,
+    /// Active instance index within the current category.
+    current_instance: usize,
+    /// Per-category memory of the last instance visited. Lets users
+    /// cycle away from text passage 7 to drill and back without
+    /// losing their place.
+    instance_memory: std::collections::HashMap<String, usize>,
     keyboard: Box<dyn Keyboard>,
     layout: Layout,
     exercise: Box<dyn Exercise>,
@@ -122,12 +132,21 @@ impl Engine {
             ))
         })?;
 
-        let exercise_name = "drill-home".to_string();
-        let exercise = exercise_catalog::build(&exercise_name, keyboard.as_ref(), &layout);
-
         let translator = translate::build(&layout, from_layout.as_deref());
         let mut stats = StatsTracker::new();
         stats.set_persistent(stats::persist::load(&initial_layout));
+
+        // Exercise depends on stats for heat-aware construction
+        // (drill's starting level), so stats must be loaded first.
+        let current_category = "drill".to_string();
+        let current_instance = 0;
+        let exercise = exercise_catalog::build(
+            &current_category,
+            current_instance,
+            keyboard.as_ref(),
+            &layout,
+            stats.persistent(),
+        );
 
         Ok(Engine {
             keyboards_dir: keyboards_dir.to_path_buf(),
@@ -136,7 +155,9 @@ impl Engine {
             layouts,
             current_keyboard: initial_keyboard,
             current_layout: initial_layout,
-            current_exercise: exercise_name,
+            current_category,
+            current_instance,
+            instance_memory: std::collections::HashMap::new(),
             keyboard,
             layout,
             exercise,
@@ -160,16 +181,22 @@ impl Engine {
         &self.current_layout
     }
 
-    pub fn current_exercise(&self) -> &str {
-        &self.current_exercise
+    /// Serialized form of the active exercise for prefs
+    /// persistence. See `exercise::catalog::format_pref`.
+    pub fn current_exercise(&self) -> String {
+        exercise_catalog::format_pref(&self.current_category, self.current_instance)
     }
 
-    pub fn exercise(&self) -> &dyn Exercise {
-        self.exercise.as_ref()
+    /// Number of instances in the current category (0 for drill).
+    pub fn current_instance_count(&self) -> usize {
+        exercise_catalog::instance_count(&self.current_category)
     }
 
-    pub fn exercise_mut(&mut self) -> &mut dyn Exercise {
-        self.exercise.as_mut()
+    /// Human label for the current instance, e.g. `"50"`,
+    /// `"Endless"`, `"The Commit"`. `None` when the category has
+    /// no instance axis.
+    pub fn current_instance_label(&self) -> Option<String> {
+        exercise_catalog::instance_label(&self.current_category, self.current_instance)
     }
 
     /* --- projection methods --- */
@@ -189,6 +216,13 @@ impl Engine {
         display.keyboard_short = self.keyboard.short().to_string();
         display.layout_short = self.layout.short.clone();
         display.exercise_short = self.exercise.short().to_string();
+        let instance_count = self.current_instance_count();
+        display.exercise_instance = if instance_count == 0 {
+            (0, 0)
+        } else {
+            (self.current_instance + 1, instance_count)
+        };
+        display.exercise_instance_label = self.current_instance_label();
         display.broken_keyboard = self.broken_keyboard.as_ref().map(Into::into);
         display.broken_layout = self.broken_layout.as_ref().map(Into::into);
         display.keyboard_visible = self.keyboard_visible;
@@ -216,19 +250,13 @@ impl Engine {
         };
         let hit = translated == expected;
         self.stats.record(expected, hit);
-        if hit {
-            self.exercise.advance();
-        }
+        // Pass both hit and miss to the exercise — the drill's
+        // autoscaler needs both signals for its rolling window.
+        self.exercise.advance(self.stats.persistent(), hit);
         KeystrokeResult {
             hit,
             exercise_done: self.exercise.is_done(),
         }
-    }
-
-    /// Forward a control key (arrows, etc.) to the active exercise.
-    /// Returns whether the exercise handled it.
-    pub fn handle_exercise_control(&mut self, key: crossterm::event::KeyEvent) -> bool {
-        self.exercise.handle_control(key)
     }
 
     /* --- display toggles --- */
@@ -304,7 +332,6 @@ impl Engine {
                 });
                 let change = LayoutChange {
                     from: std::mem::replace(&mut self.current_layout, name.to_string()),
-                    to: name.to_string(),
                 };
                 return Err(EngineError::Broken {
                     name: name.to_string(),
@@ -317,7 +344,6 @@ impl Engine {
         stats::persist::save(&self.current_layout, self.stats.persistent());
         let change = LayoutChange {
             from: std::mem::replace(&mut self.current_layout, name.to_string()),
-            to: name.to_string(),
         };
         self.keyboard = keyboard;
         self.layout = layout;
@@ -329,14 +355,34 @@ impl Engine {
         Ok(change)
     }
 
-    pub fn set_exercise(&mut self, name: &str) {
-        self.current_exercise = name.to_string();
+    /// Set the active exercise from a serialized prefs string
+    /// (`"text:3"`, `"words:50"`, `"drill"`, or any legacy name).
+    /// Safe against unknown formats — falls back to drill.
+    pub fn set_exercise_from_pref(&mut self, pref: &str) {
+        let (cat, inst) = exercise_catalog::parse_pref(pref);
+        self.set_category_instance(cat, inst);
+    }
+
+    fn set_category_instance(&mut self, category: String, instance: usize) {
+        // Remember where we were in the outgoing category before
+        // moving on.
+        self.instance_memory
+            .insert(self.current_category.clone(), self.current_instance);
+        self.current_category = category;
+        // Clamp instance to the category's range.
+        let bound = exercise_catalog::instance_count(&self.current_category);
+        self.current_instance = if bound == 0 { 0 } else { instance.min(bound - 1) };
         self.rebuild_exercise();
     }
 
     fn rebuild_exercise(&mut self) {
-        self.exercise =
-            exercise_catalog::build(&self.current_exercise, self.keyboard.as_ref(), &self.layout);
+        self.exercise = exercise_catalog::build(
+            &self.current_category,
+            self.current_instance,
+            self.keyboard.as_ref(),
+            &self.layout,
+            self.stats.persistent(),
+        );
     }
 
     fn rebuild_translator(&mut self) {
@@ -371,14 +417,45 @@ impl Engine {
         self.set_layout(&name)
     }
 
-    pub fn next_exercise(&mut self) {
-        let name = exercise_catalog::next(&self.current_exercise);
-        self.set_exercise(name);
+    /// Cycle to the next exercise category (Alt+↓). Restores the
+    /// new category's remembered instance if one exists.
+    pub fn next_exercise_category(&mut self) {
+        let next = exercise_catalog::next_category(&self.current_category).to_string();
+        let inst = self.remembered_instance(&next);
+        self.set_category_instance(next, inst);
     }
 
-    pub fn prev_exercise(&mut self) {
-        let name = exercise_catalog::prev(&self.current_exercise);
-        self.set_exercise(name);
+    /// Cycle to the previous exercise category (Alt+↑).
+    pub fn prev_exercise_category(&mut self) {
+        let prev = exercise_catalog::prev_category(&self.current_category).to_string();
+        let inst = self.remembered_instance(&prev);
+        self.set_category_instance(prev, inst);
+    }
+
+    /// Cycle to the next instance within the current category
+    /// (Alt+→). No-op when the category has no instances (drill).
+    pub fn next_exercise_instance(&mut self) {
+        if let Some(next) =
+            exercise_catalog::next_instance(&self.current_category, self.current_instance)
+        {
+            self.current_instance = next;
+            self.rebuild_exercise();
+        }
+    }
+
+    /// Cycle to the previous instance within the current category
+    /// (Alt+←).
+    pub fn prev_exercise_instance(&mut self) {
+        if let Some(prev) =
+            exercise_catalog::prev_instance(&self.current_category, self.current_instance)
+        {
+            self.current_instance = prev;
+            self.rebuild_exercise();
+        }
+    }
+
+    fn remembered_instance(&self, category: &str) -> usize {
+        self.instance_memory.get(category).copied().unwrap_or(0)
     }
 
     /* --- persistence --- */
