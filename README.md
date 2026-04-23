@@ -216,8 +216,9 @@ stays hidden from the layout cycle otherwise.
 ## Shipped data
 
 - **Keyboards**: `halcyon_elora_v2` (col-stag split), `kyria`
-  (col-stag split, no number row), `us_intl` (ANSI row-stag),
-  `ortho`
+  (col-stag split, no number row), `ferris` (col-stag split,
+  34 keys, no number row or outer pinky), `us_intl` (ANSI
+  row-stag), `ortho`
 - **Layouts**: `canary`, `colemak`, `colemak-dh`, `drifter`,
   `dvorak`, `engram`, `gallium`, `gallium-v2`, `graphite`,
   `hyperroll`, `isrt`, `qwerty`, `semimak`, `sturdy`, `workman`

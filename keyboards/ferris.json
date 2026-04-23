@@ -1,0 +1,81 @@
+{
+  name: "ferris",
+  short: "Ferris",
+  description: "Ferris Sweep — minimal 34-key col-stag split. Same col-stag splay as the Halcyon Elora v2's alpha core, but without the number row, outer-pinky column, or the outer five thumb keys per hand.",
+
+  // Col-stag main block. Ids follow docs/id-convention.md:
+  //   main_k1..k30  — 30-key alpha core, inner 5 cols per hand
+  //                   × 3 rows (top / home / bottom)
+  //
+  // Ferris has no number row (no k31..k40) and no outer-pinky
+  // column (no k41..k49). Alpha core only; thumbs below.
+  //
+  // Geometry mirrors halcyon_elora_v2's col-stag splay:
+  //   pinky-outer & pinky-inner: pulled back 0.75
+  //   ring:    pulled back 0.25
+  //   middle:  pushed forward 0.5
+  //   index-outer: pulled back 0.25
+  //   index-inner: baseline
+  blocks: [
+    {
+      type: "col-stag",
+      cluster: "main",
+      keys: [
+        // ---- top alpha row (r = -1), main_k1..k10 ----
+        { id: "main_k1",  r: -1, c: -5, x: -5.0, y: -0.25, finger: "LPinky" },
+        { id: "main_k2",  r: -1, c: -4, x: -4.0, y: -1.25, finger: "LRing" },
+        { id: "main_k3",  r: -1, c: -3, x: -3.0, y: -1.5,  finger: "LMiddle" },
+        { id: "main_k4",  r: -1, c: -2, x: -2.0, y: -1.25, finger: "LIndex" },
+        { id: "main_k5",  r: -1, c: -1, x: -1.0, y: -1.0,  finger: "LIndex" },
+        { id: "main_k6",  r: -1, c:  1, x:  1.0, y: -1.0,  finger: "RIndex" },
+        { id: "main_k7",  r: -1, c:  2, x:  2.0, y: -1.25, finger: "RIndex" },
+        { id: "main_k8",  r: -1, c:  3, x:  3.0, y: -1.5,  finger: "RMiddle" },
+        { id: "main_k9",  r: -1, c:  4, x:  4.0, y: -1.25, finger: "RRing" },
+        { id: "main_k10", r: -1, c:  5, x:  5.0, y: -0.25, finger: "RPinky" },
+
+        // ---- home row (r = 0), main_k11..k20 ----
+        { id: "main_k11", r:  0, c: -5, x: -5.0, y:  0.75, finger: "LPinky" },
+        { id: "main_k12", r:  0, c: -4, x: -4.0, y: -0.25, finger: "LRing" },
+        { id: "main_k13", r:  0, c: -3, x: -3.0, y: -0.5,  finger: "LMiddle" },
+        { id: "main_k14", r:  0, c: -2, x: -2.0, y: -0.25, finger: "LIndex" },
+        { id: "main_k15", r:  0, c: -1, x: -1.0, y:  0.0,  finger: "LIndex" },
+        { id: "main_k16", r:  0, c:  1, x:  1.0, y:  0.0,  finger: "RIndex" },
+        { id: "main_k17", r:  0, c:  2, x:  2.0, y: -0.25, finger: "RIndex" },
+        { id: "main_k18", r:  0, c:  3, x:  3.0, y: -0.5,  finger: "RMiddle" },
+        { id: "main_k19", r:  0, c:  4, x:  4.0, y: -0.25, finger: "RRing" },
+        { id: "main_k20", r:  0, c:  5, x:  5.0, y:  0.75, finger: "RPinky" },
+
+        // ---- bottom row (r = 1), main_k21..k30 ----
+        { id: "main_k21", r:  1, c: -5, x: -5.0, y:  1.75, finger: "LPinky" },
+        { id: "main_k22", r:  1, c: -4, x: -4.0, y:  0.75, finger: "LRing" },
+        { id: "main_k23", r:  1, c: -3, x: -3.0, y:  0.5,  finger: "LMiddle" },
+        { id: "main_k24", r:  1, c: -2, x: -2.0, y:  0.75, finger: "LIndex" },
+        { id: "main_k25", r:  1, c: -1, x: -1.0, y:  1.0,  finger: "LIndex" },
+        { id: "main_k26", r:  1, c:  1, x:  1.0, y:  1.0,  finger: "RIndex" },
+        { id: "main_k27", r:  1, c:  2, x:  2.0, y:  0.75, finger: "RIndex" },
+        { id: "main_k28", r:  1, c:  3, x:  3.0, y:  0.5,  finger: "RMiddle" },
+        { id: "main_k29", r:  1, c:  4, x:  4.0, y:  0.75, finger: "RRing" },
+        { id: "main_k30", r:  1, c:  5, x:  5.0, y:  1.75, finger: "RPinky" },
+      ],
+    },
+
+    // Thumb clusters — Ferris has 2 thumb keys per hand, matching
+    // the k5/k6 positions of the Elora's thumb cluster. Placeholder xy.
+    {
+      type: "free-form",
+      cluster: "left_thumb",
+      keys: [
+        { id: "left_thumb_k5", r: 3, c: -3, x: -3.0, y: 4.0, finger: "LThumb" },
+        { id: "left_thumb_k6", r: 3, c: -2, x: -2.0, y: 4.0, finger: "LThumb" },
+      ],
+    },
+    {
+      type: "free-form",
+      cluster: "right_thumb",
+      keys: [
+        { id: "right_thumb_k5", r: 3, c:  3, x:  3.0, y: 4.0, finger: "RThumb" },
+        { id: "right_thumb_k6", r: 3, c:  4, x:  4.0, y: 4.0, finger: "RThumb" },
+      ],
+    },
+  ],
+}
