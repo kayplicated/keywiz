@@ -149,8 +149,6 @@ pub struct WordsDisplay {
     pub cursor: usize,
     /// Number of completed words (for the header counter).
     pub word_index: usize,
-    /// Target word count for finite exercises; `None` for endless.
-    pub target_count: Option<usize>,
     pub is_finished: bool,
 }
 

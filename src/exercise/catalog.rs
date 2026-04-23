@@ -3,8 +3,8 @@
 //! Two axes:
 //! - **Category** (`Alt+↑/↓`) — drill, words, text.
 //! - **Instance** (`Alt+←/→`) — mode within a category. Drill has
-//!   no instances; words has five lengths (`10/20/50/100/0` where
-//!   `0` means endless); text has one instance per file in `texts/`.
+//!   no instances; words has one per file in `words/`; text has
+//!   one per file in `texts/`.
 //!
 //! Both axes wrap at their ends. Switching category restores the
 //! last-used instance within that category via engine-side memory
@@ -17,12 +17,10 @@ use crate::exercise::{Exercise, HeatSteps};
 use crate::keyboard::common::PhysicalKey;
 use crate::keyboard::Keyboard;
 use crate::mapping::{KeyMapping, Layout};
+use crate::words;
 
 /// Category axis. Order is the Alt+↑/↓ cycle order.
 pub const CATEGORIES: &[&str] = &["drill", "words", "text"];
-
-/// The five shipped word-count instances. `0` = endless.
-pub const WORDS_INSTANCES: &[u32] = &[10, 20, 50, 100, 0];
 
 /// Build an exercise for the active (category, instance) pair
 /// against the current keyboard/layout/heat. Unknown category
@@ -35,13 +33,7 @@ pub fn build(
     heat: &HeatSteps,
 ) -> Box<dyn Exercise> {
     match category {
-        "words" => {
-            let count = WORDS_INSTANCES
-                .get(instance)
-                .copied()
-                .unwrap_or(WORDS_INSTANCES[0]);
-            Box::new(WordsExercise::new(count))
-        }
+        "words" => Box::new(WordsExercise::new(instance)),
         "text" => Box::new(TextExercise::new(instance)),
         // "drill" and anything unknown.
         _ => Box::new(DrillExercise::new(
@@ -52,31 +44,24 @@ pub fn build(
 }
 
 /// Number of instances in `category`. Drill has none (returns 0);
-/// words has `WORDS_INSTANCES.len()`; text has one per file in
+/// words has one per file in `words/`; text has one per file in
 /// `texts/`. Engine uses this to bound instance cycling.
 pub fn instance_count(category: &str) -> usize {
     match category {
         "drill" => 0,
-        "words" => WORDS_INSTANCES.len(),
+        "words" => words::list_count(),
         "text" => TextExercise::passage_count(),
         _ => 0,
     }
 }
 
 /// Human label for the current instance in footer indicators, e.g.
-/// `"50"`, `"Endless"`, `"The Commit"`. Returns `None` when the
-/// category has no instance axis.
+/// `"English"`, `"The Commit"`. Returns `None` when the category
+/// has no instance axis.
 pub fn instance_label(category: &str, instance: usize) -> Option<String> {
     match category {
         "drill" => None,
-        "words" => {
-            let count = WORDS_INSTANCES.get(instance).copied()?;
-            Some(if count == 0 {
-                "Endless".to_string()
-            } else {
-                count.to_string()
-            })
-        }
+        "words" => words::list_title(instance),
         "text" => TextExercise::passage_title(instance),
         _ => None,
     }
@@ -129,30 +114,28 @@ pub fn parse_pref(s: &str) -> (String, usize) {
     // New format: "category:instance"
     if let Some((cat, inst)) = s.split_once(':')
         && CATEGORIES.contains(&cat)
+        && let Ok(i) = inst.parse::<usize>()
     {
-        let parsed: Option<usize> = match cat {
-            "words" => {
-                // `words:0` is endless (index 4 in the shipped list).
-                // Translate the numeric word-count to an instance
-                // index via lookup.
-                inst.parse::<u32>()
-                    .ok()
-                    .and_then(|count| WORDS_INSTANCES.iter().position(|&c| c == count))
-            }
-            _ => inst.parse().ok(),
-        };
-        if let Some(i) = parsed {
-            return (cat.to_string(), i);
-        }
+        return (cat.to_string(), i);
     }
 
-    // Legacy single-name format.
+    // Legacy single-name format. Old per-length words prefs all
+    // collapse to wordlist index 0 since length is no longer an
+    // instance axis.
     match s {
         "drill" | "drill-home" | "drill-home-top" | "drill-all" => ("drill".to_string(), 0),
-        "words" | "words-20" => ("words".to_string(), 1), // index of 20
-        "words-endless" => ("words".to_string(), 4),      // index of 0 (endless)
+        "words" | "words-20" | "words-endless" => ("words".to_string(), 0),
         "text" => ("text".to_string(), 0),
-        _ => ("drill".to_string(), 0),
+        _ => {
+            // Legacy "words:20" / "words:0" length-based prefs from
+            // before wordlists existed. Map to list index 0.
+            if let Some((cat, _)) = s.split_once(':')
+                && CATEGORIES.contains(&cat)
+            {
+                return (cat.to_string(), 0);
+            }
+            ("drill".to_string(), 0)
+        }
     }
 }
 
@@ -162,14 +145,7 @@ pub fn parse_pref(s: &str) -> (String, usize) {
 pub fn format_pref(category: &str, instance: usize) -> String {
     match category {
         "drill" => "drill".to_string(),
-        "words" => {
-            let count = WORDS_INSTANCES
-                .get(instance)
-                .copied()
-                .unwrap_or(WORDS_INSTANCES[1]);
-            format!("words:{count}")
-        }
-        "text" => format!("text:{instance}"),
+        "words" | "text" => format!("{category}:{instance}"),
         _ => "drill".to_string(),
     }
 }

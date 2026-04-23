@@ -112,16 +112,12 @@ pub fn draw_frame(
             Span::styled(level.clone(), Style::default().fg(Color::Yellow)),
         ])
     } else if let Some(words) = &display.words {
-        let suffix = match words.target_count {
-            Some(n) => format!(" — {}/{}", words.word_index, n),
-            None => format!(" — {} words", words.word_index),
-        };
         Line::from(vec![
             Span::styled(
                 "Typing Practice",
                 Style::default().fg(Color::Cyan).bold(),
             ),
-            Span::raw(suffix),
+            Span::raw(format!(" — {} words", words.word_index)),
         ])
     } else if let Some(text) = &display.text {
         // Position (n/m) and the switch hint live in the footer;

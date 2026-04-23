@@ -66,9 +66,11 @@ Three exercise categories, cycled with **Alt+↑/↓**:
 - **Drill** — random keys with adaptive difficulty. Starts on
   whichever row has the hottest troubled keys; promotes at
   >90% accuracy, demotes below 70%.
-- **Words** — random words with a scrolling display. Several
-  word-count instances (20, 50, 100, endless) cycled with
-  **Alt+←/→**.
+- **Words** — endless random words with a scrolling display.
+  One instance per wordlist in `words/`; **Alt+←/→** cycles
+  between lists (English, short words, whatever you drop in).
+  keywiz is a layout workbench, not a typing speedrunner — no
+  20-word finish line; the stats page is where numbers live.
 - **Text** — type real passages from `texts/`. Arrow within the
   category to switch passages.
 
@@ -253,6 +255,14 @@ The rest of the file is the passage body. Multiple lines are
 fine — they get word-wrapped to fit the display.
 ```
 
+## Custom wordlists
+
+Drop `.txt` files into `words/`, one word per line. The filename
+becomes the list title (`short_words.txt` → "Short Words"), so
+lists downloaded from external sources work without editing.
+Each file shows up as a selectable instance in the words exercise
+(**Alt+←/→**).
+
 ## Storage
 
 - Stats: `~/.local/share/keywiz/stats.sqlite` (SQLite via
@@ -276,7 +286,7 @@ keywiz/
 ├── keyboards/           — JSON5 keyboards
 ├── layouts/             — JSON5 layouts
 ├── texts/               — text-practice passages
-├── words.txt            — word list
+├── words/               — one .txt per wordlist
 └── docs/
     ├── HANDOFF.md       — current state, next-up
     ├── roadmap.md       — tiered roadmap
