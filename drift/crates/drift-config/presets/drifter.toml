@@ -1,0 +1,198 @@
+# Drifter preset.
+#
+# Flexion-favoring, hand-territory-aware defaults that encode the
+# philosophy behind the Drifter layout: reward matched row territory
+# between hands, reward flexion cascades, prefer inward rolls. Uses
+# a piano-pedagogy finger-strength model.
+#
+# This preset is intentionally non-neutral. Use `neutral.toml` as
+# the baseline when you want claims to stand on structural merit.
+
+[corpus]
+path = "../../../../oxeylyzer/static/language_data/english.json"
+
+[analyzers]
+enabled = [
+    "sfb",
+    "roll",
+    "scissor",
+    "stretch",
+    "same_row_skip",
+    "same_row_skip_fingerpair",
+    "sfs",
+    "inward_roll",
+    "outward_roll",
+    "onehand",
+    "alternate",
+    "redirect",
+    "bad_redirect",
+    "hand_territory",
+    "flexion_cascade",
+    "extension_cascade",
+    "row_cascade",
+    "terminal_penalty",
+    "async_hand_drift",
+    "row_distribution",
+    "finger_load",
+]
+
+[analyzers.sfb]
+# Vertical same-finger bigrams — finger lifts and returns on the
+# same column. Full penalty.
+penalty = -7.0
+# Lateral same-finger motions — index-column crossings like `wh`,
+# `ck`. Real cost (the finger does move) but the column shift
+# doesn't require a vertical return, so it's less punishing than
+# a true SFB. Setting this equal to `penalty` reproduces the
+# pre-refactor behavior that treated both as the same thing.
+lateral_penalty = -2.0
+
+[analyzers.roll]
+same_row_adjacent = 2.0
+# Slight inward preference — Drifter's design biases toward
+# vowels-inward roll clusters.
+inward_multiplier = 1.1
+outward_multiplier = 1.0
+
+[analyzers.scissor]
+base_penalty = -2.0
+# Row-direction multipliers stay neutral (1.0) — the col-stag
+# asymmetric exemption does the direction-specific work.
+flexion = 1.0
+extension = 1.0
+full_cross = 1.2
+index_middle_forward_ok = true
+middle_ring_forward_ok = true
+ring_pinky_forward_ok = true
+forward_threshold = 0.0
+
+[analyzers.stretch]
+penalty = -1.0
+
+# Drifter leaves the flat same-row-skip analyzer neutral; the
+# finger-pair variant below does the real work with per-pair
+# kinesthetic weights.
+[analyzers.same_row_skip]
+weight = 0.0
+
+# Per-finger-pair same-row non-adjacent motion weights. Encodes
+# Kay's subjective kinesthetic map: inward rolls are consistently
+# good, outward rolls are less comfortable and get worse further
+# out, pinky→index-inner (the longest inward motion) is oddly
+# pleasant, etc. These values ARE opinionated and ARE Drifter-
+# specific — other presets leave them at zero.
+[analyzers.same_row_skip_fingerpair]
+# Inward (outer-to-inner). "Good" pairs.
+inward_ring_index = 1.5
+inward_ring_index_inner = 1.2
+inward_pinky_middle = 1.0
+inward_pinky_index = 1.5
+inward_pinky_index_inner = 1.7
+inward_middle_index_inner = 1.0
+
+# Outward (inner-to-outer). Consistently smaller rewards; the
+# further out the motion goes, the lower the weight.
+outward_ring_index = 0.6
+outward_ring_index_inner = 0.4
+outward_pinky_middle = 0.5
+outward_pinky_index = 0.3
+outward_pinky_index_inner = 0.2
+outward_middle_index_inner = 0.4
+
+# Same-finger skipgrams at gap 1 — SFS is less punishing than a
+# pure SFB but still the same finger lifting and returning in a
+# short window. Lateral (index-column-crossing) SFS is milder
+# still because the recovery beat makes the column shift free.
+[analyzers.sfs]
+penalty = -2.0
+lateral_penalty = -0.5
+gap = 1
+
+[analyzers.inward_roll]
+weight = 3.0
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 1.0
+
+[analyzers.outward_roll]
+weight = 2.5
+skip_multiplier = 0.7
+# Drifter treats pinky-terminal outward rolls as less stable.
+end_on_pinky_multiplier = 0.6
+
+[analyzers.onehand]
+weight = 1.0
+
+[analyzers.alternate]
+weight = 0.4
+partial_weight = 0.15
+
+[analyzers.redirect]
+weight = -3.0
+anchor_fingers = ["l_index", "r_index"]
+
+[analyzers.bad_redirect]
+weight = -5.0
+anchor_fingers = ["l_index", "r_index"]
+
+# Row synchrony — Drifter's signature. Reward matched rows,
+# penalize split-row alternation.
+[analyzers.hand_territory]
+same_row_reward = 0.5
+one_row_penalty = -0.3
+two_row_penalty = -1.0
+
+# Reward same-hand home+bottom cascades — the Drifter thesis.
+[analyzers.flexion_cascade]
+weight = 1.5
+allowed_rows = ["home", "bottom"]
+
+# Drifter doesn't reward extension cascades — it's explicitly
+# flexion-biased. Keeping the analyzer enabled but at weight 0 so
+# the preset makes its philosophy explicit rather than implicit.
+[analyzers.extension_cascade]
+weight = 0.0
+allowed_rows = ["home", "top"]
+
+[analyzers.row_cascade]
+weight = -3.0
+
+# Drifter singles out the pinky as the unstable terminal finger.
+[analyzers.terminal_penalty]
+l_pinky = -0.5
+l_ring = 0.0
+l_middle = 0.0
+l_index = 0.0
+r_index = 0.0
+r_middle = 0.0
+r_ring = 0.0
+r_pinky = -0.5
+
+# Drifter's signature complement to hand_territory: penalize
+# trigrams where the hands drift vertically in opposite directions.
+# Cost scales with the product of each hand's mean row offset, so a
+# window with deep splits costs more than one with shallow ones.
+[analyzers.async_hand_drift]
+# Length 4 lets the analyzer see the full flexion/drift arc rather
+# than just its trigram projection. The derived-ngram table softens
+# per-window frequencies (Markov chain rule dilutes through
+# multiplication), so we compensate with a heavier weight tuned to
+# preserve the n=3 baseline's drifter-vs-gallium discrimination.
+length = 4
+weight = -2.6
+
+[analyzers.row_distribution]
+top_weight = 0.0
+home_weight = 0.0
+bottom_weight = 0.0
+
+# Piano-pedagogy finger strengths: middle is the power finger.
+[analyzers.finger_load]
+overload_weight = -0.05
+l_pinky = 1.0
+l_ring = 1.8
+l_middle = 2.0
+l_index = 1.5
+r_index = 1.5
+r_middle = 2.0
+r_ring = 1.8
+r_pinky = 1.0

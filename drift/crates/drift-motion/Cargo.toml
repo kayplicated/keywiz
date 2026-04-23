@@ -1,0 +1,9 @@
+[package]
+name = "drift-motion"
+description = "Bigram geometric primitives for drift analyzers"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }

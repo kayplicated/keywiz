@@ -1,0 +1,173 @@
+# Neutral preset.
+#
+# All opinion-bearing analyzers disabled or at weight 0. Scores a
+# layout on structural properties only, without favoring any
+# particular ergonomic philosophy. Use this as the baseline when
+# comparing layouts whose targets you don't know, or when designing
+# a custom-tuned preset from scratch.
+
+[corpus]
+# Relative to this preset file. Override via `--corpus` on the CLI.
+path = "../../../../oxeylyzer/static/language_data/english.json"
+
+[analyzers]
+enabled = [
+    # Bigram scope.
+    "sfb",
+    "roll",
+    "scissor",
+    "stretch",
+    "same_row_skip",
+    "same_row_skip_fingerpair",
+
+    # Skipgram scope.
+    "sfs",
+
+    # Trigram scope.
+    "inward_roll",
+    "outward_roll",
+    "onehand",
+    "alternate",
+    "redirect",
+    "bad_redirect",
+    "hand_territory",
+    "flexion_cascade",
+    "extension_cascade",
+    "row_cascade",
+    "terminal_penalty",
+    "async_hand_drift",
+
+    # Aggregate scope — informational by default (weight 0).
+    "row_distribution",
+    "finger_load",
+]
+
+# ---- bigram analyzers ----
+
+[analyzers.sfb]
+penalty = -7.0
+# Lateral same-finger motions (index-column crossings) get a
+# separate, smaller penalty. See drifter.toml for context.
+lateral_penalty = -2.0
+
+[analyzers.roll]
+same_row_adjacent = 2.0
+inward_multiplier = 1.0
+outward_multiplier = 1.0
+
+[analyzers.scissor]
+base_penalty = -2.0
+flexion = 1.0
+extension = 1.0
+full_cross = 1.2
+index_middle_forward_ok = true
+middle_ring_forward_ok = true
+ring_pinky_forward_ok = true
+forward_threshold = 0.0
+
+[analyzers.stretch]
+penalty = -1.0
+
+# Neutral: same-row skips are neither rewarded nor penalized.
+[analyzers.same_row_skip]
+weight = 0.0
+
+# Neutral: per-finger-pair same-row skips all zero. The analyzer
+# is enabled so its position in the preset is explicit ("we
+# considered this rule and chose not to apply it") but all
+# weights are unset, which defaults to zero.
+[analyzers.same_row_skip_fingerpair]
+
+# Neutral: same-finger skipgrams not penalized.
+[analyzers.sfs]
+penalty = 0.0
+lateral_penalty = 0.0
+gap = 1
+
+# ---- trigram analyzers ----
+
+[analyzers.inward_roll]
+weight = 3.0
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 1.0
+
+[analyzers.outward_roll]
+weight = 2.5
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 1.0
+
+[analyzers.onehand]
+weight = 1.0
+
+[analyzers.alternate]
+weight = 0.4
+# Partial alternation (one hand-switch in a trigram) earns a
+# smaller reward. Roughly proportional to the share of strict
+# alternation being met (1 of 2 pairs cross-hand).
+partial_weight = 0.15
+
+[analyzers.redirect]
+weight = -3.0
+anchor_fingers = ["l_index", "r_index"]
+
+[analyzers.bad_redirect]
+weight = -5.0
+anchor_fingers = ["l_index", "r_index"]
+
+# Neutral: row-synchrony rewards/penalties all zero.
+[analyzers.hand_territory]
+same_row_reward = 0.0
+one_row_penalty = 0.0
+two_row_penalty = 0.0
+
+# Neutral: no flexion-cascade reward.
+[analyzers.flexion_cascade]
+weight = 0.0
+allowed_rows = ["home", "bottom"]
+
+# Neutral: no extension-cascade reward either.
+[analyzers.extension_cascade]
+weight = 0.0
+allowed_rows = ["home", "top"]
+
+# Neutral: async cross-hand drift is neither rewarded nor penalized.
+[analyzers.async_hand_drift]
+weight = 0.0
+
+# Row-cascade penalty still applies — visiting all three rows in
+# one hand is structurally expensive regardless of philosophy.
+[analyzers.row_cascade]
+weight = -3.0
+
+# Neutral: no finger singled out.
+[analyzers.terminal_penalty]
+l_pinky = 0.0
+l_ring = 0.0
+l_middle = 0.0
+l_index = 0.0
+r_index = 0.0
+r_middle = 0.0
+r_ring = 0.0
+r_pinky = 0.0
+
+# ---- aggregate analyzers ----
+
+# Row distribution is informational unless you want to actively
+# penalize a particular row.
+[analyzers.row_distribution]
+top_weight = 0.0
+home_weight = 0.0
+bottom_weight = 0.0
+
+# Finger overload: disabled by default in neutral. All strengths
+# equal (1.0) so any balance claim is purely configuration-driven.
+[analyzers.finger_load]
+overload_weight = 0.0
+l_pinky = 1.0
+l_ring = 1.0
+l_middle = 1.0
+l_index = 1.0
+r_index = 1.0
+r_middle = 1.0
+r_ring = 1.0
+r_pinky = 1.0

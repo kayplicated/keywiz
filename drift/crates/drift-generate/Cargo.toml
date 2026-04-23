@@ -1,0 +1,13 @@
+[package]
+name = "drift-generate"
+description = "Simulated-annealing layout generator for drift"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+drift-analyzer = { path = "../drift-analyzer" }
+drift-delta = { path = "../drift-delta" }
+anyhow = { workspace = true }
+rand = { workspace = true }

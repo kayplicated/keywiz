@@ -1,0 +1,17 @@
+[package]
+name = "drift-delta"
+description = "Incremental scoring for drift's simulated-annealing hot loop"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+drift-analyzer = { path = "../drift-analyzer" }
+
+[dev-dependencies]
+drift-score = { path = "../drift-score" }
+drift-analyzers = { path = "../drift-analyzers" }
+drift-corpus = { path = "../drift-corpus" }
+drift-keyboard = { path = "../drift-keyboard" }
+drift-config = { path = "../drift-config" }

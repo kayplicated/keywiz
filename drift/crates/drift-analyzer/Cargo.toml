@@ -1,0 +1,10 @@
+[package]
+name = "drift-analyzer"
+description = "Analyzer trait and pipeline for the drift framework"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+anyhow = { workspace = true }

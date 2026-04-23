@@ -1,0 +1,13 @@
+[package]
+name = "drift-core"
+description = "Shared vocabulary types for the drift layout-analysis framework"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { workspace = true, optional = true }

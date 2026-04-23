@@ -1,0 +1,12 @@
+[package]
+name = "drift-dof"
+description = "Reader for oxeylyzer .dof layout files"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

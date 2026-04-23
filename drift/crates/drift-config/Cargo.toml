@@ -1,0 +1,13 @@
+[package]
+name = "drift-config"
+description = "TOML-backed config loader for drift"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+drift-analyzer = { path = "../drift-analyzer" }
+anyhow = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }

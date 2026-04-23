@@ -1,0 +1,12 @@
+[package]
+name = "drift-analyzers"
+description = "Stock analyzer implementations for the drift framework"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+drift-analyzer = { path = "../drift-analyzer" }
+drift-motion = { path = "../drift-motion" }
+anyhow = { workspace = true }

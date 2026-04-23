@@ -1,0 +1,126 @@
+# oxey_mimic preset.
+#
+# Experiment: what if drift's pipeline only scores what oxey scores,
+# with weights chosen to match oxey's config.toml? The point isn't
+# to produce identical numerical scores (the metric definitions
+# differ enough that exact match is impossible) but to see whether
+# drift and oxey AGREE on layout ordering when drift's unique
+# structural measurements are disabled.
+#
+# Disabled (drift-unique):
+#   - hand_territory (cross-hand row synchrony)
+#   - flexion_cascade / extension_cascade (home+bot / home+top rewards)
+#   - row_cascade (all-three-rows penalty)
+#   - async_hand_drift (opposite-direction hand drift)
+#   - terminal_penalty (per-finger trigram terminal)
+#   - same_row_skip (neutral on both sides of debate)
+#
+# Tuned to match oxey:
+#   - sfb.penalty matches oxey sfbs = -7.0
+#   - sfb.lateral_penalty matches oxey (no distinction) = -7.0
+#   - sfs.penalty matches oxey sfs = -1.0
+#   - inward_roll / outward_roll match oxey inrolls/outrolls weights
+#   - onehand matches oxey onehands = 0.9
+#   - alternate matches oxey alternates = 0.4
+#   - redirect matches oxey redirects = -3.4
+#   - bad_redirect matches oxey bad_redirects = -4.9
+
+[corpus]
+path = "../../../../oxeylyzer/static/language_data/english.json"
+
+[analyzers]
+enabled = [
+    "sfb",
+    "sfs",
+    "roll",
+    "scissor",
+    "stretch",
+    "inward_roll",
+    "outward_roll",
+    "onehand",
+    "alternate",
+    "redirect",
+    "bad_redirect",
+    "finger_load",
+    "row_distribution",
+]
+
+[analyzers.sfb]
+# Oxey treats all same-finger bigrams at -7, no vertical/lateral split.
+penalty = -7.0
+lateral_penalty = -7.0
+
+[analyzers.sfs]
+# Oxey has SFS weight of -1.0.
+penalty = -1.0
+lateral_penalty = -1.0
+gap = 1
+
+[analyzers.roll]
+# Oxey has no bigram roll; it only has trigram inrolls/outrolls. Set
+# to zero so same-row adjacent-finger bigrams don't get a bonus here
+# — the inward/outward_roll trigram analyzers handle rolls.
+same_row_adjacent = 0.0
+inward_multiplier = 1.0
+outward_multiplier = 1.0
+
+[analyzers.scissor]
+# Oxey scissors don't distinguish col-stag splay from "real"
+# scissors, so all three asymmetric-forward exemptions are disabled
+# here. Every cross-row adjacent-finger bigram counts.
+base_penalty = -2.0
+flexion = 1.0
+extension = 1.0
+full_cross = 1.2
+index_middle_forward_ok = false
+middle_ring_forward_ok = false
+ring_pinky_forward_ok = false
+forward_threshold = 0.0
+
+[analyzers.stretch]
+penalty = -0.3
+
+[analyzers.inward_roll]
+weight = 2.5
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 1.0
+
+[analyzers.outward_roll]
+weight = 2.4
+skip_multiplier = 0.7
+end_on_pinky_multiplier = 1.0
+
+[analyzers.onehand]
+weight = 0.9
+
+[analyzers.alternate]
+weight = 0.4
+# Oxey doesn't reward partial alternation, so explicitly disable.
+partial_weight = 0.0
+
+[analyzers.redirect]
+weight = -3.4
+anchor_fingers = ["l_index", "r_index"]
+
+[analyzers.bad_redirect]
+weight = -4.9
+anchor_fingers = ["l_index", "r_index"]
+
+[analyzers.row_distribution]
+top_weight = 0.0
+home_weight = 0.0
+bottom_weight = 0.0
+
+[analyzers.finger_load]
+# Oxey's finger weights: lp=1.4, lr=3.6, lm=4.8, li=5.5, rp=1.4,
+# rr=3.6, rm=4.8, ri=5.5 (from its config). Higher = finger can
+# absorb more. Translate to drift's relative-weight scheme.
+overload_weight = -0.05
+l_pinky = 1.4
+l_ring = 3.6
+l_middle = 4.8
+l_index = 5.5
+r_index = 5.5
+r_middle = 4.8
+r_ring = 3.6
+r_pinky = 1.4

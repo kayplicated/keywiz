@@ -1,0 +1,15 @@
+[package]
+name = "drift-score"
+description = "Pipeline executor that scores a layout against a corpus"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+serde = ["dep:serde", "drift-core/serde"]
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+drift-analyzer = { path = "../drift-analyzer" }
+serde = { workspace = true, optional = true }

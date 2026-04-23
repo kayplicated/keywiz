@@ -1,0 +1,13 @@
+[package]
+name = "drift-keyboard"
+description = "Keyboard and Layout loaders (keywiz JSON5 format)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core" }
+anyhow = { workspace = true }
+serde = { workspace = true }
+json5 = { workspace = true }
+indexmap = { workspace = true }

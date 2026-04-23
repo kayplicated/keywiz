@@ -1,0 +1,13 @@
+[package]
+name = "drift-report"
+description = "Renderers for drift score results"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+drift-core = { path = "../drift-core", features = ["serde"] }
+drift-score = { path = "../drift-score", features = ["serde"] }
+owo-colors = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
