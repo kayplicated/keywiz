@@ -1,32 +1,43 @@
 //! Drawing routines for the terminal renderer.
 //!
 //! Takes a `Placement` (already resolved by the engine) and paints
-//! a box + label in ratatui. Colors come from finger assignment or
-//! heat, depending on the `heatmap_on` toggle from DisplayState.
+//! a box + label in ratatui. The active overlay decides which
+//! surfaces (border / label / fill) get colored; the renderer
+//! supplies sensible fallbacks and stacks the current-key
+//! highlight on top so the user always sees where to type.
 
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style, Stylize};
+use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::engine::placement::Placement;
-use crate::keyboard::common::Finger;
+use crate::renderer::overlay::{KeyOverlay, KeyPaint};
 
-use super::heatmap;
 use super::naming;
+use super::FlashFrame;
 
-/// Paint one key in the given rect.
+/// Default color for any key surface no overlay paints —
+/// mapped or not. "None overlay" reads identically to "unmapped
+/// key": dim gray border + dim gray label (or no label). The user
+/// sees a quiet baseline; overlays opt in to louder signals.
+const DEFAULT_GRAY: Color = Color::DarkGray;
+
+/// Paint one key in the given rect. `flash` adds a short-lived
+/// bright border on top of whatever the overlay paints — `None`
+/// keeps the key fully overlay-driven.
 pub fn draw_key(
     f: &mut Frame,
     rect: Rect,
     placement: &Placement,
     is_highlighted: bool,
-    heatmap_on: bool,
+    overlay: &dyn KeyOverlay,
+    flash: Option<&FlashFrame>,
 ) {
     if placement.label.is_empty() {
-        // Unmapped key: dim outline, no label.
-        let style = Style::default().fg(Color::DarkGray);
+        // Unmapped key: dim outline, no label, no overlay input.
+        let style = Style::default().fg(DEFAULT_GRAY);
         f.render_widget(
             Paragraph::new(box_lines(rect.width, rect.height, "", style)),
             rect,
@@ -35,10 +46,24 @@ pub fn draw_key(
     }
 
     let label = label_for(placement);
-    let color = color_for(placement, heatmap_on);
+    let mut paint = overlay.paint(placement);
+    if let Some(flash) = flash {
+        // Flash override: replace whatever the overlay decided for
+        // the border with a bright color whose intensity steps
+        // down as the keystroke ages. Label and fill stay as the
+        // overlay chose so heat tints / finger colors don't
+        // disappear during the flash.
+        paint.border = Some(flash_color(flash.age_ms));
+    }
 
     if is_highlighted {
-        let border = Style::default().fg(color).bold();
+        // Highlight composes on top of the overlay: the border color
+        // comes from the overlay (so heat stays visible through the
+        // highlight), but the box chars are heavy + bold; the label
+        // is always white + bold so "type this" is unambiguous
+        // regardless of overlay.
+        let border_color = paint.border.unwrap_or(DEFAULT_GRAY);
+        let border = Style::default().fg(border_color).bold();
         let letter = Style::default().fg(Color::White).bold();
         f.render_widget(
             Paragraph::new(box_lines_highlighted(
@@ -51,12 +76,37 @@ pub fn draw_key(
             rect,
         );
     } else {
-        let style = Style::default().fg(color);
+        let style = resolve_style(&paint);
         f.render_widget(
             Paragraph::new(box_lines(rect.width, rect.height, &label, style)),
             rect,
         );
     }
+}
+
+/// Fold the overlay's paint into a single ratatui `Style`.
+///
+/// Terminal today renders the entire key (border and label) in one
+/// `Style` — `box_lines` paints every cell with the same foreground.
+/// When the overlay paints only the border (or only the label) we
+/// pick the border color since it's the dominant visual. Whatever
+/// is left unpainted falls back to [`DEFAULT_GRAY`], matching the
+/// unmapped-key look. A future pass can split border/label into
+/// separate styles; gui renderers already get that for free.
+fn resolve_style(paint: &KeyPaint) -> Style {
+    let fg = paint.border.or(paint.label).unwrap_or(DEFAULT_GRAY);
+    let mut style = Style::default().fg(fg);
+    if let Some(bg) = paint.fill {
+        style = style.bg(bg);
+    }
+    if let Some(m) = paint.modifier {
+        style = style.add_modifier(m);
+    } else {
+        // Avoid unused-import warning — `Modifier` is imported for
+        // the signature even when no overlay asks for it.
+        let _ = Modifier::empty();
+    }
+    style
 }
 
 /// Turn the engine-provided label into a display string. For typed
@@ -79,34 +129,6 @@ fn label_for(placement: &Placement) -> String {
         placement.label.clone()
     } else {
         resolved
-    }
-}
-
-fn color_for(placement: &Placement, heatmap_on: bool) -> Color {
-    if heatmap_on {
-        if let Some(heat) = placement.heat {
-            return heatmap::color_for_heat(heat);
-        }
-        return Color::DarkGray;
-    }
-    finger_color(placement.finger)
-}
-
-/// Terminal theming: finger → ratatui color. Kept here (not on
-/// `Finger` itself) because ratatui is a renderer-specific concern —
-/// the data layer stays presentation-agnostic.
-fn finger_color(finger: Finger) -> Color {
-    match finger {
-        Finger::LPinky => Color::Red,
-        Finger::LRing => Color::Yellow,
-        Finger::LMiddle => Color::Green,
-        Finger::LIndex => Color::Cyan,
-        Finger::LThumb => Color::DarkGray,
-        Finger::RThumb => Color::DarkGray,
-        Finger::RIndex => Color::Blue,
-        Finger::RMiddle => Color::Magenta,
-        Finger::RRing => Color::Yellow,
-        Finger::RPinky => Color::Red,
     }
 }
 
@@ -198,6 +220,21 @@ fn box_lines_highlighted(
         border,
     )));
     lines
+}
+
+/// Pick a flash border color based on keystroke age. Stepwise
+/// fade from brightest (just pressed) to subtle (about to
+/// expire), so the user perceives "that happened, and that's
+/// fading now" without needing smooth RGB interpolation that
+/// terminals don't support reliably.
+fn flash_color(age_ms: u64) -> Color {
+    if age_ms < 80 {
+        Color::White
+    } else if age_ms < 160 {
+        Color::LightYellow
+    } else {
+        Color::Cyan
+    }
 }
 
 fn truncate_to(s: &str, max: usize) -> String {

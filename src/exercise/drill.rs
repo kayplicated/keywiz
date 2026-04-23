@@ -35,8 +35,7 @@ use rand::distr::Distribution;
 use rand::prelude::IndexedRandom;
 
 use crate::engine::placement::DisplayState;
-use crate::exercise::Exercise;
-use crate::stats::Stats;
+use crate::exercise::{Exercise, HeatSteps};
 
 // ---- tuning ----
 
@@ -199,13 +198,13 @@ pub struct DrillExercise {
 
 impl DrillExercise {
     /// Build a drill against the pre-computed per-level char sets,
-    /// with the starting level inferred from `stats`.
-    pub fn new(chars_by_level: [Vec<char>; 3], stats: &Stats) -> Self {
-        let level = pick_starting_level(&chars_by_level, stats);
+    /// with the starting level inferred from `heat`.
+    pub fn new(chars_by_level: [Vec<char>; 3], heat: &HeatSteps) -> Self {
+        let level = pick_starting_level(&chars_by_level, heat);
         let chars = &chars_by_level[level.index()];
         let recent_cap = RECENT_WINDOW_MULT * chars.len().max(1);
         let recent_picks = VecDeque::with_capacity(recent_cap);
-        let current = pick_weighted(chars, stats, None, &recent_picks).unwrap_or('a');
+        let current = pick_weighted(chars, heat, None, &recent_picks).unwrap_or('a');
         let mut drill = DrillExercise {
             chars_by_level,
             level,
@@ -239,8 +238,8 @@ impl DrillExercise {
         (correct as f64 / self.window.len() as f64) * 100.0
     }
 
-    fn level_is_hot(&self, stats: &Stats) -> bool {
-        level_is_hot(self.current_chars(), stats)
+    fn level_is_hot(&self, heat: &HeatSteps) -> bool {
+        level_is_hot(self.current_chars(), heat)
     }
 
     fn reset_progression(&mut self) {
@@ -258,8 +257,8 @@ impl DrillExercise {
     // to make consolidation awkward without helper naming gymnastics.
     // Leaving split for now; revisit if a third branch ever appears
     // or the semantics drift further.
-    fn try_autoscale(&mut self, stats: &Stats) {
-        let hot = self.level_is_hot(stats);
+    fn try_autoscale(&mut self, heat: &HeatSteps) {
+        let hot = self.level_is_hot(heat);
         let min_keys = if hot { MIN_KEYS_HOT } else { MIN_KEYS_COLD };
         if self.keys_at_level < min_keys || self.window.len() < WINDOW_SIZE {
             return;
@@ -278,26 +277,26 @@ impl DrillExercise {
                 // the user hasn't been practicing — repick to surface
                 // one of them.
                 self.current =
-                    pick_weighted(self.current_chars(), stats, None, &self.recent_picks)
+                    pick_weighted(self.current_chars(), heat, None, &self.recent_picks)
                         .unwrap_or(self.current);
                 self.record_pick(self.current);
             }
-        } else if acc < DEMOTION_PCT {
-            if let Some(prev) = self.level.prev() {
-                self.level = prev;
-                self.reset_progression();
-                // Demotion: if the user was mid-fight with a letter
-                // that still exists in the smaller level, keep that
-                // letter as the target. Otherwise the letter they
-                // were about to finally get right would vanish and
-                // feel like the app gave up on them. Only repick
-                // when the current letter is no longer in scope.
-                if !self.current_chars().contains(&self.current) {
-                    self.current =
-                        pick_weighted(self.current_chars(), stats, None, &self.recent_picks)
-                            .unwrap_or(self.current);
-                    self.record_pick(self.current);
-                }
+        } else if acc < DEMOTION_PCT
+            && let Some(prev) = self.level.prev()
+        {
+            self.level = prev;
+            self.reset_progression();
+            // Demotion: if the user was mid-fight with a letter
+            // that still exists in the smaller level, keep that
+            // letter as the target. Otherwise the letter they
+            // were about to finally get right would vanish and
+            // feel like the app gave up on them. Only repick
+            // when the current letter is no longer in scope.
+            if !self.current_chars().contains(&self.current) {
+                self.current =
+                    pick_weighted(self.current_chars(), heat, None, &self.recent_picks)
+                        .unwrap_or(self.current);
+                self.record_pick(self.current);
             }
         }
     }
@@ -316,7 +315,7 @@ impl Exercise for DrillExercise {
         Some(self.current)
     }
 
-    fn advance(&mut self, stats: &Stats, correct: bool) {
+    fn advance(&mut self, heat: &HeatSteps, correct: bool) {
         self.keys_at_level += 1;
         if self.window.len() >= WINDOW_SIZE {
             self.window.pop_front();
@@ -331,11 +330,11 @@ impl Exercise for DrillExercise {
 
         // Autoscale first — it may switch the level (and the picker
         // will then sample from the new level's chars).
-        self.try_autoscale(stats);
+        self.try_autoscale(heat);
 
         if correct {
             self.current =
-                pick_weighted(self.current_chars(), stats, Some(self.current), &self.recent_picks)
+                pick_weighted(self.current_chars(), heat, Some(self.current), &self.recent_picks)
                     .unwrap_or(self.current);
             self.record_pick(self.current);
         }
@@ -359,22 +358,19 @@ impl Exercise for DrillExercise {
 /// if home row has trouble and so does all-rows, we go to home row —
 /// fix the foundation first. If nothing is hot anywhere, start at
 /// all-rows for broad practice.
-fn pick_starting_level(chars_by_level: &[Vec<char>; 3], stats: &Stats) -> DrillLevel {
-    for i in 0..3 {
-        if level_is_hot(&chars_by_level[i], stats) {
-            return DrillLevel::from_index(i);
-        }
-    }
-    DrillLevel::AllRows
+fn pick_starting_level(chars_by_level: &[Vec<char>; 3], heat: &HeatSteps) -> DrillLevel {
+    chars_by_level
+        .iter()
+        .enumerate()
+        .find(|(_, chars)| level_is_hot(chars, heat))
+        .map(|(i, _)| DrillLevel::from_index(i))
+        .unwrap_or(DrillLevel::AllRows)
 }
 
-fn level_is_hot(chars: &[char], stats: &Stats) -> bool {
-    chars.iter().any(|c| {
-        stats
-            .get(*c)
-            .map(|r| r.heat >= HOT_HEAT_THRESHOLD)
-            .unwrap_or(false)
-    })
+fn level_is_hot(chars: &[char], heat: &HeatSteps) -> bool {
+    chars
+        .iter()
+        .any(|c| heat.get(c).copied().unwrap_or(0) >= HOT_HEAT_THRESHOLD)
 }
 
 /// Pick one char from `chars`, weighted by `baseline + heat_boost +
@@ -385,7 +381,7 @@ fn level_is_hot(chars: &[char], stats: &Stats) -> bool {
 /// get bumped toward their fair share.
 fn pick_weighted(
     chars: &[char],
-    stats: &Stats,
+    heat: &HeatSteps,
     avoid: Option<char>,
     recent_picks: &VecDeque<char>,
 ) -> Option<char> {
@@ -406,9 +402,9 @@ fn pick_weighted(
     let weights: Vec<f64> = candidates
         .iter()
         .map(|c| {
-            let heat = stats.get(*c).map(|r| r.heat).unwrap_or(0);
+            let heat_steps = heat.get(c).copied().unwrap_or(0);
             let count = recent_picks.iter().filter(|&&p| p == *c).count();
-            BASELINE_WEIGHT + heat_boost(heat) + fairness_boost(count, total, n)
+            BASELINE_WEIGHT + heat_boost(heat_steps) + fairness_boost(count, total, n)
         })
         .collect();
 

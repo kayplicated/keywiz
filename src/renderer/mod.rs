@@ -5,6 +5,7 @@
 //! its target. Terminal is live; desktop and webui are stubs for
 //! later.
 
+pub mod overlay;
 pub mod terminal;
 pub mod desktop;
 pub mod webui;

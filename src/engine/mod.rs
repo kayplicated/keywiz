@@ -14,6 +14,7 @@ pub mod catalog;
 pub mod placement;
 pub mod projector;
 pub mod state;
+pub mod stats_filter;
 pub mod translate;
 
 pub use state::Engine;

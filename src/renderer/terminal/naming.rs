@@ -16,10 +16,10 @@ pub fn human_name(id: &str) -> String {
     if let Some(rest) = id.strip_prefix("num_pad_") {
         return format!("Num {}", title_case(rest));
     }
-    if let Some(k_idx) = id.rfind("_k") {
-        if id[k_idx + 2..].chars().all(|c| c.is_ascii_digit()) {
-            return id[k_idx + 1..].to_string();
-        }
+    if let Some(k_idx) = id.rfind("_k")
+        && id[k_idx + 2..].chars().all(|c| c.is_ascii_digit())
+    {
+        return id[k_idx + 1..].to_string();
     }
     id.to_string()
 }

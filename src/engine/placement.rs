@@ -56,10 +56,6 @@ pub struct Placement {
     /// enter) and for unmapped keys. Renderers use this to decide
     /// whether a key is highlightable as a typing target.
     pub typable: bool,
-    /// Normalized heat level in `0.0..=1.0` for heatmap rendering,
-    /// or `None` when the key has no accumulated heat. Renderers
-    /// map this to their own color palettes.
-    pub heat: Option<f32>,
 }
 
 /// Everything a renderer needs to paint a frame beyond the
@@ -83,19 +79,44 @@ pub struct DisplayState {
     pub exercise_instance_label: Option<String>,
     pub broken_keyboard: Option<BrokenDisplay>,
     pub broken_layout: Option<BrokenDisplay>,
-    pub keyboard_visible: bool,
-    pub heatmap_visible: bool,
+    /// Whether the keyboard slot (whatever's currently in it —
+    /// keyboard, inline stats, future) is showing. Tab toggles.
+    pub slot_visible: bool,
+    /// Which content is in the keyboard slot. `"keyboard"` or
+    /// `"inline_stats"`. Renderer picks the painter by string so
+    /// adding a new slot doesn't ripple through types.
+    pub slot: &'static str,
+    /// F1 help page. When `true`, renderer replaces everything
+    /// with the keybind reference.
+    pub help_page_visible: bool,
+    /// F4 stats page. When `true`, renderer replaces everything
+    /// with the full stats page.
+    pub stats_page_visible: bool,
+    /// F5 layout-iterations page. When `true`, renderer replaces
+    /// everything with the iterations view. Orthogonal to F4 —
+    /// answers "how is the layout performing" vs F4's "how am I
+    /// typing."
+    pub layout_page_visible: bool,
+    /// Which stats view the F4 page is showing. `"current_session"`
+    /// or `"session_history"`. Same stringly-typed pattern as
+    /// `slot`.
+    pub stats_view: &'static str,
+    /// Name of the currently-active overlay (see
+    /// `renderer::overlay::KeyOverlay::name`). `"none"` when no
+    /// overlay is painting. Renderers can surface this in the
+    /// footer so the user sees which overlay is active.
+    pub overlay_name: &'static str,
     /// Character the user should press next (drill's current, the
     /// next char of the current word, etc.). Renderers use it to
     /// highlight the corresponding key.
     pub highlight_char: Option<char>,
     pub session_accuracy: f64,
-    /// Staged — WPM computation lives in a `typing/` module that
-    /// hasn't been built yet (see architecture plan step "shared
-    /// char-matching mechanics"). Field kept so renderers can wire
-    /// once it lands.
-    #[allow(dead_code)]
+    /// Net WPM for the active session (correct chars / 5 / minutes
+    /// of active typing time). Zero on an empty session.
     pub session_wpm: f64,
+    /// Actions (keystrokes) per minute of active typing time. Raw
+    /// hand-speed signal; WPM is APM / 5.
+    pub session_apm: f64,
     pub session_total_correct: u64,
     pub session_total_wrong: u64,
 

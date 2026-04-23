@@ -14,7 +14,6 @@ use crate::engine::placement::Placement;
 use crate::keyboard::common::PhysicalKey;
 use crate::keyboard::{Keyboard, StaggerType};
 use crate::mapping::{KeyMapping, Layout};
-use crate::stats::Stats;
 
 /// Project the active keyboard for a terminal renderer.
 ///
@@ -32,7 +31,6 @@ use crate::stats::Stats;
 pub fn project_for_terminal(
     keyboard: &dyn Keyboard,
     layout: &Layout,
-    stats: &Stats,
 ) -> Vec<Placement> {
     let mut out: Vec<Placement> = Vec::new();
     for block in keyboard.blocks() {
@@ -53,7 +51,6 @@ pub fn project_for_terminal(
                 cluster: k.cluster.clone(),
                 label: label_for(k, layout),
                 typable: is_typable(k, layout),
-                heat: heat_for(k, layout, stats),
             });
         }
     }
@@ -70,11 +67,7 @@ pub fn project_for_terminal(
 /// yet; the function shape is here so the projector is the single
 /// seam when they land.
 #[allow(dead_code)]
-pub fn project_for_gui(
-    keyboard: &dyn Keyboard,
-    layout: &Layout,
-    stats: &Stats,
-) -> Vec<Placement> {
+pub fn project_for_gui(keyboard: &dyn Keyboard, layout: &Layout) -> Vec<Placement> {
     keyboard
         .keys()
         .map(|k| Placement {
@@ -88,7 +81,6 @@ pub fn project_for_gui(
             cluster: k.cluster.clone(),
             label: label_for(k, layout),
             typable: is_typable(k, layout),
-            heat: heat_for(k, layout, stats),
         })
         .collect()
 }
@@ -112,12 +104,3 @@ fn label_for(key: &PhysicalKey, layout: &Layout) -> String {
     }
 }
 
-/// Heat level for a key, normalized to `0..=1`. Only typed chars
-/// have heat (named actions don't participate in drill stats).
-fn heat_for(key: &PhysicalKey, layout: &Layout, stats: &Stats) -> Option<f32> {
-    let ch = match layout.get(&key.id)? {
-        KeyMapping::Char { lower, .. } => *lower,
-        KeyMapping::Named { .. } => return None,
-    };
-    stats.heat_for(ch)
-}

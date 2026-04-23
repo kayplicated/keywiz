@@ -2,48 +2,108 @@
   name: "drifter",
   short: "Drifter",
   // Drifter — flexion-biased col-stag layout for the Halcyon Elora
-  // v2. Final form after seven iterations; prior experiments live
-  // under layouts.bak/ (drifter-v1 through drifter-v6 and the
-  // inverted-row drifter-v8 reference).
+  // v2. Descended from Gallium's home row; diverges on top and
+  // bottom rows to optimize for properties Gallium doesn't target.
+  // Prior forms live under layouts.bak/ (drifter-v1..v8).
   //
-  // Shape:
+  // Current shape:
   //
-  //   q j m w _    _ x ' _ z          alpha top: 3 keys unbound
-  //   n r t s g    p h e a i          home row matches gallium
-  //   b l d c v    k f u o y          common letters live here
+  //   q v m j [    ] - = x z
+  //   n r t s g    p h e a i          home row inherited from gallium
+  //   b l d c w    k f u o y          common letters cluster here
   //
-  // Right thumb cluster (lower row, k3..k5):  ; . ,
+  // Right thumb cluster (k3..k6):  ; ' , .
   //
-  // Design choices that carried through:
-  //   - Both hands' common letters cluster in home + bottom, so
-  //     alternation bigrams in prose land in the same row territory
-  //     rather than splitting hands across rows (see drift's
-  //     hand_territory rule).
-  //   - Top row holds only rare letters (q j m w x z) and `'`.
-  //   - Right hand's bottom row `k f u o y` forms a clean
-  //     adjacent-finger sequence: `of`/`fo`/`ou`/`you` roll cleanly.
-  //   - `'` stays on the alpha grid at RM-top because it appears
-  //     inside words (don't, it's, what's) and reaching to the
-  //     thumb mid-word would break typing rhythm.
-  //   - `, ; .` moved to the right thumb cluster; none of these
-  //     appear mid-word in English, so thumb-reach is natural at
-  //     clause/sentence boundaries.
+  // Design theses (most load-bearing first):
   //
-  // Three alpha positions are intentionally unbound (LII-top,
-  // RII-top, RR-top). keywiz skips them during drilling; firmware
-  // can bind them to layer-hold, macros, or whatever.
+  //   1. Inward-roll consistency on the right hand. `k f u o y` is
+  //      a monotonic pinky-to-index-center cluster on the bottom
+  //      row — every adjacent pair rolls, and with vowels (`u o`)
+  //      in the middle, rolls can enter from either side. Common
+  //      English patterns `you`, `our`, `of`/`fo`, `ou`/`uo` all
+  //      land as clean inward rolls. This is the point of the
+  //      layout — the aesthetic of "hand curls inward around the
+  //      vowels" is what Drifter optimizes for. Gallium's rolls
+  //      are mostly outward (`st`, `tr`, `ld`, `he`) with `you`
+  //      as its one substantial inward cluster.
+  //
+  //   2. Row-territory symmetry between hands. Both hands' common
+  //      letters live on home + bottom, so alternation bigrams in
+  //      prose land in matching row territory rather than splitting
+  //      the hands across different rows. Measured by drift's
+  //      hand_territory analyzer.
+  //
+  //   3. Gallium's home row (`n r t s g / p h e a i`) kept as-is.
+  //      This is the empirically-good bit of Gallium — inherited
+  //      without modification. Most of Drifter's SFBs (`sc`, `ue`,
+  //      `rl`, `ao`, `sw`, `sg`, `ph`) are shared with Gallium
+  //      and structural to this home row.
+  //
+  //   4. Top row is intentionally low-traffic. Holds rare letters
+  //      (q v j m x z) and bracket/hyphen/equals. Drifter does
+  //      less top-row work than Gallium does; flexion-biased
+  //      design prefers curling down to reaching up.
+  //
+  //   5. `'` lives on the right thumb cluster, not the alpha grid.
+  //      Elora's 7-key thumb cluster makes thumb-reach cheap;
+  //      mid-word contractions (`don't`, `it's`, `they're`) flow
+  //      through the thumb without interrupting alpha rhythm.
+  //      Freeing up the alpha grid also shortens the `i'` stretch
+  //      (now pinky-home to thumb instead of pinky-home-to-R-
+  //      index-outer-top).
+  //
+  // Notable positional choices (and what they buy/cost):
+  //
+  //   `w` at L-inner-index-bot: `w`-heavy words (`away`, `what`,
+  //   `why`, `awesome`) keep cross-hand alternation with right-
+  //   hand vowels. Costs one lateral same-finger motion (`sw`,
+  //   drift-weighted as SFB-lat).
+  //
+  //   `v` and `m` adjacent on left top (ring + middle): `i've` and
+  //   `i'm` share the same hand-motion pattern, so muscle memory
+  //   transfers between them. Costs `vr` same-finger SFB (ring
+  //   column, ~0.06% of typing).
+  //
+  //   `p` at R-inner-index-home: `ph` is a same-row lateral motion
+  //   (drift-weighted as SFB-lat, not full SFB). `p` + vowels all
+  //   flow as same-row or adjacent-finger motions with `h e a i`
+  //   next door.
+  //
+  //   `k` at R-outer-index-bot, `f` at R-inner-index-bot: keeps
+  //   the roll cluster intact. `f` paired with `h` same-finger
+  //   lateral.
+  //
+  //   `z` at R-pinky-top: stays here for `ij` digraph support
+  //   (Dutch, where `i`/`j` on different hands matters). Moving
+  //   `z` off right-pinky would force `j` to a bad spot.
+  //
+  // Unbound alpha slots: LII-top (`main_k5`) and RII-top
+  // (`main_k6`) hold `[` and `]`. Those aren't scored by drift
+  // or oxey on English corpora and are available for remapping.
+  //
+  // Scoring snapshot (as of current form):
+  //   drift drifter preset:  +14.9 (vs gallium +0.3)
+  //   drift neutral preset:  +12.3 (vs gallium +5.3)
+  //   drift extension preset: +10.5 (vs gallium +2.7)
+  //   oxeylyzer english:      0.407 (vs gallium 0.465)
+  //
+  // Drifter wins on every drift preset; loses narrowly to Gallium
+  // on oxey. The oxey gap (~0.06) is the measurable cost of
+  // trading SFB/scissor/stretch minimization for the structural
+  // properties above — row symmetry, inward-roll consistency,
+  // cross-hand vowel flow. Not a bug; an accepted trade.
   mappings: {
     // ---- top row (main_k1..k10) ----
     main_k1:  { char: ["q", "Q"] },
-    main_k2:  { char: ["j", "J"] },   // was x; j moved here from LII-top
+    main_k2:  { char: ["v", "V"] },
     main_k3:  { char: ["m", "M"] },
-    main_k4:  { char: ["w", "W"] },
-    // main_k5 intentionally empty (firmware: thumb)
-    // main_k6 intentionally empty (firmware: thumb MO)
-    main_k7:  { char: ["x", "X"] },   // was .; x moved here from LR-top
-    main_k8:  { char: ["'", "\""] },
-    // main_k9 intentionally empty (firmware: thumb)
-    main_k10: { char: ["z", "Z"] },   // was ,; z moved here from RII-top
+    main_k4:  { char: ["j", "J"] },
+    main_k5:  { char: ["\[", "\{"] },
+    main_k6:  { char: ["\]", "\}"] },
+    main_k7:  { char: ["-", "_"] },
+    main_k8:  { char: ["=", "+"] },
+    main_k9:  { char: ["x", "X"] },
+    main_k10: { char: ["z", "Z"] },
 
     // ---- home row (main_k11..k20) ----
     main_k11: { char: ["n", "N"] },
@@ -62,7 +122,7 @@
     main_k22: { char: ["l", "L"] },
     main_k23: { char: ["d", "D"] },
     main_k24: { char: ["c", "C"] },
-    main_k25: { char: ["v", "V"] },
+    main_k25: { char: ["w", "W"] },
     main_k26: { char: ["k", "K"] },
     main_k27: { char: ["f", "F"] },
     main_k28: { char: ["u", "U"] },
@@ -81,13 +141,17 @@
     main_k39: { char: ["9", "("] },
     main_k40: { char: ["0", ")"] },
 
-    // ---- right thumb cluster — punctuation moved off the alpha grid ----
-    // `'` stays on alpha (k8) because it appears inside contractions
-    // mid-word; reaching to the thumb for every `don't`/`it's`
-    // would break typing rhythm. `; . ,` move here.
+    // ---- right thumb cluster — all punctuation lives here ----
+    // The Elora's 7-key thumb cluster makes thumb-reach cheap for
+    // mid-word characters, which lets `'` leave the alpha grid
+    // entirely. Contractions (`don't`, `it's`, `they're`) flow
+    // through the thumb without interrupting alpha rhythm, and
+    // the `i'` stretch shortens from pinky-to-R-index-outer-top
+    // to pinky-to-thumb.
     right_thumb_k3: { char: [";", ":"] },
-    right_thumb_k4: { char: [".", ">"] },
+    right_thumb_k4: { char: ["\'", "\""] },
     right_thumb_k5: { char: [",", "<"] },
+    right_thumb_k6: { char: [".", ">"] },
 
     // ---- named mods ----
     mods_tab:         { named: "tab" },

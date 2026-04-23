@@ -149,7 +149,7 @@ impl WordsCore {
 }
 
 fn random_word_unweighted() -> String {
-    let empty = crate::stats::Stats::new();
+    let empty = std::collections::HashMap::new();
     random_word(&empty)
 }
 
@@ -177,7 +177,7 @@ impl Exercise for WordsExercise {
         self.0.expected()
     }
 
-    fn advance(&mut self, _stats: &crate::stats::Stats, correct: bool) {
+    fn advance(&mut self, _heat: &crate::exercise::HeatSteps, correct: bool) {
         if correct {
             self.0.advance()
         }

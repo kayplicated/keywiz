@@ -13,11 +13,10 @@
 use crate::exercise::drill::DrillExercise;
 use crate::exercise::text::TextExercise;
 use crate::exercise::words::WordsExercise;
-use crate::exercise::Exercise;
+use crate::exercise::{Exercise, HeatSteps};
 use crate::keyboard::common::PhysicalKey;
 use crate::keyboard::Keyboard;
 use crate::mapping::{KeyMapping, Layout};
-use crate::stats::Stats;
 
 /// Category axis. Order is the Alt+↑/↓ cycle order.
 pub const CATEGORIES: &[&str] = &["drill", "words", "text"];
@@ -26,14 +25,14 @@ pub const CATEGORIES: &[&str] = &["drill", "words", "text"];
 pub const WORDS_INSTANCES: &[u32] = &[10, 20, 50, 100, 0];
 
 /// Build an exercise for the active (category, instance) pair
-/// against the current keyboard/layout/stats. Unknown category
+/// against the current keyboard/layout/heat. Unknown category
 /// falls through to drill.
 pub fn build(
     category: &str,
     instance: usize,
     keyboard: &dyn Keyboard,
     layout: &Layout,
-    stats: &Stats,
+    heat: &HeatSteps,
 ) -> Box<dyn Exercise> {
     match category {
         "words" => {
@@ -47,7 +46,7 @@ pub fn build(
         // "drill" and anything unknown.
         _ => Box::new(DrillExercise::new(
             drill_chars_by_level(keyboard, layout),
-            stats,
+            heat,
         )),
     }
 }
@@ -129,7 +128,7 @@ pub fn prev_instance(category: &str, current: usize) -> Option<usize> {
 pub fn parse_pref(s: &str) -> (String, usize) {
     // New format: "category:instance"
     if let Some((cat, inst)) = s.split_once(':')
-        && CATEGORIES.iter().any(|&c| c == cat)
+        && CATEGORIES.contains(&cat)
     {
         let parsed: Option<usize> = match cat {
             "words" => {

@@ -1,52 +1,13 @@
-//! Page-level layout helpers for terminal modes.
+//! Footer renderer for terminal modes.
 //!
-//! `centered_content_layout` carves a mode's screen into header /
-//! body / keyboard / stats / footer bands. `render_footer` paints
-//! the standard two-line footer from a `DisplayState`.
+//! Page-level layout is now done with
+//! [`crate::renderer::terminal::view::View`] — this module owns
+//! only the footer paint logic, which is shared across views
+//! (indicator line + optional error line).
 
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::Rect;
 
 use crate::engine::placement::DisplayState;
-
-pub struct ContentAreas {
-    pub header: Rect,
-    pub body: Rect,
-    pub keyboard: Rect,
-    pub stats: Rect,
-    pub footer: Rect,
-}
-
-pub fn centered_content_layout(area: Rect, body_h: u16, keyboard_h: u16) -> ContentAreas {
-    // Footer is two lines: indicator + optional error message.
-    let content_h: u16 = 1 + 1 + body_h + 1 + keyboard_h + 1 + 1 + 1 + 2;
-    let [_, center, _] = Layout::vertical([
-        Constraint::Fill(1),
-        Constraint::Length(content_h),
-        Constraint::Fill(1),
-    ])
-    .areas(area);
-
-    let [header, _, body, _, keyboard, _, stats, _, footer] = Layout::vertical([
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(body_h),
-        Constraint::Length(1),
-        Constraint::Length(keyboard_h),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(2),
-    ])
-    .areas(center);
-
-    ContentAreas {
-        header,
-        body,
-        keyboard,
-        stats,
-        footer,
-    }
-}
 
 /// Two-line footer. Line 1: keyboard — layout — exercise indicator
 /// with cycling hints (broken names show in red). Line 2: parse

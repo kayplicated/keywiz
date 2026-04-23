@@ -1,0 +1,52 @@
+{
+  name: "ortho",
+  short: "Ortho 3×10",
+  description: "Flat ortholinear reference geometry — 30-key alpha core, no stagger, no splay. The neutral scoring target for .dof ortho layouts.",
+
+  // Uniform 3×10 grid. Uses col-stag block type with zero splay
+  // (y = r), so every column sits at integer x and every row at
+  // integer y. Ids follow docs/id-convention.md.
+  blocks: [
+    {
+      type: "col-stag",
+      cluster: "main",
+      keys: [
+        // ---- top alpha row (r = -1), main_k1..k10 ----
+        { id: "main_k1",  r: -1, c: -5, x: -5.0, y: -1.0, finger: "LPinky" },
+        { id: "main_k2",  r: -1, c: -4, x: -4.0, y: -1.0, finger: "LRing" },
+        { id: "main_k3",  r: -1, c: -3, x: -3.0, y: -1.0, finger: "LMiddle" },
+        { id: "main_k4",  r: -1, c: -2, x: -2.0, y: -1.0, finger: "LIndex" },
+        { id: "main_k5",  r: -1, c: -1, x: -1.0, y: -1.0, finger: "LIndex" },
+        { id: "main_k6",  r: -1, c:  1, x:  1.0, y: -1.0, finger: "RIndex" },
+        { id: "main_k7",  r: -1, c:  2, x:  2.0, y: -1.0, finger: "RIndex" },
+        { id: "main_k8",  r: -1, c:  3, x:  3.0, y: -1.0, finger: "RMiddle" },
+        { id: "main_k9",  r: -1, c:  4, x:  4.0, y: -1.0, finger: "RRing" },
+        { id: "main_k10", r: -1, c:  5, x:  5.0, y: -1.0, finger: "RPinky" },
+
+        // ---- home row (r = 0), main_k11..k20 ----
+        { id: "main_k11", r:  0, c: -5, x: -5.0, y:  0.0, finger: "LPinky" },
+        { id: "main_k12", r:  0, c: -4, x: -4.0, y:  0.0, finger: "LRing" },
+        { id: "main_k13", r:  0, c: -3, x: -3.0, y:  0.0, finger: "LMiddle" },
+        { id: "main_k14", r:  0, c: -2, x: -2.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k15", r:  0, c: -1, x: -1.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k16", r:  0, c:  1, x:  1.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k17", r:  0, c:  2, x:  2.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k18", r:  0, c:  3, x:  3.0, y:  0.0, finger: "RMiddle" },
+        { id: "main_k19", r:  0, c:  4, x:  4.0, y:  0.0, finger: "RRing" },
+        { id: "main_k20", r:  0, c:  5, x:  5.0, y:  0.0, finger: "RPinky" },
+
+        // ---- bottom row (r = 1), main_k21..k30 ----
+        { id: "main_k21", r:  1, c: -5, x: -5.0, y:  1.0, finger: "LPinky" },
+        { id: "main_k22", r:  1, c: -4, x: -4.0, y:  1.0, finger: "LRing" },
+        { id: "main_k23", r:  1, c: -3, x: -3.0, y:  1.0, finger: "LMiddle" },
+        { id: "main_k24", r:  1, c: -2, x: -2.0, y:  1.0, finger: "LIndex" },
+        { id: "main_k25", r:  1, c: -1, x: -1.0, y:  1.0, finger: "LIndex" },
+        { id: "main_k26", r:  1, c:  1, x:  1.0, y:  1.0, finger: "RIndex" },
+        { id: "main_k27", r:  1, c:  2, x:  2.0, y:  1.0, finger: "RIndex" },
+        { id: "main_k28", r:  1, c:  3, x:  3.0, y:  1.0, finger: "RMiddle" },
+        { id: "main_k29", r:  1, c:  4, x:  4.0, y:  1.0, finger: "RRing" },
+        { id: "main_k30", r:  1, c:  5, x:  5.0, y:  1.0, finger: "RPinky" },
+      ],
+    },
+  ],
+}

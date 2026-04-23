@@ -1,0 +1,14 @@
+[package]
+name = "keywiz-stats"
+description = "Event-stream keystroke statistics and derived views for keywiz"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+rusqlite = { version = "0.32", features = ["bundled"] }
+sha2 = "0.10"
