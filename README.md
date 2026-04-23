@@ -1,30 +1,36 @@
 # keywiz
 
-A terminal typing tutor with a visual keyboard — built for custom layouts that no other tool supports.
+A terminal **layout workbench**: design a keyboard layout, train on
+it, measure how it actually performs for you, iterate. Three
+integrated tools in one binary.
 
-## Screenshots
+![keywiz — words exercise on drifter / halcyon elora v2 with the finger overlay](assets/hero-words-drifter-elora.png)
 
-| | |
-|---|---|
-| ![Mode selection menu](assets/menu.png) | ![Key drills on us_intl](assets/drill.png) |
-| **Mode selection** | **Key Drills** — adaptive level progression |
-| ![Typing Practice on Kyria](assets/words.png) | ![Text Practice on Elora with heatmap](assets/text.png) |
-| **Typing Practice** on a Kyria split keyboard with the Hyperroll layout | **Text Practice** on an Elora keyboard with the Gallium layout — F2 heatmap revealing the trouble keys |
+## What it is
 
-## Features
+keywiz started as a typing tutor for custom layouts (typr was
+broken, and no other tool could render a non-QWERTY keyboard with
+its real geometry). It grew into three layers:
 
-- **Visual keyboard** with color-coded finger zones
-- **Key drills** with adaptive difficulty — starts on home row, levels up/down based on rolling accuracy
-- **Typing practice** with scrolling word display and live WPM/accuracy
-- **Endless mode** — continuous practice without a word limit
-- **Text practice** — type through real passages, arrow keys to switch texts
-- **Heatmap overlay** — F2 colors the keyboard by where you actually struggle, accumulated across sessions
-- **Smart word selection** — words you type quietly bias toward your weak keys, so practice targets itself
-- **Many layouts + keyboards** — 13 shipped layouts (QWERTY, Dvorak, Colemak, Colemak-DH, Workman, Graphite, Sturdy, Gallium, Canary, Hyperroll, Engram, Semimak, ISRT) across US, Kyria, and Elora hardware — cycle between them with Ctrl+arrows while the app is running
-- **Data-driven** — keyboards and layouts are JSON files; drop your own in `keyboards/` or `layouts/` and they show up in the cycle
-- **Toggle keyboard** with Tab — fly blind when you're ready
-- **Kanata escape hatch** — point keywiz at a `.kbd` config for one-off layouts not in the shipped catalog
-- Runs in the terminal, no GUI dependencies
+1. **drift** — a layout scorer with pluggable analyzers.
+   Reads oxeylyzer corpora, imports `.dof`, runs delta scoring
+   across layouts. Tier 1 complete (189 public layouts score,
+   JSON output, layout diffs, per-analyzer CLI overrides).
+2. **keywiz-stats** — an event-stream statistics crate.
+   Every keystroke is recorded with its expected char, typed
+   char, timestamp, and inter-keystroke delay against a
+   content-hashed layout + keyboard snapshot. Drifter v1 and
+   drifter v2 have different hashes — same name, different
+   iterations. Event stream is the source of truth; views
+   aggregate on read.
+3. **keywiz** — the typing trainer itself. Terminal UI with a
+   rendered keyboard, three exercises (drill, words, text),
+   and a two-modal stats surface (F4 performance, F5 layout
+   iterations).
+
+The workflow is end-to-end: design a layout → score it with drift
+→ train on it → see whether the theoretical gains match your
+actual measured experience → iterate.
 
 ## Install
 
@@ -32,78 +38,230 @@ A terminal typing tutor with a visual keyboard — built for custom layouts that
 cargo install --path .
 ```
 
-## Usage
+## Quick start
 
 ```sh
-# Default: us_intl keyboard + qwerty layout
+# Run keywiz (typing trainer)
 keywiz
 
-# Pick keyboard and layout by name
-keywiz -k us_intl -l colemak
-keywiz -k elora -l gallium
-keywiz -k kyria -l canary
-
-# Cycle at runtime without restarting
-#   Ctrl+↑ / Ctrl+↓  — previous / next keyboard
-#   Ctrl+← / Ctrl+→  — previous / next layout
-
-# Load a kanata .kbd directly (escape hatch for custom layouts)
-keywiz --kanata /path/to/your.kbd
-keywiz --kanata /path/to/your.kbd gallium_v2   # specific layer
+# Pick keyboard + layout by name
+keywiz -k halcyon_elora_v2 -l drifter
+keywiz -k us_intl -l qwerty
 
 # Practice a layout while typing on a different physical keyboard
-keywiz -l colemak --from qwerty
+keywiz -l drifter --from qwerty
+
+# Run drift (layout scorer) through keywiz's forwarding
+keywiz --drift score layouts/drifter.json
+keywiz --drift compare layouts/drifter.json layouts/gallium-v2.json
+keywiz --drift --preset drifter score layouts/drifter.json
 ```
 
-### Training on a different physical keyboard
+## The typing trainer
 
-`--from <layout>` tells keywiz what your input keyboard *actually sends*, so each keypress is translated to the equivalent position in the target layout. Useful for SSHing into your machine from a vanilla QWERTY laptop while practicing Gallium, or for testing a layout you haven't switched the OS to yet. Pressing physical `j` on QWERTY registers as whatever the target layout puts at that position.
+Three exercise categories, cycled with **Alt+↑/↓**:
 
-Shipped keyboards (`keyboards/`): `us_intl`, `kyria`, `elora`, `halcyon_elora_v2`.
+- **Drill** — random keys with adaptive difficulty. Starts on
+  whichever row has the hottest troubled keys; promotes at
+  >90% accuracy, demotes below 70%.
+- **Words** — random words with a scrolling display. Several
+  word-count instances (20, 50, 100, endless) cycled with
+  **Alt+←/→**.
+- **Text** — type real passages from `texts/`. Arrow within the
+  category to switch passages.
 
-Shipped layouts (`layouts/`): `qwerty`, `dvorak`, `colemak`, `colemak-dh`, `workman`, `graphite`, `sturdy`, `gallium`, `canary`, `hyperroll`, `engram`, `semimak`, `isrt`.
+### Visual keyboard + overlays
 
-### Adding your own
+The active layout renders as a real keyboard with the correct
+geometry — split, ortho, row-stag, col-stag, column offsets, key
+widths. **F2** cycles the overlay:
 
-Both are just JSON. Drop a new file in `keyboards/` or `layouts/` and it appears in the cycle on next launch. A **keyboard** declares physical buttons with home-row-centered coordinates (x grows right, y grows down, home row at `y=0`). A **layout** maps evdev keycodes (`KEY_A`, `KEY_SEMICOLON`, …) to `{ lower, upper }` characters. See the shipped files for templates.
+- **none** (default) — quiet baseline
+- **finger** — per-finger colors (the classic "rainbow")
+- **heat** — per-key heat tinting that updates live as you type
 
-For hardware-specific overrides, name a layout file `{layout}-{keyboard}.json` (e.g. `gallium-elora.json`) — it wins over the generic when paired with that keyboard, and stays hidden from the layout list otherwise.
+**Shift+Tab** toggles the flash layer — the last-pressed key
+flashes white → light yellow → cyan over ~250 ms on top of
+whatever overlay is painting. Off by default.
 
-### Modes
+![drill exercise on qwerty with the ansi row-stag keyboard](assets/drill-qwerty-ansi.png)
 
-- **[1] Key Drills** — random keys, starts with home row. Levels up at >90% accuracy, back down below 70%.
-- **[2] Typing Practice** — type 20 words with a scrolling display and keyboard guide.
-- **[3] Endless Mode** — like typing practice, but it never ends. ESC to stop.
-- **[4] Text Practice** — type through real passages from the `texts/` directory. Arrow left/right to switch between texts.
+**Tab** hides/shows the keyboard entirely, falling back to a
+dense inline stats dashboard (see below).
 
-### Controls
+### Live performance readout
 
-- **Tab** — toggle keyboard visibility
-- **F2** — toggle heatmap overlay on the keyboard
-- **Ctrl + ↑ / ↓** — cycle keyboards
-- **Ctrl + ← / →** — cycle layouts
-- **◀ ▶** — switch passages (text practice mode)
-- **ESC** — go back / quit
+The footer carries WPM / APM / Correct / Wrong / Accuracy in
+real time. With **F3**'s inline stats slot, you get a six-panel
+dashboard instead of the keyboard picture:
 
-### Heatmap & smart practice
+- **Consistency** — coefficient of variation of inter-keystroke
+  delay (lower = smoother rhythm)
+- **Burst** — peak 5-second rolling WPM
+- **Streak** — correct-in-a-row (current + best this session)
+- **Hands** — L/R load bars with miss rate; dominant hand
+  highlights when split > 10pp
+- **Recent** — last-30-keystroke accuracy vs session average
+  with an up/down arrow
+- **Weak now** — worst bigram in the active scope, live
+- **APM sparkline** — last 60 seconds bucketed, right-aligned
 
-Every keystroke feeds a per-key *heat* score: missing a key bumps its heat up by one step, two correct presses drop it back down. Heat accumulates across sessions (stored under your OS data directory, per layout) so a key that's been trouble for weeks stays visible.
+![F3 inline stats dashboard with consistency, burst, streak, hands, recent, weak-now, and APM sparkline](assets/inline-stats-dashboard.png)
 
-Two things read from it:
+### F4 — stats page (how am I typing)
 
-- **The F2 heatmap overlay** colors the keyboard from cool violet → blue → yellow → orange → red. Green is deliberately absent — correctness should feel calm, not "good."
-- **Word selection in modes [2] and [3]** quietly weights toward words containing your hot keys. If `y` is giving you trouble you'll see more `yet`, `holiday`, `by`. With no heat, selection is uniform random.
+![F4 Overview page with WPM APM accuracy, rhythm, peak, session arc, worst bigrams and keys](assets/stats-overview.png)
 
-There's no "drill X" menu — practice targets itself as you type.
+Three pages, cycled with **Ctrl+↑/↓**:
 
-## Custom Texts
+- **Overview** — numbers + Rhythm / Peak / Session arc columns
+  + worst bigrams + worst keys + APM sparkline. "Session arc"
+  splits your session into warmup / steady / end so you can see
+  if you're fading or ramping.
+- **Progression** — WPM sparkline + per-bucket table over days
+  / weeks / months / years. Calendar-correct via chrono.
+- **Layout × You** — per-finger load & miss rate, L/R balance,
+  and a heat-painted mini keyboard for the current time bucket.
+  Walk **Alt+←/→** to watch hot keys cool across sessions.
 
-Add `.txt` files to the `texts/` directory for text practice mode. Format:
+Filter scope cycles with:
+
+- **Ctrl+←/→** — (layout, keyboard) combo
+- **Alt+↑/↓** — granularity (session / day / week / month / year / all)
+- **Alt+←/→** — walk the offset (P1/P3) or range width (P2)
+
+### F5 — layout iterations (how is the layout)
+
+F4 asks *how you're typing*. F5 asks *how the layout is
+performing across its content-hash iterations.* Swap two keys in
+the layout JSON and the next session lands under a new hash. F5
+shows every hash as a row in a table with date range, session
+count, keystrokes, aggregate WPM, and accuracy — so "did that
+swap help?" has an honest answer.
+
+## The layout scorer (drift)
+
+```sh
+keywiz --drift score layouts/drifter.json
+keywiz --drift score --preset oxey_mimic layouts/drifter.json
+keywiz --drift compare layouts/drifter.json layouts/gallium-v2.json
+keywiz --drift generate --preset drifter
+```
+
+drift is a 13-crate workspace at `drift/`:
+
+- Compiler-enforced dependency graph (drift-core → drift-motion
+  → drift-analyzer → drift-analyzers → …)
+- 20 analyzers spanning finger use, rolls, scissors, row skips,
+  partial alternation
+- 4 presets (drifter, oxey_mimic, extension, neutral)
+- N-gram derivation, `.dof` import, JSON output, per-analyzer
+  CLI overrides
+
+`keywiz --drift` forwards in-process — bit-identical output
+versus calling `drift` directly. See
+[`drift/docs/HANDOFF.md`](drift/docs/HANDOFF.md) for depth.
+
+## Keybind reference
+
+### Typing view
+
+| Key | Action |
+|---|---|
+| `F1` | Help page (this table) |
+| `F2` | Cycle overlay (none / finger / heat) |
+| `F3` | Cycle slot content (keyboard / inline stats) |
+| `F4` | Stats page (performance) |
+| `F5` | Layout iterations |
+| `Tab` | Hide / show the keyboard slot |
+| `Shift+Tab` | Toggle flash layer |
+| `Ctrl+↑/↓` | Previous / next keyboard |
+| `Ctrl+←/→` | Previous / next layout |
+| `Alt+↑/↓` | Previous / next exercise category |
+| `Alt+←/→` | Previous / next exercise instance |
+| `Esc` | Quit (or close an open modal) |
+
+### Inside the F4 stats modal
+
+Same keys, rebound to filter / page axes:
+
+| Key | Action |
+|---|---|
+| `Ctrl+←/→` | Cycle (layout, keyboard) combo |
+| `Ctrl+↑/↓` | Cycle stats page (Overview / Progression / Layout × You) |
+| `Alt+↑/↓` | Cycle time granularity |
+| `Alt+←/→` | Walk offset (P1/P3) or range width (P2) |
+| `F4` / `Esc` | Close |
+
+## Adding layouts and keyboards
+
+Both are JSON5. Drop a file in `keyboards/` or `layouts/` and it
+appears in the cycle on next launch.
+
+**Keyboards** describe physical buttons: id, grid coord (r,c),
+geometric position + width/height, finger assignment, cluster.
+See `keyboards/halcyon_elora_v2.json` (col-stag split reference)
+or `keyboards/us_intl.json` (row-stag ANSI).
+
+**Layouts** map physical key ids to
+`{ char: ["a", "A"] }` or `{ named: "shift" }`. See
+`layouts/drifter.json` for a documented example with its design
+theses.
+
+For hardware-specific overrides: name a layout file
+`{layout}-{keyboard}.json` (e.g. `qwerty-halcyon_elora_v2.json`).
+It wins over the generic when paired with that keyboard and
+stays hidden from the layout cycle otherwise.
+
+## Shipped data
+
+- **Keyboards**: `us_intl` (ANSI row-stag),
+  `halcyon_elora_v2` (col-stag split), `ortho`
+- **Layouts**: `drifter`, `gallium-v2`, `qwerty`, plus a
+  `qwerty-halcyon_elora_v2` variant
+
+More layouts and keyboards live in `keyboards.bak/` and
+`layouts.bak/` awaiting port-forward to the current schema.
+
+## Custom texts
+
+Add `.txt` files to `texts/`:
 
 ```
 Title Goes Here
-The rest of the file is the passage text that you'll type through.
-Multiple lines are fine — they get word-wrapped to fit the display.
+The rest of the file is the passage body. Multiple lines are
+fine — they get word-wrapped to fit the display.
+```
+
+## Storage
+
+- Stats: `~/.local/share/keywiz/stats.sqlite` (SQLite via
+  bundled rusqlite)
+- Preferences: `~/.local/share/keywiz/prefs.json` (last
+  keyboard / layout / exercise / overlay)
+
+Event storage is append-only. A heavy user writes ~1M events
+per year; SQLite handles that with headroom. Nothing is summed
+or compacted on write — views aggregate on read, so a bug in
+one view can't poison another.
+
+## Project layout
+
+```
+keywiz/
+├── src/                 — keywiz binary
+├── drift/crates/        — 13-crate drift workspace
+├── keywiz/crates/
+│   └── keywiz-stats/    — event store + views
+├── keyboards/           — JSON5 keyboards
+├── layouts/             — JSON5 layouts
+├── texts/               — text-practice passages
+├── words.txt            — word list
+└── docs/
+    ├── HANDOFF.md       — current state, next-up
+    ├── roadmap.md       — tiered roadmap
+    ├── stats-ideas.md   — stats-modal design doc
+    └── architecture-plan.md
 ```
 
 ## License
