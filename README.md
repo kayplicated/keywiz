@@ -4,7 +4,9 @@ A terminal **layout workbench**: design a keyboard layout, train on
 it, measure how it actually performs for you, iterate. Three
 integrated tools in one binary.
 
-![keywiz — words exercise on drifter / halcyon elora v2 with the finger overlay](assets/hero-words-drifter-elora.png)
+<p align="center">
+  <img src="assets/hero-words-drifter-elora.png" width="640" alt="keywiz — words exercise on drifter / halcyon elora v2 with the finger overlay" />
+</p>
 
 ## What it is
 
@@ -84,7 +86,12 @@ widths. **F2** cycles the overlay:
 flashes white → light yellow → cyan over ~250 ms on top of
 whatever overlay is painting. Off by default.
 
-![drill exercise on qwerty with the ansi row-stag keyboard](assets/drill-qwerty-ansi.png)
+<table>
+  <tr>
+    <td><img src="assets/drill-qwerty-ansi.png" alt="drill exercise on qwerty with the ansi row-stag keyboard and finger overlay" /></td>
+    <td><img src="assets/words-heat-overlay.png" alt="words exercise on drifter with the heat overlay showing per-key troubled-key tinting" /></td>
+  </tr>
+</table>
 
 **Tab** hides/shows the keyboard entirely, falling back to a
 dense inline stats dashboard (see below).
@@ -106,11 +113,18 @@ dashboard instead of the keyboard picture:
 - **Weak now** — worst bigram in the active scope, live
 - **APM sparkline** — last 60 seconds bucketed, right-aligned
 
-![F3 inline stats dashboard with consistency, burst, streak, hands, recent, weak-now, and APM sparkline](assets/inline-stats-dashboard.png)
+<p align="center">
+  <img src="assets/inline-stats-dashboard.png" width="640" alt="F3 inline stats dashboard with consistency, burst, streak, hands, recent, weak-now, and APM sparkline" />
+</p>
 
 ### F4 — stats page (how am I typing)
 
-![F4 Overview page with WPM APM accuracy, rhythm, peak, session arc, worst bigrams and keys](assets/stats-overview.png)
+<table>
+  <tr>
+    <td><img src="assets/stats-overview.png" alt="F4 Overview page with WPM APM accuracy, rhythm, peak, session arc, worst bigrams and keys" /></td>
+    <td><img src="assets/stats-layout-x-you.png" alt="F4 Layout x You page with per-finger load, hand balance, and a heat-painted keyboard" /></td>
+  </tr>
+</table>
 
 Three pages, cycled with **Ctrl+↑/↓**:
 
