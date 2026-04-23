@@ -286,12 +286,7 @@ keywiz/
 ├── keyboards/           — JSON5 keyboards
 ├── layouts/             — JSON5 layouts
 ├── texts/               — text-practice passages
-├── words/               — one .txt per wordlist
-└── docs/
-    ├── HANDOFF.md       — current state, next-up
-    ├── roadmap.md       — tiered roadmap
-    ├── stats-ideas.md   — stats-modal design doc
-    └── architecture-plan.md
+└── words/               — one .txt per wordlist
 ```
 
 ## License
