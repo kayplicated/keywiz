@@ -1,65 +1,138 @@
 # drift
 
-Flexion-aware keyboard layout scorer. Built because oxey's cost
-model undervalues row-direction asymmetry on col-stag keyboards,
-and because we wanted a tool whose weights are transparent and
-editable.
+A **flexion-aware keyboard layout scorer and generator** — sibling crate
+to keywiz. Built for people who want to score structural properties that
+[oxeylyzer](https://github.com/O-X-E-Y/oxeylyzer)'s cost model doesn't
+capture (row symmetry, flexion cascades, async hand drift, direction-
+consistent rolls), and for whom "more alternation" isn't the answer to
+every question.
 
-Status: v0.1 — scores layouts and compares them. No generation.
+Status: v0.1 — scores any layout, runs SA generation, imports `.dof`,
+computes layout diffs, ships four presets.
 
 ## Running
 
-```
-cargo run -- score <layout.json>
-cargo run -- compare <a.json> <b.json>
-```
+```sh
+# Score one layout
+drift score layouts/drifter.json
 
-Layouts are keywiz JSON5 format. Keyboards are keywiz JSON5 format.
-Corpora are oxey JSON format (chars + bigrams as percentages).
+# Compare two layouts
+drift compare layouts/drifter.json layouts/gallium-v2.json
 
-## Weights
+# Generate a layout with simulated annealing
+drift generate --preset drifter
 
-All tunable weights live in `drift.toml` at the crate root. Defaults
-are neutral on row-direction: `flexion = extension = 1.0` means
-the scorer measures bigram motions without favoring top or bottom.
+# Use a preset
+drift --preset oxey_mimic score layouts/drifter.json
 
-To bias toward a specific philosophy, tweak `[row]`:
-
-```toml
-# Drifter-style: reward flexion, penalize extension.
-flexion = 0.5
-extension = 1.3
-
-# Or the inverse, if you prefer reaching up:
-flexion = 1.3
-extension = 0.5
+# Or load drift as a subcommand of keywiz (in-process, same binary)
+keywiz --drift score layouts/drifter.json
 ```
 
-## What the scorer measures
+Layouts are keywiz JSON5 (`main_k*` id scheme) or DOF
+(`.dof` with an embedded board descriptor). Keyboards are keywiz JSON5.
+Corpora are oxeylyzer-format JSON (chars + bigrams as percentages).
 
-- **SFB** — same-finger bigrams. Penalized by `bigram.sfb_penalty`.
-- **Scissor** — adjacent-finger cross-row motion. Penalized by
-  `bigram.scissor_penalty × [row multiplier]`.
-- **Roll** — same-row adjacent-finger motion. Rewarded.
-- **Stretch** — non-adjacent same-hand motion. Penalized lightly.
-- **Alternate** — different hands. No same-hand cost.
+## What it measures
 
-The `[asymmetric]` section enables a biomechanical rule: if the
-outer finger of an adjacent-finger pair is naturally pre-extended
-forward (pinky-rest-forward pattern on col-stag), the motion is
-NOT classified as a scissor. This captures the Elora's aggressive
-col-stag geometry where middle-to-ring-to-pinky motions feel
-natural even across rows.
+Drift is analyzer-based: each scoring rule is a drop-in module that
+emits hit-contribution pairs, and the pipeline sums them. The stock
+set runs 20+ analyzers spanning:
+
+**Bigram** — SFB, SFS, scissor, stretch, roll (direction-weighted,
+inward/outward), alternate (partial + full).
+
+**Trigram** — inward_roll, outward_roll, redirect, bad_redirect
+(no index anchor), onehand, pinky_terminal.
+
+**Structural** — row_distribution, finger_load (strength-weighted,
+quadratic overload penalty), flexion_cascade (reward home+bot
+sequences on col-stag), row_cascade (penalize all-three-rows
+sequences), hand_territory (cross-hand row-synchrony in
+alternation).
+
+**Asymmetric** — on col-stag boards, adjacent-finger cross-row motions
+where the outer finger is naturally pre-extended (ring-above-pinky,
+middle-above-ring) are exempt from scissor classification. Captures
+the fact that "reaching" *into* the resting splay shape isn't a scissor.
+
+The full list is in
+[`drift/docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md); adding a new one is
+four files and a registry entry — see
+[`docs/WRITING_ANALYZERS.md`](docs/WRITING_ANALYZERS.md).
+
+## Presets
+
+| Preset      | Bias                                                     |
+|-------------|----------------------------------------------------------|
+| `neutral`   | Default. Top and bottom rows treated equivalently.       |
+| `drifter`   | Flexion-biased. Rewards home↔bottom; penalizes home↔top. |
+| `extension` | The inverse. Rewards reaching up.                        |
+| `oxey_mimic`| Approximates oxeylyzer's weights for A/B comparison.     |
+
+All live in `drift/crates/drift-config/presets/*.toml`. Copy any file
+to start your own preset — keys are documented inline.
+
+Ad-hoc overrides without a config file:
+
+```sh
+drift --set sfb.penalty=-5.0 --enable same_row_skip score foo.json
+```
+
+## Workspace layout
+
+Thirteen crates with a compiler-enforced dependency graph:
+
+```
+drift-core          — types: Keyboard, Layout, Scope, Hit, Finger
+  └ drift-motion    — classify a motion: roll / scissor / stretch / alt
+      └ drift-analyzer    — trait Analyzer, registry, pipeline
+          └ drift-analyzers  — 20+ stock rules
+              └ drift-score     — run a pipeline over a layout+corpus
+                  └ drift-delta    — delta scoring for SA hot loop
+                  └ drift-generate — simulated-annealing generator
+                  └ drift-report   — text + JSON output
+                      └ drift-cli   — the `drift` binary
+drift-corpus        — oxey JSON reader + n-gram derivation
+drift-keyboard      — keywiz JSON5 loader
+drift-dof           — `.dof` file import + board→keyboard mapping
+drift-config        — TOML presets, overrides, pipeline builder
+```
+
+Score runs in under 200 ms on a 50k-word corpus; SA generates a layout
+in a few minutes on a laptop (delta scoring makes ~10× difference over
+full-score-per-swap).
 
 ## Output
 
-Text by default. Shows:
+Text is the default; `--format json` emits a serializable envelope.
 
-- Row distribution (top/home/bot %)
-- Per-finger load, strength-weighted
-- Motion breakdown (alternate/SFB/roll/scissor/stretch)
-- Top 10 SFBs, scissors, rolls by contribution
-- Total score
+```
+Layout: drifter
+Board:  halcyon_elora_v2
+Corpus: shai
 
-Higher score = better. Negative scores are normal when penalties
-exceed rewards, which happens for any imperfect layout.
+Category breakdown:
+  alternate     13816 hits   cost   +21.809
+  roll             44 hits   cost   +17.290
+  redirect       1497 hits   cost    -6.473
+  sfb              76 hits   cost    -6.134
+  ...
+
+Overall score: +19.216
+```
+
+Higher is better. Negative totals happen when penalties exceed rewards —
+normal for any imperfect layout. The categories and hit counts are the
+real signal; the total is a weighted sum.
+
+## Going deeper
+
+- [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) — structural
+  preconditions and biomechanical assumptions baked into the scorer.
+- [`docs/WRITING_ANALYZERS.md`](docs/WRITING_ANALYZERS.md) — add a
+  new analyzer in four files and a registry entry.
+
+## License
+
+AGPL-3.0, inherited from keywiz. See the workspace root.
