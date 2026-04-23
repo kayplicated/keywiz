@@ -1,0 +1,70 @@
+{
+  name: "semimak",
+  short: "Semimak",
+  description: "Semimak — semilin's alternative ergonomic layout (colstag-native)",
+  // Ported from the pre-blocks KEY_* schema. Alpha core
+  // (main_k1..k30) + number row (main_k31..k40) work on any
+  // board following docs/id-convention.md. Outer-column
+  // mappings (main_k41+) carry ANSI punctuation; boards
+  // without those slots drop them.
+  mappings: {
+    // ---- top row (main_k1..k10) ----
+    main_k1 : { char: ["f", "F"] },
+    main_k2 : { char: ["l", "L"] },
+    main_k3 : { char: ["h", "H"] },
+    main_k4 : { char: ["v", "V"] },
+    main_k5 : { char: ["z", "Z"] },
+    main_k6 : { char: ["q", "Q"] },
+    main_k7 : { char: ["w", "W"] },
+    main_k8 : { char: ["u", "U"] },
+    main_k9 : { char: ["o", "O"] },
+    main_k10: { char: ["y", "Y"] },
+
+    // ---- home row (main_k11..k20) ----
+    main_k11: { char: ["s", "S"] },
+    main_k12: { char: ["r", "R"] },
+    main_k13: { char: ["n", "N"] },
+    main_k14: { char: ["t", "T"] },
+    main_k15: { char: ["k", "K"] },
+    main_k16: { char: ["c", "C"] },
+    main_k17: { char: ["d", "D"] },
+    main_k18: { char: ["e", "E"] },
+    main_k19: { char: ["a", "A"] },
+    main_k20: { char: ["i", "I"] },
+
+    // ---- bottom row (main_k21..k30) ----
+    main_k21: { char: ["x", "X"] },
+    main_k22: { char: ["'", "\""] },
+    main_k23: { char: ["b", "B"] },
+    main_k24: { char: ["m", "M"] },
+    main_k25: { char: ["j", "J"] },
+    main_k26: { char: ["p", "P"] },
+    main_k27: { char: ["g", "G"] },
+    main_k28: { char: [",", "<"] },
+    main_k29: { char: [".", ">"] },
+    main_k30: { char: ["/", "?"] },
+
+    // ---- number row (main_k31..k40) ----
+    main_k31: { char: ["1", "!"] },
+    main_k32: { char: ["2", "@"] },
+    main_k33: { char: ["3", "#"] },
+    main_k34: { char: ["4", "$"] },
+    main_k35: { char: ["5", "%"] },
+    main_k36: { char: ["6", "^"] },
+    main_k37: { char: ["7", "&"] },
+    main_k38: { char: ["8", "*"] },
+    main_k39: { char: ["9", "("] },
+    main_k40: { char: ["0", ")"] },
+
+    // ---- outer columns (ANSI punctuation) ----
+    main_k41: { char: ["`", "~"] },
+    main_k46: { char: ["-", "_"] },
+    main_k47: { char: ["-", "_"] },
+    main_k48: { char: [";", ":"] },
+
+    // ---- ANSI overflow ----
+    main_k51: { char: ["=", "+"] },
+    main_k52: { char: ["]", "}"] },
+    main_k53: { char: ["\\", "|"] },
+  },
+}

@@ -215,13 +215,15 @@ stays hidden from the layout cycle otherwise.
 
 ## Shipped data
 
-- **Keyboards**: `us_intl` (ANSI row-stag),
-  `halcyon_elora_v2` (col-stag split), `ortho`
-- **Layouts**: `drifter`, `gallium-v2`, `qwerty`, plus a
-  `qwerty-halcyon_elora_v2` variant
-
-More layouts and keyboards live in `keyboards.bak/` and
-`layouts.bak/` awaiting port-forward to the current schema.
+- **Keyboards**: `halcyon_elora_v2` (col-stag split), `kyria`
+  (col-stag split, no number row), `us_intl` (ANSI row-stag),
+  `ortho`
+- **Layouts**: `canary`, `colemak`, `colemak-dh`, `drifter`,
+  `dvorak`, `engram`, `gallium`, `gallium-v2`, `graphite`,
+  `hyperroll`, `isrt`, `qwerty`, `semimak`, `sturdy`, `workman`
+- **Variants** (auto-resolved per keyboard, hidden from cycle):
+  `canary-halcyon_elora_v2`, `canary-kyria`,
+  `qwerty-halcyon_elora_v2`
 
 ## Custom texts
 

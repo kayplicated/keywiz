@@ -1,0 +1,70 @@
+{
+  name: "engram",
+  short: "Engram",
+  description: "Engram layout — vowels on left, punctuation in center columns",
+  // Ported from the pre-blocks KEY_* schema. Alpha core
+  // (main_k1..k30) + number row (main_k31..k40) work on any
+  // board following docs/id-convention.md. Outer-column
+  // mappings (main_k41+) carry ANSI punctuation; boards
+  // without those slots drop them.
+  mappings: {
+    // ---- top row (main_k1..k10) ----
+    main_k1 : { char: ["b", "B"] },
+    main_k2 : { char: ["y", "Y"] },
+    main_k3 : { char: ["o", "O"] },
+    main_k4 : { char: ["u", "U"] },
+    main_k5 : { char: ["'", "\""] },
+    main_k6 : { char: ["-", "_"] },
+    main_k7 : { char: ["l", "L"] },
+    main_k8 : { char: ["d", "D"] },
+    main_k9 : { char: ["w", "W"] },
+    main_k10: { char: ["v", "V"] },
+
+    // ---- home row (main_k11..k20) ----
+    main_k11: { char: ["c", "C"] },
+    main_k12: { char: ["i", "I"] },
+    main_k13: { char: ["e", "E"] },
+    main_k14: { char: ["a", "A"] },
+    main_k15: { char: [",", "<"] },
+    main_k16: { char: [".", ">"] },
+    main_k17: { char: ["h", "H"] },
+    main_k18: { char: ["t", "T"] },
+    main_k19: { char: ["s", "S"] },
+    main_k20: { char: ["n", "N"] },
+
+    // ---- bottom row (main_k21..k30) ----
+    main_k21: { char: ["g", "G"] },
+    main_k22: { char: ["x", "X"] },
+    main_k23: { char: ["j", "J"] },
+    main_k24: { char: ["k", "K"] },
+    main_k25: { char: ["/", "?"] },
+    main_k26: { char: [";", ":"] },
+    main_k27: { char: ["r", "R"] },
+    main_k28: { char: ["m", "M"] },
+    main_k29: { char: ["f", "F"] },
+    main_k30: { char: ["p", "P"] },
+
+    // ---- number row (main_k31..k40) ----
+    main_k31: { char: ["1", "!"] },
+    main_k32: { char: ["2", "@"] },
+    main_k33: { char: ["3", "#"] },
+    main_k34: { char: ["4", "$"] },
+    main_k35: { char: ["5", "%"] },
+    main_k36: { char: ["6", "^"] },
+    main_k37: { char: ["7", "&"] },
+    main_k38: { char: ["8", "*"] },
+    main_k39: { char: ["9", "("] },
+    main_k40: { char: ["0", ")"] },
+
+    // ---- outer columns (ANSI punctuation) ----
+    main_k41: { char: ["`", "~"] },
+    main_k46: { char: ["-", "_"] },
+    main_k47: { char: ["z", "Z"] },
+    main_k48: { char: ["q", "Q"] },
+
+    // ---- ANSI overflow ----
+    main_k51: { char: ["=", "+"] },
+    main_k52: { char: ["]", "}"] },
+    main_k53: { char: ["\\", "|"] },
+  },
+}
