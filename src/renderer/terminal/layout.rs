@@ -2,16 +2,22 @@
 //!
 //! Page-level layout is now done with
 //! [`crate::renderer::terminal::view::View`] — this module owns
-//! only the footer paint logic, which is shared across views
-//! (indicator line + optional error line).
+//! only the footer paint logic, which is shared across views.
+//!
+//! The footer is three rows:
+//!   1. Ctrl bindings — hardware axis (keyboard, layout).
+//!   2. Alt bindings  — exercise axis (category, instance).
+//!   3. Error reason  — blank unless something's broken.
+//!
+//! Two rows instead of one for the bindings because the MAX_COLUMN_WIDTH
+//! cap on the view builder (90 cols) isn't wide enough to fit all four
+//! bindings on a single line without truncating the instance label when
+//! names get long.
 
 use ratatui::layout::Rect;
 
 use crate::engine::placement::DisplayState;
 
-/// Two-line footer. Line 1: keyboard — layout — exercise indicator
-/// with cycling hints (broken names show in red). Line 2: parse
-/// error reason when something's broken, blank otherwise.
 pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState) {
     use ratatui::layout::Alignment;
     use ratatui::style::{Color, Modifier, Style};
@@ -21,7 +27,6 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
     let dim = Style::default().fg(Color::DarkGray);
     let red = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
     let red_dim = Style::default().fg(Color::Red);
-
     let name = Style::default().fg(Color::Gray);
 
     let keyboard_name = match &display.broken_keyboard {
@@ -33,7 +38,7 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
         None => Span::styled(display.layout_short.clone(), name),
     };
 
-    // Exercise category + instance indicator. Category text always
+    // Exercise category + instance counter. Category text always
     // includes `(n/m)` — for drill it renders as `(—/—)` so the
     // user reads "this category has no sub-axis" instead of
     // wondering why the indicator looks different from others.
@@ -48,12 +53,10 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
         name,
     );
 
-    // Each group: "Ctrl+↑↓ · Keyboard"; groups separated by "   —   "
-    // so the (binding, name) pairs read as discrete units.
     let sep = Span::styled("     ", dim);
     let dot = Span::styled(" · ", dim);
 
-    let mut indicator_spans = vec![
+    let ctrl_line = Line::from(vec![
         Span::styled("Ctrl+↑↓", dim),
         dot.clone(),
         keyboard_name,
@@ -61,7 +64,9 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
         Span::styled("Ctrl+←→", dim),
         dot.clone(),
         layout_name,
-        sep.clone(),
+    ]);
+
+    let mut alt_spans = vec![
         Span::styled("Alt+↑↓", dim),
         dot.clone(),
         category_span,
@@ -69,12 +74,12 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
     // Only show the instance binding when there's an instance to
     // select; drill has no sideways axis so the key-hint is omitted.
     if let Some(label) = &display.exercise_instance_label {
-        indicator_spans.push(sep);
-        indicator_spans.push(Span::styled("Alt+←→", dim));
-        indicator_spans.push(dot);
-        indicator_spans.push(Span::styled(label.clone(), name));
+        alt_spans.push(sep);
+        alt_spans.push(Span::styled("Alt+←→", dim));
+        alt_spans.push(dot);
+        alt_spans.push(Span::styled(label.clone(), name));
     }
-    let indicator = Line::from(indicator_spans);
+    let alt_line = Line::from(alt_spans);
 
     let reason = display
         .broken_keyboard
@@ -88,7 +93,7 @@ pub fn render_footer(f: &mut ratatui::Frame, area: Rect, display: &DisplayState)
     };
 
     f.render_widget(
-        Paragraph::new(vec![indicator, error_line]).alignment(Alignment::Center),
+        Paragraph::new(vec![ctrl_line, alt_line, error_line]).alignment(Alignment::Center),
         area,
     );
 }

@@ -101,7 +101,7 @@ pub fn draw_frame(
         .add_row(Row::new("body", body_h).pad_bottom(1))
         .add_row(Row::new("slot", kb_h).pad_bottom(1))
         .add_row(Row::new("stats_line", 1).pad_bottom(1))
-        .add_row(Row::new("footer", 2))
+        .add_row(Row::new("footer", 3))
         .resolve(f.area());
 
     // ---- header ----
