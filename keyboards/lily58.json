@@ -1,0 +1,107 @@
+{
+  name: "lily58",
+  short: "Lily58",
+  description: "Lily58 — 58-key split col-stag with a very mild splay. Four rows × six columns per hand plus a five-key thumb cluster; top row is a number row.",
+
+  // Col-stag main block. Ids follow docs/id-convention.md:
+  //   main_k1..k30  — 30-key alpha core (3 rows × 5 inner cols × 2)
+  //   main_k31..k40 — number row (10 slots, one per alpha col)
+  //   main_k41..k49 — outer pinky columns, 4 rows per hand
+  //
+  // Lily58's splay is *much* gentler than the Halcyon Elora v2's:
+  //   pinky-outer & pinky-inner: barely pulled back (0.1)
+  //   ring:    flat with index (0.0)
+  //   middle:  pushed forward 0.4 — the only clear stagger
+  //   index-outer & index-inner: baseline
+  blocks: [
+    {
+      type: "col-stag",
+      cluster: "main",
+      keys: [
+        // ---- top alpha row (r = -1), main_k1..k10 ----
+        { id: "main_k1",  r: -1, c: -5, x: -5.0, y: -0.9, finger: "LPinky" },
+        { id: "main_k2",  r: -1, c: -4, x: -4.0, y: -1.0, finger: "LRing" },
+        { id: "main_k3",  r: -1, c: -3, x: -3.0, y: -1.4, finger: "LMiddle" },
+        { id: "main_k4",  r: -1, c: -2, x: -2.0, y: -1.0, finger: "LIndex" },
+        { id: "main_k5",  r: -1, c: -1, x: -1.0, y: -1.0, finger: "LIndex" },
+        { id: "main_k6",  r: -1, c:  1, x:  1.0, y: -1.0, finger: "RIndex" },
+        { id: "main_k7",  r: -1, c:  2, x:  2.0, y: -1.0, finger: "RIndex" },
+        { id: "main_k8",  r: -1, c:  3, x:  3.0, y: -1.4, finger: "RMiddle" },
+        { id: "main_k9",  r: -1, c:  4, x:  4.0, y: -1.0, finger: "RRing" },
+        { id: "main_k10", r: -1, c:  5, x:  5.0, y: -0.9, finger: "RPinky" },
+
+        // ---- home row (r = 0), main_k11..k20 ----
+        { id: "main_k11", r:  0, c: -5, x: -5.0, y:  0.1, finger: "LPinky" },
+        { id: "main_k12", r:  0, c: -4, x: -4.0, y:  0.0, finger: "LRing" },
+        { id: "main_k13", r:  0, c: -3, x: -3.0, y: -0.4, finger: "LMiddle" },
+        { id: "main_k14", r:  0, c: -2, x: -2.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k15", r:  0, c: -1, x: -1.0, y:  0.0, finger: "LIndex" },
+        { id: "main_k16", r:  0, c:  1, x:  1.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k17", r:  0, c:  2, x:  2.0, y:  0.0, finger: "RIndex" },
+        { id: "main_k18", r:  0, c:  3, x:  3.0, y: -0.4, finger: "RMiddle" },
+        { id: "main_k19", r:  0, c:  4, x:  4.0, y:  0.0, finger: "RRing" },
+        { id: "main_k20", r:  0, c:  5, x:  5.0, y:  0.1, finger: "RPinky" },
+
+        // ---- bottom row (r = 1), main_k21..k30 ----
+        { id: "main_k21", r:  1, c: -5, x: -5.0, y:  1.1, finger: "LPinky" },
+        { id: "main_k22", r:  1, c: -4, x: -4.0, y:  1.0, finger: "LRing" },
+        { id: "main_k23", r:  1, c: -3, x: -3.0, y:  0.6, finger: "LMiddle" },
+        { id: "main_k24", r:  1, c: -2, x: -2.0, y:  1.0, finger: "LIndex" },
+        { id: "main_k25", r:  1, c: -1, x: -1.0, y:  1.0, finger: "LIndex" },
+        { id: "main_k26", r:  1, c:  1, x:  1.0, y:  1.0, finger: "RIndex" },
+        { id: "main_k27", r:  1, c:  2, x:  2.0, y:  1.0, finger: "RIndex" },
+        { id: "main_k28", r:  1, c:  3, x:  3.0, y:  0.6, finger: "RMiddle" },
+        { id: "main_k29", r:  1, c:  4, x:  4.0, y:  1.0, finger: "RRing" },
+        { id: "main_k30", r:  1, c:  5, x:  5.0, y:  1.1, finger: "RPinky" },
+
+        // ---- number row (r = -2), main_k31..k40 ----
+        { id: "main_k31", r: -2, c: -5, x: -5.0, y: -1.9, finger: "LPinky" },
+        { id: "main_k32", r: -2, c: -4, x: -4.0, y: -2.0, finger: "LRing" },
+        { id: "main_k33", r: -2, c: -3, x: -3.0, y: -2.4, finger: "LMiddle" },
+        { id: "main_k34", r: -2, c: -2, x: -2.0, y: -2.0, finger: "LIndex" },
+        { id: "main_k35", r: -2, c: -1, x: -1.0, y: -2.0, finger: "LIndex" },
+        { id: "main_k36", r: -2, c:  1, x:  1.0, y: -2.0, finger: "RIndex" },
+        { id: "main_k37", r: -2, c:  2, x:  2.0, y: -2.0, finger: "RIndex" },
+        { id: "main_k38", r: -2, c:  3, x:  3.0, y: -2.4, finger: "RMiddle" },
+        { id: "main_k39", r: -2, c:  4, x:  4.0, y: -2.0, finger: "RRing" },
+        { id: "main_k40", r: -2, c:  5, x:  5.0, y: -1.9, finger: "RPinky" },
+
+        // ---- outer pinky columns (Lily's 6th col) ----
+        { id: "main_k41", r: -2, c: -6, x: -6.0, y: -1.9, finger: "LPinky" },
+        { id: "main_k42", r: -1, c: -6, x: -6.0, y: -0.9, finger: "LPinky" },
+        { id: "main_k43", r:  0, c: -6, x: -6.0, y:  0.1, finger: "LPinky" },
+        { id: "main_k44", r:  1, c: -6, x: -6.0, y:  1.1, finger: "LPinky" },
+        { id: "main_k46", r: -2, c:  6, x:  6.0, y: -1.9, finger: "RPinky" },
+        { id: "main_k47", r: -1, c:  6, x:  6.0, y: -0.9, finger: "RPinky" },
+        { id: "main_k48", r:  0, c:  6, x:  6.0, y:  0.1, finger: "RPinky" },
+        { id: "main_k49", r:  1, c:  6, x:  6.0, y:  1.1, finger: "RPinky" },
+      ],
+    },
+
+    // Thumb clusters — 5 keys per hand. k1/k2 inner-upper (tucked
+    // under the home row), k4/k5/k6 outer-lower fanning outward.
+    // Placeholder xy.
+    {
+      type: "free-form",
+      cluster: "left_thumb",
+      keys: [
+        { id: "left_thumb_k1", r: 2, c: -2, x: -2.0, y: 2.5, finger: "LThumb" },
+        { id: "left_thumb_k2", r: 2, c: -1, x: -1.0, y: 2.5, finger: "LThumb" },
+        { id: "left_thumb_k4", r: 3, c: -4, x: -4.0, y: 3.5, finger: "LThumb" },
+        { id: "left_thumb_k5", r: 3, c: -3, x: -3.0, y: 3.5, finger: "LThumb" },
+        { id: "left_thumb_k6", r: 3, c: -2, x: -2.0, y: 3.5, finger: "LThumb" },
+      ],
+    },
+    {
+      type: "free-form",
+      cluster: "right_thumb",
+      keys: [
+        { id: "right_thumb_k1", r: 2, c:  1, x:  1.0, y: 2.5, finger: "RThumb" },
+        { id: "right_thumb_k2", r: 2, c:  2, x:  2.0, y: 2.5, finger: "RThumb" },
+        { id: "right_thumb_k4", r: 3, c:  2, x:  2.0, y: 3.5, finger: "RThumb" },
+        { id: "right_thumb_k5", r: 3, c:  3, x:  3.0, y: 3.5, finger: "RThumb" },
+        { id: "right_thumb_k6", r: 3, c:  4, x:  4.0, y: 3.5, finger: "RThumb" },
+      ],
+    },
+  ],
+}
