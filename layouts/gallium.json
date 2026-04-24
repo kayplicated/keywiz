@@ -1,7 +1,7 @@
 {
   name: "gallium",
   short: "Gallium",
-  description: "Gallium — Hyna's colstag layout (primary upstream variant)",
+  description: "Gallium — GalileoBlues's colstag layout (primary upstream variant)",
   // Ported from the pre-blocks KEY_* schema. Alpha core
   // (main_k1..k30) + number row (main_k31..k40) work on any
   // board following docs/id-convention.md. Outer-column

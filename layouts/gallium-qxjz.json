@@ -1,7 +1,7 @@
 {
   name: "gallium-qxjz",
   short: "Gallium qxjz",
-  // Gallium qxjz — acknowledged colstag variant of Hyna's Gallium
+  // Gallium qxjz — acknowledged colstag variant of GalileoBlues's Gallium
   // with q/x and j/z swaps on the bottom row. Not listed in the
   // upstream Gallium repo but widely circulated in the AKL
   // community. Targets the canonical main_k1..k30 alpha core +
