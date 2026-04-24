@@ -164,7 +164,11 @@ fn matches_event(
         return false;
     }
     // Per-session predicates — join through the sessions table.
-    if f.layout_hash.is_some() || f.keyboard_hash.is_some() || f.exercise_category.is_some() {
+    if f.layout_hash.is_some()
+        || f.keyboard_hash.is_some()
+        || f.exercise_category.is_some()
+        || f.exercise_categories.is_some()
+    {
         let Some(session) = sessions.get(&ev.session_id) else {
             return false;
         };
@@ -180,6 +184,11 @@ fn matches_event(
         }
         if let Some(cat) = &f.exercise_category
             && &session.exercise_category != cat
+        {
+            return false;
+        }
+        if let Some(cats) = &f.exercise_categories
+            && !cats.iter().any(|c| c == &session.exercise_category)
         {
             return false;
         }

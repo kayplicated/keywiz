@@ -102,6 +102,12 @@ pub struct EventFilter {
     pub layout_hash: Option<LayoutHash>,
     pub keyboard_hash: Option<KeyboardHash>,
     pub exercise_category: Option<String>,
+    /// Restrict to events whose session's `exercise_category` is in
+    /// this set. `None` = no constraint. Combined with
+    /// `exercise_category` via AND, so setting both only makes sense
+    /// when the single value is also in the set. An empty `Vec`
+    /// matches zero events.
+    pub exercise_categories: Option<Vec<String>>,
     pub from_ms: Option<i64>,
     pub until_ms: Option<i64>,
     /// Only events where `correct == Some(v)`. `None` = include both.

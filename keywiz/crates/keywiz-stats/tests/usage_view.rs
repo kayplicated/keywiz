@@ -139,3 +139,49 @@ fn filter_isolates_layout_hash() {
     assert_eq!(m2.len(), 1);
     assert!(m2.contains_key(&'b'));
 }
+
+#[test]
+fn filter_scopes_to_exercise_categories() {
+    let store = Box::new(MemoryStore::new()) as Box<dyn EventStore>;
+    let mut stats = Stats::new(store);
+    let l = fixtures::layout("l", &"a".repeat(64));
+    let k = fixtures::keyboard("k", &"b".repeat(64));
+
+    // Drill session types 'd'. Words session types 'w'. Text session
+    // types 't'. Asking for words+text should surface 'w' and 't'
+    // only — drill's 'd' must stay out.
+    stats.begin_session(&l, &k, "drill", None, 0).unwrap();
+    for i in 0..5 {
+        stats.record('d', 'd', i).unwrap();
+    }
+    stats.end_session(10).unwrap();
+
+    stats.begin_session(&l, &k, "words", Some("0"), 20).unwrap();
+    for i in 0..5 {
+        stats.record('w', 'w', 20 + i).unwrap();
+    }
+    stats.end_session(30).unwrap();
+
+    stats.begin_session(&l, &k, "text", Some("0"), 40).unwrap();
+    for i in 0..5 {
+        stats.record('t', 't', 40 + i).unwrap();
+    }
+    stats.end_session(50).unwrap();
+
+    let filter = EventFilter {
+        exercise_categories: Some(vec!["words".into(), "text".into()]),
+        ..Default::default()
+    };
+    let map = usage_map_raw(stats.store(), &filter).unwrap();
+    assert_eq!(map.get(&'w').copied(), Some(5));
+    assert_eq!(map.get(&'t').copied(), Some(5));
+    assert!(!map.contains_key(&'d'), "drill must be excluded");
+
+    // Empty category set matches zero events.
+    let empty = EventFilter {
+        exercise_categories: Some(vec![]),
+        ..Default::default()
+    };
+    let map_empty = usage_map_raw(stats.store(), &empty).unwrap();
+    assert!(map_empty.is_empty());
+}

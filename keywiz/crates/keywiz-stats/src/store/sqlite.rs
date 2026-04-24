@@ -273,7 +273,8 @@ impl EventStore for SqliteStore {
         // Per-session predicates join sessions.
         let needs_join = filter.layout_hash.is_some()
             || filter.keyboard_hash.is_some()
-            || filter.exercise_category.is_some();
+            || filter.exercise_category.is_some()
+            || filter.exercise_categories.is_some();
         if let Some(h) = &filter.layout_hash {
             clauses.push("s.layout_hash = ?".into());
             params.push(Box::new(h.0.clone()));
@@ -285,6 +286,17 @@ impl EventStore for SqliteStore {
         if let Some(cat) = &filter.exercise_category {
             clauses.push("s.exercise_category = ?".into());
             params.push(Box::new(cat.clone()));
+        }
+        if let Some(cats) = &filter.exercise_categories {
+            if cats.is_empty() {
+                clauses.push("0".into());
+            } else {
+                let placeholders = vec!["?"; cats.len()].join(",");
+                clauses.push(format!("s.exercise_category IN ({placeholders})"));
+                for c in cats {
+                    params.push(Box::new(c.clone()));
+                }
+            }
         }
 
         let mut sql = String::from(
