@@ -185,8 +185,8 @@ drift is a 13-crate workspace at `drift/`:
   CLI overrides
 
 `keywiz --drift` forwards in-process — bit-identical output
-versus calling `drift` directly. See
-[`drift/docs/HANDOFF.md`](drift/docs/HANDOFF.md) for depth.
+versus calling `drift` directly. See [`drift/README.md`](drift/)
+for depth.
 
 ## Keybind reference
 
