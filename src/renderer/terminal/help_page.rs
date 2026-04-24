@@ -62,7 +62,7 @@ fn keybind_lines() -> Vec<Line<'static>> {
     push_group(&mut lines, "Display");
     push_row(&mut lines, "Tab", "Hide / show the keyboard slot");
     push_row(&mut lines, "Shift+Tab", "Toggle flash on keypress");
-    push_row(&mut lines, "F2", "Cycle overlay (none / finger / heat)");
+    push_row(&mut lines, "F2", "Cycle overlay (none / finger / heat / usage)");
     push_row(&mut lines, "F3", "Cycle slot content (keyboard / inline stats)");
     push_blank(&mut lines);
 

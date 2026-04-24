@@ -12,4 +12,5 @@ pub mod keys;
 pub mod progression;
 pub mod rhythm;
 pub mod session_live;
+pub mod usage;
 pub mod wpm;

@@ -16,7 +16,8 @@ use crate::exercise::{catalog as exercise_catalog, Exercise};
 use crate::keyboard::{self, Keyboard};
 use crate::mapping::Layout;
 use crate::renderer::overlay::{
-    FingerOverlay, FingerStyle, HeatOverlay, HeatStyle, KeyOverlay, NoneOverlay,
+    FingerOverlay, FingerStyle, HeatOverlay, HeatStyle, KeyOverlay, NoneOverlay, UsageOverlay,
+    UsageStyle,
 };
 use crate::stats_adapter::{keyboard_snapshot, layout_snapshot};
 
@@ -889,14 +890,17 @@ impl Engine {
     }
 
 
-    /// Cycle F2 through overlay modes: none → finger → heat → none.
-    /// Entering the heat overlay triggers a fresh heat-map build
-    /// from the event stream, scoped to the current layout hash so
+    /// Cycle F2 through overlay modes:
+    /// none → finger → heat → usage → none.
+    ///
+    /// Heat and usage both build their maps from the event stream
+    /// on overlay entry, scoped to the current layout hash so
     /// historical data from other iterations doesn't pollute.
     pub fn cycle_overlay(&mut self) {
         let next = match self.active_overlay.name() {
             "none" => "finger",
             "finger" => "heat",
+            "heat" => "usage",
             _ => "none",
         };
         self.active_overlay = self.build_overlay(next);
@@ -907,6 +911,16 @@ impl Engine {
     /// prefs files written by older keywiz versions shouldn't
     /// cause failures on load.
     pub fn set_overlay_by_name(&mut self, name: &str) {
+        self.active_overlay = self.build_overlay(name);
+    }
+
+    /// Rebuild the active overlay in place. Called after the
+    /// keyboard or layout changes so data-driven overlays (heat,
+    /// usage) re-query against the new layout_hash immediately
+    /// instead of staying pinned to the previous layout's data
+    /// until the next keystroke's `on_event` refresh fires.
+    fn refresh_active_overlay(&mut self) {
+        let name = self.active_overlay.name();
         self.active_overlay = self.build_overlay(name);
     }
 
@@ -939,26 +953,46 @@ impl Engine {
             "finger" => Box::new(FingerOverlay::new(FingerStyle::default())),
             "heat" => {
                 let map = self
-                    .events
-                    .as_ref()
-                    .and_then(|events| {
-                        let layout_hash = crate::stats_adapter::layout_snapshot(
-                            &self.layout,
-                            &self.current_layout,
-                            0,
-                        )
-                        .hash;
-                        let filter = keywiz_stats::EventFilter {
-                            layout_hash: Some(layout_hash),
-                            ..Default::default()
-                        };
-                        keywiz_stats::views::heat::heat_map(events.store(), &filter).ok()
+                    .layout_scoped_map(|store, filter| {
+                        keywiz_stats::views::heat::heat_map(store, filter).ok()
                     })
                     .unwrap_or_default();
                 Box::new(HeatOverlay::new(map, HeatStyle::default()))
             }
+            "usage" => {
+                let map = self
+                    .layout_scoped_map(|store, filter| {
+                        keywiz_stats::views::usage::usage_map(store, filter).ok()
+                    })
+                    .unwrap_or_default();
+                Box::new(UsageOverlay::new(map, UsageStyle::default()))
+            }
             _ => Box::new(NoneOverlay),
         }
+    }
+
+    /// Query a view scoped to the current layout's hash. Shared
+    /// between the heat and usage overlays since they both want
+    /// "a `HashMap<char, f32>` over the same filter."
+    fn layout_scoped_map<F>(&self, view: F) -> Option<HashMap<char, f32>>
+    where
+        F: FnOnce(
+            &dyn keywiz_stats::EventStore,
+            &keywiz_stats::EventFilter,
+        ) -> Option<HashMap<char, f32>>,
+    {
+        let events = self.events.as_ref()?;
+        let layout_hash = crate::stats_adapter::layout_snapshot(
+            &self.layout,
+            &self.current_layout,
+            0,
+        )
+        .hash;
+        let filter = keywiz_stats::EventFilter {
+            layout_hash: Some(layout_hash),
+            ..Default::default()
+        };
+        view(events.store(), &filter)
     }
 
     /* --- setters (keyboard / layout / exercise) --- */
@@ -1004,6 +1038,7 @@ impl Engine {
         self.layout = layout;
         self.rebuild_exercise();
         self.rebuild_translator();
+        self.refresh_active_overlay();
         Ok(())
     }
 
@@ -1045,6 +1080,7 @@ impl Engine {
         self.layout = layout;
         self.rebuild_exercise();
         self.rebuild_translator();
+        self.refresh_active_overlay();
         Ok(change)
     }
 

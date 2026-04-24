@@ -82,7 +82,14 @@ widths. **F2** cycles the overlay:
 
 - **none** (default) — quiet baseline
 - **finger** — per-finger colors (the classic "rainbow")
-- **heat** — per-key heat tinting that updates live as you type
+- **heat** — per-key *error* heat in a warm gradient. Answers
+  "which keys are hurting me right now?" — glows where you're
+  missing, cools as you recover.
+- **usage** — per-key press rank in a cool gradient (indigo →
+  teal → green). Answers "where do my fingers live?" — stable,
+  volume-independent signal (your workhorses look the same after
+  500 keystrokes as after 500,000), and stays informative once
+  fluency has dried up the error heat.
 
 **Shift+Tab** toggles the flash layer — the last-pressed key
 flashes white → light yellow → cyan over ~250 ms on top of

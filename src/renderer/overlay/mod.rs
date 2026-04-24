@@ -43,10 +43,12 @@ use keywiz_stats::{Event, EventStore, LayoutHash};
 pub mod finger;
 pub mod heat;
 pub mod none;
+pub mod usage;
 
 pub use finger::{FingerOverlay, FingerStyle};
 pub use heat::{HeatOverlay, HeatStyle};
 pub use none::NoneOverlay;
+pub use usage::{UsageOverlay, UsageStyle};
 
 /// What an overlay decides to paint on a key.
 ///
