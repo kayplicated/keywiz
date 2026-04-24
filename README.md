@@ -144,8 +144,11 @@ Three pages, cycled with **Ctrl+↑/↓**:
 - **Progression** — WPM sparkline + per-bucket table over days
   / weeks / months / years. Calendar-correct via chrono.
 - **Layout × You** — per-finger load & miss rate, L/R balance,
-  and a heat-painted mini keyboard for the current time bucket.
-  Walk **Alt+←/→** to watch hot keys cool across sessions.
+  and a usage-painted mini keyboard for the current time bucket.
+  Walk **Alt+←/→** to watch your shape-of-use across sessions.
+  (Error heat lives on the live typing view's F2 overlay instead —
+  this page is the longer-horizon question, where usage stays
+  informative once fluency dries up the error signal.)
 
 Filter scope cycles with:
 

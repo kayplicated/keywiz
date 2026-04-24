@@ -5,10 +5,18 @@
 //! 1. **Finger load + hand balance** — per-finger count %, per-
 //!    finger miss rate, L/R balance summary. Answers "is this
 //!    layout balanced for *my* hands."
-//! 2. **Heat over time** — mini keyboard rendered with heat colors
-//!    for the current time bucket. Alt+←/→ walks buckets, so the
-//!    user watches hot keys cool off as they practice. Progress
-//!    made visible.
+//! 2. **Usage over time** — mini keyboard rendered with the
+//!    rank-based *usage* gradient for the current time bucket.
+//!    Alt+←/→ walks buckets, so the user watches the shape-of-
+//!    use drift across sessions, weeks, months.
+//!
+//! The page originally painted error heat on the keyboard, but
+//! error heat goes dim once fluency kicks in — exactly when the
+//! "does this layout work for me" question becomes worth asking.
+//! Error heat still lives on the live typing view (F2 overlay
+//! cycle); this page answers a longer-horizon question and usage
+//! stays informative regardless of skill. Per-finger miss rate
+//! in the panel above carries the error signal here.
 //!
 //! v2 (later, not here): drift cross-reference + roll analysis.
 
@@ -20,12 +28,12 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-use keywiz_stats::views::heat;
+use keywiz_stats::views::usage;
 
 use crate::engine::state::FingerStats;
 use crate::engine::Engine;
 use crate::keyboard::common::Finger;
-use crate::renderer::overlay::{HeatOverlay, HeatStyle};
+use crate::renderer::overlay::{UsageOverlay, UsageStyle};
 use crate::renderer::terminal::render_keyboard;
 use crate::renderer::terminal::view::{Col, Row, View};
 
@@ -67,9 +75,9 @@ pub fn draw(f: &mut Frame, area: Rect, engine: &Engine) {
         rects.get("hands_r"),
     );
 
-    // ---- Heat keyboard ----
-    f.render_widget(panel_header("Keyboard heat"), rects.get("heat_h"));
-    draw_heat_keyboard(f, rects.get("keyboard"), engine);
+    // ---- Usage keyboard ----
+    f.render_widget(panel_header("Keyboard usage"), rects.get("heat_h"));
+    draw_usage_keyboard(f, rects.get("keyboard"), engine);
 }
 
 /// Paragraph header helper — darkgray bold title.
@@ -178,27 +186,32 @@ fn miss_color(rate: f64) -> Color {
     }
 }
 
-/// Render a mini keyboard colored by heat for the current filter
-/// scope. Reuses the main-view keyboard renderer with a temporary
-/// `HeatOverlay` built from the scoped event slice.
-fn draw_heat_keyboard(f: &mut Frame, area: Rect, engine: &Engine) {
+/// Render a mini keyboard colored by the rank-based usage map for
+/// the current filter scope.
+///
+/// The keyboard painted is the stats *combo's* keyboard+layout,
+/// loaded from the catalog by name — not the live-typing pair.
+/// So if you're typing on gallium-v2 right now but the stats combo
+/// is drifter/halcyon_elora_v2, P3 shows drifter's letters on the
+/// halcyon_elora_v2 geometry with drifter's usage data. When no
+/// combo is set (the "all combos" scope), falls back to the live
+/// pair.
+fn draw_usage_keyboard(f: &mut Frame, area: Rect, engine: &Engine) {
     let Some(store) = engine.events_store() else {
         return;
     };
     let Some(filter) = engine.resolve_event_filter() else {
         return;
     };
-    let map = heat::heat_map(store, &filter).unwrap_or_default();
-    let overlay = HeatOverlay::new(map, HeatStyle::default());
+    let map = usage::usage_map(store, &filter).unwrap_or_default();
+    let overlay = UsageOverlay::new(map, UsageStyle::default());
 
-    // Build placements off the live keyboard + layout. We'd prefer
-    // the filtered combo's own snapshot here (so P3 reflects the
-    // layout you're analyzing even when you've since switched
-    // away), but turning a canonical-JSON snapshot back into a
-    // `dyn Keyboard` needs a loader that doesn't exist yet. P3 v1
-    // uses the live keyboard; cross-layout heat-over-time waits
-    // for snapshot-based placement rendering.
-    let placements = engine.placements_for_terminal();
+    let placements = engine
+        .stats_filter()
+        .combo
+        .as_ref()
+        .and_then(|c| engine.placements_for_combo(&c.keyboard, &c.layout))
+        .unwrap_or_else(|| engine.placements_for_terminal());
     // A minimal DisplayState lets render_keyboard run. It doesn't
     // read anything beyond `highlight_char`, which is unset here —
     // no "type this next" indicator belongs on a stats surface.

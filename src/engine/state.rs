@@ -338,6 +338,27 @@ impl Engine {
         project_for_terminal(self.keyboard.as_ref(), &self.layout)
     }
 
+    /// Placements for an arbitrary (keyboard, layout) pair, loaded
+    /// from the catalog by name. Used by F4's stats views so a
+    /// combo-scoped page renders *that* combo's keyboard even when
+    /// the live typing view is on a different one. Returns `None`
+    /// if either side fails to load — pages that can't render a
+    /// keyboard picture should fall back to an empty area rather
+    /// than paint the wrong one.
+    pub fn placements_for_combo(
+        &self,
+        keyboard_name: &str,
+        layout_name: &str,
+    ) -> Option<Vec<Placement>> {
+        let keyboard = keyboard::load(&keyboard_path(
+            &self.keyboards_dir,
+            keyboard_name,
+        ))
+        .ok()?;
+        let layout = load_layout_resolved(&self.layouts_dir, layout_name, keyboard_name).ok()?;
+        Some(project_for_terminal(keyboard.as_ref(), &layout))
+    }
+
     /// Build the full DisplayState for a render.
     ///
     /// Uses field-by-field assignment on a `DisplayState::default()`
@@ -537,8 +558,20 @@ impl Engine {
 
     /// F4 — enter/leave the full stats page. When active, typing
     /// is paused and the stats page replaces the usual surfaces.
+    ///
+    /// Entering the page defaults the combo filter to the live
+    /// (layout, keyboard) pair. "How's my current session going?"
+    /// is the common case on F4 open; jumping to "all combos" left
+    /// users cycling Ctrl+←/→ back to their own session every
+    /// time. Ctrl+←/→ still walks to other recorded combos.
     pub fn toggle_stats_page(&mut self) {
         self.stats_page_visible = !self.stats_page_visible;
+        if self.stats_page_visible {
+            self.stats_filter.combo = Some(Combo {
+                layout: self.current_layout.clone(),
+                keyboard: self.current_keyboard.clone(),
+            });
+        }
     }
 
     /// Advance to the next stats view inside the F3 page. No-op
