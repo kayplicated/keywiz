@@ -17,7 +17,7 @@ computes layout diffs, ships four presets.
 drift score layouts/drifter.json
 
 # Compare two layouts
-drift compare layouts/drifter.json layouts/gallium-v2.json
+drift compare layouts/drifter.json layouts/gallium-qxjz.json
 
 # Generate a layout with simulated annealing
 drift generate --preset drifter

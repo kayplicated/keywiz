@@ -3,8 +3,8 @@
 //! Schema:
 //! ```json5
 //! {
-//!   name: "gallium-v2",
-//!   short: "Gallium v2",
+//!   name: "gallium-qxjz",
+//!   short: "Gallium qxjz",
 //!   mappings: {
 //!     main_k11: { char: ["n", "N"] },
 //!     mods_shift_left: { named: "shift" },

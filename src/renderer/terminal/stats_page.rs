@@ -129,7 +129,7 @@ fn render_footer(f: &mut Frame, area: Rect, display: &DisplayState, engine: &Eng
 }
 
 /// Cheap display-prettifier: swap underscores for spaces. Source
-/// names (`halcyon_elora`, `gallium-v2`) are code-friendly;
+/// names (`halcyon_elora`, `gallium-qxjz`) are code-friendly;
 /// the footer reads better with human spacing.
 fn pretty_name(raw: &str) -> String {
     raw.replace('_', " ")

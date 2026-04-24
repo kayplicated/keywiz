@@ -1,9 +1,11 @@
 {
-  name: "gallium-v2",
-  short: "Gallium v2",
-  // Gallium v2 — the col-stag-optimized variant with QX and JZ
-  // swaps applied. Targets the canonical main_k1..k30 alpha core
-  // + number row. Outer columns (main_k41..) are layout-specific;
+  name: "gallium-qxjz",
+  short: "Gallium qxjz",
+  // Gallium qxjz — acknowledged colstag variant of Hyna's Gallium
+  // with q/x and j/z swaps on the bottom row. Not listed in the
+  // upstream Gallium repo but widely circulated in the AKL
+  // community. Targets the canonical main_k1..k30 alpha core +
+  // number row. Outer columns (main_k41..) are layout-specific;
   // gallium doesn't prescribe them.
   mappings: {
     // ---- top row (main_k1..k10) ----

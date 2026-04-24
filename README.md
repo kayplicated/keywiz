@@ -55,7 +55,7 @@ keywiz -l drifter --from qwerty
 
 # Run drift (layout scorer) through keywiz's forwarding
 keywiz --drift score layouts/drifter.json
-keywiz --drift compare layouts/drifter.json layouts/gallium-v2.json
+keywiz --drift compare layouts/drifter.json layouts/gallium-qxjz.json
 keywiz --drift --preset drifter score layouts/drifter.json
 ```
 
@@ -170,7 +170,7 @@ swap help?" has an honest answer.
 ```sh
 keywiz --drift score layouts/drifter.json
 keywiz --drift score --preset oxey_mimic layouts/drifter.json
-keywiz --drift compare layouts/drifter.json layouts/gallium-v2.json
+keywiz --drift compare layouts/drifter.json layouts/gallium-qxjz.json
 keywiz --drift generate --preset drifter
 ```
 
@@ -249,7 +249,7 @@ stays hidden from the layout cycle otherwise.
   splay, 42 keys, no number row), `us_intl` (ANSI row-stag),
   `ortho`
 - **Layouts**: `canary`, `colemak`, `colemak-dh`, `drifter`,
-  `dvorak`, `engram`, `gallium`, `gallium-v2`, `graphite`,
+  `dvorak`, `engram`, `gallium`, `gallium-qxjz`, `graphite`,
   `hyperroll`, `isrt`, `qwerty`, `semimak`, `sturdy`, `workman`
 - **Variants** (auto-resolved per keyboard, hidden from cycle):
   `canary-halcyon_elora`, `canary-kyria`,

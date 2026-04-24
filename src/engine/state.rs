@@ -243,7 +243,7 @@ impl Engine {
                 ))
             })?;
 
-        let (initial_layout, layout) = pick_first_loadable(&layouts, "gallium-v2", |n| {
+        let (initial_layout, layout) = pick_first_loadable(&layouts, "gallium-qxjz", |n| {
             load_layout_resolved(layouts_dir, n, &initial_keyboard)
         })
         .ok_or_else(|| {
