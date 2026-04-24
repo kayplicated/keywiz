@@ -64,8 +64,8 @@ keywiz --drift --preset drifter score layouts/drifter.json
 Three exercise categories, cycled with **Alt+↑/↓**:
 
 - **Drill** — random keys with adaptive difficulty. Starts on
-  whichever row has the hottest troubled keys; promotes at
-  >90% accuracy, demotes below 70%.
+  whichever row has the hottest troubled keys; promotes above
+  90% accuracy, demotes below 70%.
 - **Words** — endless random words with a scrolling display.
   One instance per wordlist in `words/`; **Alt+←/→** cycles
   between lists (English, short words, whatever you drop in).
