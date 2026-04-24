@@ -1,12 +1,10 @@
 # Drift — structural assumptions
 
 This document lists the structural preconditions drift's code
-relies on. These aren't bugs or biases in the configurable sense
-(see `DRIFT_AUDIT.md` for those) — they're baked into the type
-system, the keyboard schema, or the analyzer logic in ways that
-aren't easy to parameterize. If your use case hits one of them,
-drift's output will be wrong or nonsensical for reasons the config
-can't fix.
+relies on. They're baked into the type system, the keyboard
+schema, or the analyzer logic in ways that aren't easy to
+parameterize. If your use case hits one of them, drift's output
+will be wrong or nonsensical for reasons the config can't fix.
 
 Read this before you adapt drift to an unusual keyboard, an
 unusual language, or an unusual scoring model.
@@ -125,7 +123,7 @@ middle home row (pushed forward away from user).
 `ring_pinky_forward_ok`) and a `forward_threshold`. The
 direction of the rule (outer-forward = natural) is hardcoded in
 drift-motion. Inverting it requires a code change, not a config
-change. See `DRIFT_AUDIT.md` item 1.6.
+change.
 
 ## Cross-row kind mapping
 
