@@ -298,7 +298,7 @@ one view can't poison another.
 keywiz/
 ├── src/                 — keywiz binary
 ├── drift/crates/        — 13-crate drift workspace
-├── keywiz/crates/
+├── crates/
 │   └── keywiz-stats/    — event store + views
 ├── keyboards/           — JSON5 keyboards
 ├── layouts/             — JSON5 layouts
