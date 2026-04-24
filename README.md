@@ -224,6 +224,13 @@ Same keys, rebound to filter / page axes:
 Both are JSON5. Drop a file in `keyboards/` or `layouts/` and it
 appears in the cycle on next launch.
 
+**Editing an existing file is live.** keywiz re-reads a
+layout / keyboard JSON whenever you cycle away from it and back
+(`Ctrl+←/→` or `Ctrl+↑/↓`). Iterate on a layout in your editor,
+hit the cycle twice in keywiz, and the new mapping is active —
+no restart, no session loss. Only new files need a relaunch to
+show up in the cycle.
+
 **Keyboards** describe physical buttons: id, grid coord (r,c),
 geometric position + width/height, finger assignment, cluster.
 See `keyboards/halcyon_elora.json` (col-stag split reference)
