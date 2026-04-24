@@ -9,6 +9,14 @@
 //! [`keywiz_stats::views::usage`], which log-normalizes counts so
 //! rarely-pressed keys stay visible instead of collapsing to zero
 //! next to the top-frequency ones.
+//!
+//! **Drill events are excluded.** Drill is heat-weighted and
+//! autoscaling — it hunts weaknesses rather than sampling english,
+//! so counting drill presses amplifies whatever was already hot
+//! and drowns out the "what does my corpus ask of me" signal the
+//! overlay is trying to show. Words + text sessions only. Drill's
+//! per-key footprint lives in the error-side heat overlay, which
+//! is where that feedback actually belongs.
 
 use std::collections::HashMap;
 
@@ -80,6 +88,7 @@ impl KeyOverlay for UsageOverlay {
     fn on_event(&mut self, _event: &Event, ctx: &OverlayContext<'_>) {
         let filter = EventFilter {
             layout_hash: Some(ctx.layout_hash.clone()),
+            exercise_categories: Some(vec!["words".into(), "text".into()]),
             ..Default::default()
         };
         if let Ok(map) = keywiz_stats::views::usage::usage_map(ctx.store, &filter) {
