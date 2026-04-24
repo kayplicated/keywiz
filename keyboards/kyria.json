@@ -1,7 +1,7 @@
 {
   name: "kyria",
   short: "Kyria",
-  description: "splitkb Kyria — column-staggered split, same col-stag splay and thumb cluster as the Halcyon Elora v2 but without the top number row.",
+  description: "splitkb Kyria — column-staggered split, same col-stag splay and thumb cluster as the Halcyon Elora but without the top number row.",
 
   // Col-stag main block. Ids follow docs/id-convention.md:
   //   main_k1..k30  — 30-key alpha core, inner 5 cols per hand
@@ -10,7 +10,7 @@
   //                   outer column on each hand across the 3 alpha
   //                   rows only (no number row = no k41/k46 slots).
   //
-  // Geometry mirrors halcyon_elora_v2's col-stag splay:
+  // Geometry mirrors halcyon_elora's col-stag splay:
   //   pinky-outer & pinky-inner: pulled back 0.75
   //   ring:    pulled back 0.25
   //   middle:  pushed forward 0.5
@@ -69,7 +69,7 @@
       ],
     },
 
-    // Thumb clusters — identical to halcyon_elora_v2's 7-key layout.
+    // Thumb clusters — identical to halcyon_elora's 7-key layout.
     // k1/k2 inner-upper, k3..k7 outer-lower. Placeholder xy.
     {
       type: "free-form",

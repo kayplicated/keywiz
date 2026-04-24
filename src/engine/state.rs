@@ -233,7 +233,7 @@ impl Engine {
         let layouts = generic_layout_names(layouts_dir, &keyboards);
 
         let (initial_keyboard, keyboard) =
-            pick_first_loadable(&keyboards, "halcyon_elora_v2", |n| {
+            pick_first_loadable(&keyboards, "halcyon_elora", |n| {
                 keyboard::load(&keyboard_path(keyboards_dir, n))
             })
             .ok_or_else(|| {

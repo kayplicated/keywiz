@@ -66,7 +66,7 @@ pub fn draw(f: &mut Frame, area: Rect, display: &DisplayState, engine: &Engine) 
     }
 
     // Footer — key hints + live scope values, mirroring the typing
-    // view's `Ctrl+↑↓ · Halcyon Elora v2` grammar. Second line is
+    // view's `Ctrl+↑↓ · Halcyon Elora` grammar. Second line is
     // the exit hint.
     render_footer(f, rects.get("footer"), display, engine);
 }
@@ -129,7 +129,7 @@ fn render_footer(f: &mut Frame, area: Rect, display: &DisplayState, engine: &Eng
 }
 
 /// Cheap display-prettifier: swap underscores for spaces. Source
-/// names (`halcyon_elora_v2`, `gallium-v2`) are code-friendly;
+/// names (`halcyon_elora`, `gallium-v2`) are code-friendly;
 /// the footer reads better with human spacing.
 fn pretty_name(raw: &str) -> String {
     raw.replace('_', " ")

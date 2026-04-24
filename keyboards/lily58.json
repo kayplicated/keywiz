@@ -8,7 +8,7 @@
   //   main_k31..k40 — number row (10 slots, one per alpha col)
   //   main_k41..k49 — outer pinky columns, 4 rows per hand
   //
-  // Lily58's splay is *much* gentler than the Halcyon Elora v2's:
+  // Lily58's splay is *much* gentler than the Halcyon Elora's:
   //   pinky-outer & pinky-inner: barely pulled back (0.1)
   //   ring:    flat with index (0.0)
   //   middle:  pushed forward 0.4 — the only clear stagger

@@ -109,7 +109,7 @@ Text is the default; `--format json` emits a serializable envelope.
 
 ```
 Layout: drifter
-Board:  halcyon_elora_v2
+Board:  halcyon_elora
 Corpus: shai
 
 Category breakdown:

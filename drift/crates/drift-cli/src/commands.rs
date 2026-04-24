@@ -36,9 +36,9 @@ struct Cli {
     corpus: Vec<String>,
     /// Keyboard JSON path. If omitted, the keyboard is picked per
     /// layout: `.dof` files carry a board descriptor that maps to
-    /// `keyboards/ortho.json`, `keyboards/halcyon_elora_v2.json`,
+    /// `keyboards/ortho.json`, `keyboards/halcyon_elora.json`,
     /// or `keyboards/us_intl.json`; keywiz JSON5 layouts default
-    /// to halcyon_elora_v2.
+    /// to halcyon_elora.
     #[arg(long, global = true)]
     keyboard: Option<PathBuf>,
     /// Output format. Text is human-readable and colorized; JSON is
@@ -351,7 +351,7 @@ fn collect_overrides(cli: &Cli) -> Result<Vec<Override>> {
 /// 1. Explicit `--keyboard` overrides everything and is used verbatim.
 /// 2. `.dof` layouts peek their `board` field and pick the default
 ///    keyboard for that board (via `drift_dof::default_keyboard_path`).
-/// 3. keywiz JSON5 layouts fall back to `keyboards/halcyon_elora_v2.json`.
+/// 3. keywiz JSON5 layouts fall back to `keyboards/halcyon_elora.json`.
 ///
 /// In cases 2 and 3 the hint is a relative path like
 /// `keyboards/foo.json`; it is resolved via [`resolve_keyboard_hint`]
@@ -373,7 +373,7 @@ fn load_keyboard_for(
         })?;
         resolve_keyboard_hint(hint, layout_path)?
     } else {
-        resolve_keyboard_hint("keyboards/halcyon_elora_v2.json", layout_path)?
+        resolve_keyboard_hint("keyboards/halcyon_elora.json", layout_path)?
     };
     drift_keyboard::load_keyboard(&path)
         .with_context(|| format!("loading keyboard {}", path.display()))

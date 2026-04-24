@@ -47,7 +47,7 @@ cargo install --path .
 keywiz
 
 # Pick keyboard + layout by name
-keywiz -k halcyon_elora_v2 -l drifter
+keywiz -k halcyon_elora -l drifter
 keywiz -k us_intl -l qwerty
 
 # Practice a layout while typing on a different physical keyboard
@@ -226,7 +226,7 @@ appears in the cycle on next launch.
 
 **Keyboards** describe physical buttons: id, grid coord (r,c),
 geometric position + width/height, finger assignment, cluster.
-See `keyboards/halcyon_elora_v2.json` (col-stag split reference)
+See `keyboards/halcyon_elora.json` (col-stag split reference)
 or `keyboards/us_intl.json` (row-stag ANSI).
 
 **Layouts** map physical key ids to
@@ -235,13 +235,13 @@ or `keyboards/us_intl.json` (row-stag ANSI).
 theses.
 
 For hardware-specific overrides: name a layout file
-`{layout}-{keyboard}.json` (e.g. `qwerty-halcyon_elora_v2.json`).
+`{layout}-{keyboard}.json` (e.g. `qwerty-halcyon_elora.json`).
 It wins over the generic when paired with that keyboard and
 stays hidden from the layout cycle otherwise.
 
 ## Shipped data
 
-- **Keyboards**: `halcyon_elora_v2` (col-stag split, aggressive
+- **Keyboards**: `halcyon_elora` (col-stag split, aggressive
   splay), `kyria` (col-stag split, aggressive splay, no number
   row), `ferris` (col-stag split, 34 keys, aggressive splay, no
   number row or outer pinky), `lily58` (col-stag split, mild
@@ -252,8 +252,8 @@ stays hidden from the layout cycle otherwise.
   `dvorak`, `engram`, `gallium`, `gallium-v2`, `graphite`,
   `hyperroll`, `isrt`, `qwerty`, `semimak`, `sturdy`, `workman`
 - **Variants** (auto-resolved per keyboard, hidden from cycle):
-  `canary-halcyon_elora_v2`, `canary-kyria`,
-  `qwerty-halcyon_elora_v2`
+  `canary-halcyon_elora`, `canary-kyria`,
+  `qwerty-halcyon_elora`
 
 ## Custom texts
 

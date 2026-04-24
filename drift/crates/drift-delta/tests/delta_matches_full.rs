@@ -78,7 +78,7 @@ fn swap_in_place(layout: &drift_core::Layout, a: char, b: char) -> drift_core::L
 fn assert_delta_matches(preset: &str, pairs: &[(char, char)]) {
     let (pipeline, keyboard, layout, corpus) = load_pieces(
         preset,
-        "keyboards/halcyon_elora_v2.json",
+        "keyboards/halcyon_elora.json",
         "layouts/drifter.json",
     );
 
@@ -134,7 +134,7 @@ fn commit_swap_leaves_accumulator_consistent() {
     // runs will drift away from true scores over many iterations.
     let (pipeline, keyboard, layout, corpus) = load_pieces(
         "drifter",
-        "keyboards/halcyon_elora_v2.json",
+        "keyboards/halcyon_elora.json",
         "layouts/drifter.json",
     );
 

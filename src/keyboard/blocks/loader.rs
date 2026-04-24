@@ -3,8 +3,8 @@
 //! Schema:
 //! ```json5
 //! {
-//!   name: "halcyon_elora_v2",
-//!   short: "Halcyon Elora v2",
+//!   name: "halcyon_elora",
+//!   short: "Halcyon Elora",
 //!   description: "...",
 //!   blocks: [
 //!     {

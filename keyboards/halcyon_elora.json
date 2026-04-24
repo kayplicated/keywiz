@@ -1,7 +1,7 @@
 {
-  name: "halcyon_elora_v2",
-  short: "Halcyon Elora v2",
-  description: "Kay's Halcyon Elora v2 from splitkb.com — column-staggered split with aggressive pinky pull-back and 7-key thumb cluster per hand.",
+  name: "halcyon_elora",
+  short: "Halcyon Elora",
+  description: "Kay's Halcyon Elora from splitkb.com — column-staggered split with aggressive pinky pull-back and 7-key thumb cluster per hand.",
 
   // Col-stag main block. Ids follow docs/id-convention.md:
   //   main_k1..k30  — 30-key alpha core, inner 5 cols per hand

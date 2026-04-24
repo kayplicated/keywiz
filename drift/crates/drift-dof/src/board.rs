@@ -18,7 +18,7 @@
 pub fn default_keyboard_path(board: &str) -> Option<&'static str> {
     match board {
         "ortho" => Some("keyboards/ortho.json"),
-        "elora" => Some("keyboards/halcyon_elora_v2.json"),
+        "elora" => Some("keyboards/halcyon_elora.json"),
         "ansi" => Some("keyboards/us_intl.json"),
         _ => None,
     }
@@ -33,7 +33,7 @@ mod tests {
         assert_eq!(default_keyboard_path("ortho"), Some("keyboards/ortho.json"));
         assert_eq!(
             default_keyboard_path("elora"),
-            Some("keyboards/halcyon_elora_v2.json")
+            Some("keyboards/halcyon_elora.json")
         );
         assert_eq!(
             default_keyboard_path("ansi"),

@@ -192,8 +192,8 @@ fn miss_color(rate: f64) -> Color {
 /// The keyboard painted is the stats *combo's* keyboard+layout,
 /// loaded from the catalog by name — not the live-typing pair.
 /// So if you're typing on gallium-v2 right now but the stats combo
-/// is drifter/halcyon_elora_v2, P3 shows drifter's letters on the
-/// halcyon_elora_v2 geometry with drifter's usage data. When no
+/// is drifter/halcyon_elora, P3 shows drifter's letters on the
+/// halcyon_elora geometry with drifter's usage data. When no
 /// combo is set (the "all combos" scope), falls back to the live
 /// pair.
 fn draw_usage_keyboard(f: &mut Frame, area: Rect, engine: &Engine) {

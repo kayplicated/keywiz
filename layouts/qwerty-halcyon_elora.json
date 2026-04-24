@@ -1,5 +1,5 @@
 {
-  name: "qwerty-halcyon_elora_v2",
+  name: "qwerty-halcyon_elora",
   short: "QWERTY (Halcyon)",
   // Halcyon-specific QWERTY variant. Alpha core + number row match
   // the generic qwerty.json. The left outer-pinky column is
