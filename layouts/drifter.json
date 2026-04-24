@@ -141,6 +141,13 @@
     main_k39: { char: ["9", "("] },
     main_k40: { char: ["0", ")"] },
 
+    // ---- left thumb cluster — space and enter on the outer-lower
+    // big keys. Word boundaries and line breaks belong on the
+    // left thumb so they never interrupt the right-hand rolling
+    // patterns that carry most of the "drift" feeling.
+    left_thumb_k5:  { named: "enter" },
+    left_thumb_k6:  { named: "space" },
+
     // ---- right thumb cluster — all punctuation lives here ----
     // The Elora's 7-key thumb cluster makes thumb-reach cheap for
     // mid-word characters, which lets `'` leave the alpha grid
