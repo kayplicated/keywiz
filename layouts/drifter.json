@@ -8,7 +8,7 @@
   //
   // Current shape:
   //
-  //   q v m j [    ] - = x z
+  //   q v m j [    ] = - x z
   //   n r t s g    p h e a i          home row inherited from gallium
   //   b l d c w    k f u o y          common letters cluster here
   //
@@ -100,8 +100,8 @@
     main_k4:  { char: ["j", "J"] },
     main_k5:  { char: ["\[", "\{"] },
     main_k6:  { char: ["\]", "\}"] },
-    main_k7:  { char: ["-", "_"] },
-    main_k8:  { char: ["=", "+"] },
+    main_k7:  { char: ["=", "+"] },
+    main_k8:  { char: ["-", "_"] },
     main_k9:  { char: ["x", "X"] },
     main_k10: { char: ["z", "Z"] },
 
