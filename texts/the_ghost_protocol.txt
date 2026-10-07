@@ -1,0 +1,2 @@
+The Ghost Protocol
+The message arrived with no header, no origin, and a payload of exactly 256 bytes. When she decrypted it, the screen filled with a single line of plain text: you wrote this code in a version of the world that no longer exists. She checked the signature. It was hers. Same key, same quirks, same bad habit of naming variables after old cartoon characters. She leaned back, very slowly, and wondered which of them had been deleted.

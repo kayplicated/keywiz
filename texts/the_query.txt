@@ -1,0 +1,2 @@
+The Query
+The dashboard said revenue had dropped 37% overnight, which seemed unlikely. He opened the console and typed SELECT region, SUM(amount) FROM orders WHERE created_at > '2024-03-01' GROUP BY region ORDER BY 2 DESC; and hit enter. Five rows came back. Four looked normal. The fifth, region_id 9, showed a total of 0.00 and a timestamp from 1970. Somebody had shipped a migration on Friday. He sighed, poured more coffee, and opened a ticket titled JIRA-4471: epoch zero strikes again.

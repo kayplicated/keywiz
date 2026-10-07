@@ -1,0 +1,2 @@
+The Makefile
+The build broke again, so she opened the Makefile and scrolled to the top. CC = clang, CFLAGS = -Wall -Wextra -O2, and a list of objects that ended in main.o and parser.o. The target for test depended on build, which depended on $(OBJS). She ran make clean && make -j8 and watched 42 lines scroll past. Then the error: undefined reference to lex_next. She had renamed the function in lexer.c but forgotten the header. One line later, it linked.

@@ -1,0 +1,2 @@
+The Regex
+The log file was 2 GB of noise, and she needed every failed login from March and April. She opened a terminal and typed grep -E '2024-0[34]-[0-9]{2}.*FAIL' auth.log > fails.txt and then wc -l fails.txt, which said 18,342. Too many. She sorted by address with awk '{print $5}' fails.txt and one entry jumped out: 10.4.7.22, with 17,901 attempts. Somebody's forgotten cron job, hammering the server every 30 seconds. She found it, killed it, and went to lunch.
